@@ -1,0 +1,32 @@
+{
+	"default-server": "http://localhost:6305/geoserver",
+	"wmsLayers": [
+		{
+			"id": "osmspeeds",
+			"baseUrl": "/wms",
+			"wmsName": "tpg:osm_speeds",
+			"imageFormat": "image/png8",
+			"visible": true,
+			"queryType": "wms"
+		}
+	],
+	"portalLayers": [
+		{
+			"id": "osmspeeds",
+			"active": true,
+			"label": "OSM last speed",
+			"layers": [
+				"osmspeeds"
+			]
+		}
+	],
+	"groups": [
+		{
+			"id": "layers",
+			"label": "Capas",
+			"items": [
+				"osmspeeds"
+			]
+		}
+	]
+}
