@@ -9,6 +9,8 @@
 		<class>org.fergonco.tpg.trafficViewer.jpa.Shift</class>
 		<class>org.fergonco.tpg.trafficViewer.jpa.OSMShift</class>
 		<class>org.fergonco.tpg.trafficViewer.jpa.TPG2OSM</class>
+		<class>org.fergonco.tpg.trafficViewer.jpa.TPGStop</class>
+		<class>org.fergonco.tpg.trafficViewer.jpa.JTSConverter</class>
 
 		<properties>
 			<property name="javax.persistence.jdbc.url" value="jdbc:postgresql://localhost:54322/tpg" />
