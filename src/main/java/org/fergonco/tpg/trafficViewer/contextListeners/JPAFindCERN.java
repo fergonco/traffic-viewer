@@ -8,7 +8,7 @@ import org.fergonco.tpg.trafficViewer.DBUtils;
 import org.fergonco.tpg.trafficViewer.jpa.TPGStop;
 
 //@WebListener
-public class TPGStopCreator implements ServletContextListener {
+public class JPAFindCERN implements ServletContextListener {
 
 	@Override
 	public void contextInitialized(final ServletContextEvent sce) {
