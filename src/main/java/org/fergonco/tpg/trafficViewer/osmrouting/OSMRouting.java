@@ -7,7 +7,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import javax.xml.parsers.ParserConfigurationException;
@@ -15,6 +14,7 @@ import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
 import org.jgrapht.GraphPath;
 import org.jgrapht.alg.shortestpath.DijkstraShortestPath;
 import org.jgrapht.graph.DefaultDirectedGraph;
@@ -23,6 +23,7 @@ import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
 import com.vividsolutions.jts.geom.Coordinate;
+import com.vividsolutions.jts.io.WKTWriter;
 
 public class OSMRouting {
 
@@ -40,46 +41,44 @@ public class OSMRouting {
 
 		graph = new DefaultDirectedGraph<OSMNode, OSMStep>(OSMStep.class);
 		for (OSMWay osmWay : relation) {
-			System.out.println(osmWay.getTag("junction"));
 			OSMNode[] wayNodes = osmWay.getNodes();
 			for (int i = 0; i < wayNodes.length - 1; i++) {
 				OSMNode currentNode = wayNodes[i];
 				OSMNode nextNode = wayNodes[i + 1];
 				graph.addVertex(currentNode);
 				graph.addVertex(nextNode);
-				graph.addEdge(nextNode, currentNode, new OSMStep(osmWay, nextNode, currentNode));
+				graph.addEdge(nextNode, currentNode, new OSMStep(osmWay));
 				// if oneway=yes or juntion=roundabout
 				if (!"yes".equals(osmWay.getTag("oneway")) && !"roundabout".equals(osmWay.getTag("junction"))) {
-					graph.addEdge(currentNode, nextNode, new OSMStep(osmWay, currentNode, nextNode));
+					graph.addEdge(currentNode, nextNode, new OSMStep(osmWay));
 				}
 			}
 		}
 
 	}
 
-	public List<OSMNode> getPath(String startNodeId, String endNodeId) {
+	public OSMRoutingResult getPath(String startNodeId, String endNodeId) {
 		OSMNode a = idNodes.get(startNodeId);
 		OSMNode b = idNodes.get(endNodeId);
 		GraphPath<OSMNode, OSMStep> result = DijkstraShortestPath.findPathBetween(graph, a, b);
-		return result.getVertexList();
+		return new OSMRoutingResult(result);
 	}
 
 	public static void main(String[] args) throws Exception {
 		OSMRouting osmRouting = new OSMRouting();
 		osmRouting.init(new File("ligne-y.osm.xml"));
-		List<OSMNode> path = osmRouting.getPath("266377188", "3058194700");
+		OSMRoutingResult result = osmRouting.getPath("266377188", "3058194700");
+		String linestringWKT = new WKTWriter().write(result.getLineString());
+		String[] wayIds = result.getWayIds();
+		System.out.println(wayIds.length);
 		StringBuilder builder = new StringBuilder();
 		builder.append(
-				"create table if not exists shortestpathresult (id serial primary key, geom geometry('LINESTRING', 4326));\n");
-		builder.append("delete from shortestpathresult ;\n");
-		builder.append("insert into shortestpathresult (geom) values(ST_GeomFromText('LINESTRING(");
-		for (OSMNode node : path) {
-			Coordinate coordinate = node.getCoordinate();
-			builder.append(coordinate.x).append(" ").append(coordinate.y).append(",");
-		}
-		builder.setLength(builder.length() - 1);// remove last comma
-		builder.append(")', 4326));");
-		System.out.println(builder.toString());
+				"create table if not exists test_shortestpath (id serial primary key, geom geometry('LINESTRING', 4326));\n");
+		builder.append("delete from test_shortestpath ;\n");
+		builder.append("insert into test_shortestpath (geom) values(ST_GeomFromText('").append(linestringWKT)
+				.append("', 4326));");
+		builder.append("create or replace view test_affectedways as select * from osm_line where osm_id in (")
+				.append(StringUtils.join(wayIds, ",")).append(");\n");
 		FileOutputStream output = new FileOutputStream("/tmp/result.sql");
 		IOUtils.write(builder.toString(), output);
 		output.close();

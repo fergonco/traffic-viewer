@@ -1,16 +1,25 @@
 package org.fergonco.tpg.trafficViewer.osmrouting;
 
+import org.jgrapht.DirectedGraph;
+
+/**
+ * This class represents a step between two OSMNodes in the graph. All steps
+ * instances should be different (do not override equals & hashcode) so that
+ * every call to {@link DirectedGraph#addEdge(Object, Object, Object)} take
+ * effect.
+ * 
+ * @author fergonco
+ */
 public class OSMStep {
 
 	private OSMWay way;
-	private OSMNode start;
-	private OSMNode end;
 
-	public OSMStep(OSMWay way, OSMNode start, OSMNode end) {
+	public OSMStep(OSMWay way) {
 		super();
 		this.way = way;
-		this.start = start;
-		this.end = end;
 	}
 
+	public OSMWay getWay() {
+		return way;
+	}
 }
