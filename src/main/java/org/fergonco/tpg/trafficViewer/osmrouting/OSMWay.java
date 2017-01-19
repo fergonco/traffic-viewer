@@ -1,11 +1,13 @@
 package org.fergonco.tpg.trafficViewer.osmrouting;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class OSMWay {
 
 	private String id;
 	private ArrayList<OSMNode> nodes = new ArrayList<>();
+	private HashMap<String, String> tags = new HashMap<>();
 
 	public OSMWay(String id) {
 		super();
@@ -34,12 +36,16 @@ public class OSMWay {
 	// }
 	// }
 
-	public OSMNode getFirstNode() {
-		return nodes.get(0);
+	public OSMNode[] getNodes() {
+		return nodes.toArray(new OSMNode[nodes.size()]);
 	}
 
-	public OSMNode getLastNode() {
-		return nodes.get(nodes.size() - 1);
+	public void setTag(String key, String value) {
+		tags.put(key, value);
+	}
+
+	public String getTag(String key) {
+		return tags.get(key);
 	}
 
 }

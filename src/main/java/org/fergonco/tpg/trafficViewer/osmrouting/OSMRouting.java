@@ -3,6 +3,7 @@ package org.fergonco.tpg.trafficViewer.osmrouting;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -13,9 +14,10 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
+import org.apache.commons.io.IOUtils;
 import org.jgrapht.GraphPath;
 import org.jgrapht.alg.shortestpath.DijkstraShortestPath;
-import org.jgrapht.graph.ListenableUndirectedGraph;
+import org.jgrapht.graph.DefaultDirectedGraph;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
@@ -27,7 +29,7 @@ public class OSMRouting {
 	private HashMap<String, OSMNode> idNodes = new HashMap<>();
 	private HashMap<String, OSMWay> idWays = new HashMap<>();
 	public ArrayList<OSMWay> relation = null;
-	private ListenableUndirectedGraph<OSMNode, OSMWay> graph;
+	private DefaultDirectedGraph<OSMNode, OSMStep> graph;
 
 	public void init(File osmxml) throws ParserConfigurationException, SAXException, IOException {
 		SAXParserFactory factory = SAXParserFactory.newInstance();
@@ -36,35 +38,51 @@ public class OSMRouting {
 		saxParser.parse(is, new SaxHandler());
 		is.close();
 
-		graph = new ListenableUndirectedGraph<OSMNode, OSMWay>(OSMWay.class);
+		graph = new DefaultDirectedGraph<OSMNode, OSMStep>(OSMStep.class);
 		for (OSMWay osmWay : relation) {
-			OSMNode start = osmWay.getFirstNode();
-			OSMNode end = osmWay.getLastNode();
-			graph.addVertex(start);
-			graph.addVertex(end);
-			graph.addEdge(start, end, osmWay);
+			System.out.println(osmWay.getTag("junction"));
+			OSMNode[] wayNodes = osmWay.getNodes();
+			for (int i = 0; i < wayNodes.length - 1; i++) {
+				OSMNode currentNode = wayNodes[i];
+				OSMNode nextNode = wayNodes[i + 1];
+				graph.addVertex(currentNode);
+				graph.addVertex(nextNode);
+				graph.addEdge(nextNode, currentNode, new OSMStep(osmWay, nextNode, currentNode));
+				// if oneway=yes or juntion=roundabout
+				if (!"yes".equals(osmWay.getTag("oneway")) && !"roundabout".equals(osmWay.getTag("junction"))) {
+					graph.addEdge(currentNode, nextNode, new OSMStep(osmWay, currentNode, nextNode));
+				}
+			}
 		}
 
 	}
 
-	public String[] getPath(String startNodeId, String endNodeId) {
+	public List<OSMNode> getPath(String startNodeId, String endNodeId) {
 		OSMNode a = idNodes.get(startNodeId);
 		OSMNode b = idNodes.get(endNodeId);
-		GraphPath<OSMNode, OSMWay> result = DijkstraShortestPath.findPathBetween(graph, a, b);
-		List<OSMWay> edgeList = result.getEdgeList();
-
-		String[] ret = new String[edgeList.size()];
-		for (int i = 0; i < ret.length; i++) {
-			ret[i] = edgeList.get(i).getId();
-		}
-
-		return ret;
+		GraphPath<OSMNode, OSMStep> result = DijkstraShortestPath.findPathBetween(graph, a, b);
+		return result.getVertexList();
 	}
 
 	public static void main(String[] args) throws Exception {
 		OSMRouting osmRouting = new OSMRouting();
 		osmRouting.init(new File("ligne-y.osm.xml"));
-		String[] path = osmRouting.getPath("134231234", "235235235");
+		List<OSMNode> path = osmRouting.getPath("266377188", "3058194700");
+		StringBuilder builder = new StringBuilder();
+		builder.append(
+				"create table if not exists shortestpathresult (id serial primary key, geom geometry('LINESTRING', 4326));\n");
+		builder.append("delete from shortestpathresult ;\n");
+		builder.append("insert into shortestpathresult (geom) values(ST_GeomFromText('LINESTRING(");
+		for (OSMNode node : path) {
+			Coordinate coordinate = node.getCoordinate();
+			builder.append(coordinate.x).append(" ").append(coordinate.y).append(",");
+		}
+		builder.setLength(builder.length() - 1);// remove last comma
+		builder.append(")', 4326));");
+		System.out.println(builder.toString());
+		FileOutputStream output = new FileOutputStream("/tmp/result.sql");
+		IOUtils.write(builder.toString(), output);
+		output.close();
 	}
 
 	private class SaxHandler extends DefaultHandler {
@@ -78,7 +96,7 @@ public class OSMRouting {
 				throws SAXException {
 			if (qName.equals("node")) {
 				Coordinate coordinate = new Coordinate(Double.parseDouble(attributes.getValue("lon")),
-						Double.parseDouble(attributes.getValue("lon")));
+						Double.parseDouble(attributes.getValue("lat")));
 				String nodeId = attributes.getValue("id");
 				OSMNode osmNode = new OSMNode(nodeId, coordinate);
 				idNodes.put(nodeId, osmNode);
@@ -100,6 +118,8 @@ public class OSMRouting {
 				if (way != null) {
 					currentRelationWays.add(way);
 				}
+			} else if (currentWay != null && qName.equals("tag")) {
+				currentWay.setTag(attributes.getValue("k"), attributes.getValue("v"));
 			} else if (currentRelationTags != null && qName.equals("tag")) {
 				currentRelationTags.put(attributes.getValue("k"), attributes.getValue("v"));
 			}

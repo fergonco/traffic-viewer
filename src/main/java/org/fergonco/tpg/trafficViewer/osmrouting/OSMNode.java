@@ -28,4 +28,8 @@ public class OSMNode {
 	public int getWayCount() {
 		return ways.size();
 	}
+
+	public Coordinate getCoordinate() {
+		return coordinate;
+	}
 }
