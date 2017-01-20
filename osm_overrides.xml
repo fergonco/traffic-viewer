@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osm-relation-overrides>
+	<way id="81307574" version="9" timestamp="2015-05-26T09:18:22Z"
+		changeset="31466724" uid="617875" user="MFlamm">
+		<tag k="oneway" v="no" />
+	</way>
+	<delete-way id="80119629" />
+	<add-way id="131232782" />
+</osm-relation-overrides>

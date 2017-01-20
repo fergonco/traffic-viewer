@@ -32,4 +32,8 @@ public class OSMNode {
 	public Coordinate getCoordinate() {
 		return coordinate;
 	}
+
+	public String getId() {
+		return id;
+	}
 }

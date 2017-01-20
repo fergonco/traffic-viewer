@@ -3,11 +3,15 @@ package org.fergonco.tpg.trafficViewer.osmrouting;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import com.vividsolutions.jts.geom.Coordinate;
+import com.vividsolutions.jts.geom.LineString;
+
 public class OSMWay {
 
 	private String id;
 	private ArrayList<OSMNode> nodes = new ArrayList<>();
 	private HashMap<String, String> tags = new HashMap<>();
+	private LineString lineString = null;
 
 	public OSMWay(String id) {
 		super();
@@ -22,20 +26,6 @@ public class OSMWay {
 		nodes.add(osmNode);
 	}
 
-	// public void removeNonGraphNodes() {
-	// ArrayList<OSMNode> toRemove = new ArrayList<>();
-	// for (int i = 1; i < nodes.size() - 1; i++) {
-	// OSMNode osmNode = nodes.get(i);
-	// if (osmNode.getWayCount() == 1) {
-	// toRemove.add(osmNode);
-	// }
-	// }
-	//
-	// for (OSMNode osmNode : toRemove) {
-	// nodes.remove(osmNode);
-	// }
-	// }
-
 	public OSMNode[] getNodes() {
 		return nodes.toArray(new OSMNode[nodes.size()]);
 	}
@@ -46,6 +36,33 @@ public class OSMWay {
 
 	public String getTag(String key) {
 		return tags.get(key);
+	}
+
+	public double getDistance(Coordinate coordinate) {
+		return getLineString().distance(OSMUtils.buildPoint(coordinate));
+	}
+
+	public LineString getLineString() {
+		if (lineString == null) {
+			lineString = OSMUtils.buildLineString(nodes);
+
+		}
+
+		return lineString;
+	}
+
+	public OSMNode getClosestNode(Coordinate coordinate) {
+		double min = Double.MAX_VALUE;
+		OSMNode argMin = null;
+		for (OSMNode osmNode : nodes) {
+			double distance = osmNode.getCoordinate().distance(coordinate);
+			if (distance < min) {
+				min = distance;
+				argMin = osmNode;
+			}
+		}
+
+		return argMin;
 	}
 
 }
