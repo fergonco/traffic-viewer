@@ -58,6 +58,28 @@ public class OSMRouting {
 	}
 
 	public OSMRoutingResult getPath(Coordinate start, Coordinate end) {
+
+		// Get all the OSM stops nearest than 100m
+		OSMNode[] startStops = relation.getNClosestNodes(start, 2);
+		OSMNode[] endStops = relation.getNClosestNodes(end, 2);
+		double min = Double.MAX_VALUE;
+		OSMRoutingResult argMin = null;
+		for (OSMNode osmStartStop : startStops) {
+			for (OSMNode osmEndStop : endStops) {
+				OSMRoutingResult routingResult = getPathOSMStops(osmStartStop.getCoordinate(),
+						osmEndStop.getCoordinate());
+				double length = routingResult.getLineString().getLength();
+				if (length < min) {
+					min = length;
+					argMin = routingResult;
+				}
+			}
+		}
+
+		return argMin;
+	}
+
+	private OSMRoutingResult getPathOSMStops(Coordinate start, Coordinate end) {
 		/*
 		 * We get the way first because there may be a case where the closest
 		 * node does not belong to the closest way, and we want the later.
@@ -80,23 +102,21 @@ public class OSMRouting {
 		return relation.getWays();
 	}
 
+	public Iterable<OSMNode> getNodes() {
+		return relation.getNodes();
+	}
+
 	public static void main(String[] args) throws Exception {
 		OSMRouting osmRouting = new OSMRouting();
 		osmRouting.init(new File("ligne-y.osm.xml"), new File("osm_overrides.xml"));
 		OSMRoutingResult result = osmRouting.getPath(new Coordinate(5.979067, 46.232062),
-				new Coordinate(6.1081094, 46.2555700));
+				new Coordinate(6.101175, 46.226193));
 
 		// Ferney-Mairie
 		// new Coordinate(6.1081094,46.2555700));
 
 		// ICC Does not find the stop in his side
 		// new Coordinate(6.101175, 46.226193));
-
-		// Renfile. Se ha suprimido un oneway=true
-		// new Coordinate(6.095520, 46.219171));
-
-		// Last working connection from Val-Thoiry
-		// new Coordinate(6.0847346, 46.2198077));
 
 		// Meyrin-gare, Does not find the stop in his side.
 		// Warning: to reproduce it must be the end stop!
@@ -113,6 +133,14 @@ public class OSMRouting {
 		for (OSMWay osmWay : ways) {
 			builder.append("insert into test_line values(" + osmWay.getId() + ",ST_GeomFromText('")
 					.append(wktWriter.write(osmWay.getLineString())).append("', 4326));");
+		}
+		Iterable<OSMNode> nodes = osmRouting.getNodes();
+		builder.append(
+				"create table if not exists test_stops (osm_id bigint primary key, geom geometry('POINT', 4326));\n");
+		builder.append("delete from test_stops;\n");
+		for (OSMNode osmNode : nodes) {
+			builder.append("insert into test_stops values(" + osmNode.getId() + ",ST_GeomFromText('")
+					.append(wktWriter.write(OSMUtils.buildPoint(osmNode.getCoordinate()))).append("', 4326));");
 		}
 
 		builder.append(
@@ -159,9 +187,17 @@ public class OSMRouting {
 				currentRelation = new OSMRelation();
 			} else if (qName.equals("member")) {
 				String ref = attributes.getValue("ref");
-				OSMWay way = idWays.get(ref);
-				if (way != null) {
-					currentRelation.addWay(way);
+				String type = attributes.getValue("type");
+				if (type.equals("way")) {
+					OSMWay way = idWays.get(ref);
+					if (way != null) {
+						currentRelation.addWay(way);
+					}
+				} else if (type.equals("node")) {
+					OSMNode node = idNodes.get(ref);
+					if (node != null) {
+						currentRelation.addNode(node);
+					}
 				}
 			} else if (currentWay != null && qName.equals("tag")) {
 				currentWay.setTag(attributes.getValue("k"), attributes.getValue("v"));
