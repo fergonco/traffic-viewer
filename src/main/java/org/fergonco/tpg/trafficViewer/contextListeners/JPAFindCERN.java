@@ -3,11 +3,12 @@ package org.fergonco.tpg.trafficViewer.contextListeners;
 import javax.persistence.EntityManager;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
+import javax.servlet.annotation.WebListener;
 
 import org.fergonco.tpg.trafficViewer.DBUtils;
 import org.fergonco.tpg.trafficViewer.jpa.TPGStop;
 
-//@WebListener
+@WebListener
 public class JPAFindCERN implements ServletContextListener {
 
 	@Override

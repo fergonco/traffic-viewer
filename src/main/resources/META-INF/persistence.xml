@@ -8,7 +8,6 @@
 	<persistence-unit name="local-pg" transaction-type="RESOURCE_LOCAL">
 		<class>org.fergonco.tpg.trafficViewer.jpa.Shift</class>
 		<class>org.fergonco.tpg.trafficViewer.jpa.OSMShift</class>
-		<class>org.fergonco.tpg.trafficViewer.jpa.TPG2OSM</class>
 		<class>org.fergonco.tpg.trafficViewer.jpa.TPGStop</class>
 		<class>org.fergonco.tpg.trafficViewer.jpa.JTSConverter</class>
 
