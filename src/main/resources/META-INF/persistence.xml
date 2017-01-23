@@ -21,5 +21,21 @@
 			<property name="eclipselink.database.delimiters" value="true" />
 		</properties>
 	</persistence-unit>
+	<persistence-unit name="test" transaction-type="RESOURCE_LOCAL">
+		<class>org.fergonco.tpg.trafficViewer.jpa.Shift</class>
+		<class>org.fergonco.tpg.trafficViewer.jpa.OSMShift</class>
+		<class>org.fergonco.tpg.trafficViewer.jpa.TPGStop</class>
+		<class>org.fergonco.tpg.trafficViewer.jpa.JTSConverter</class>
+
+		<properties>
+			<property name="javax.persistence.jdbc.url" value="jdbc:postgresql://localhost:54322/tpgtest" />
+			<property name="javax.persistence.jdbc.user" value="tpg" />
+			<property name="javax.persistence.jdbc.password" value="tpg" />
+			<property name="javax.persistence.jdbc.driver" value="org.postgresql.Driver" />
+			<property name="eclipselink.logging.level" value="FINE" />
+			<property name="eclipselink.ddl-generation" value="create-tables" />
+			<property name="eclipselink.database.delimiters" value="true" />
+		</properties>
+	</persistence-unit>
 
 </persistence>

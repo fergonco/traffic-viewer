@@ -6,6 +6,8 @@ import javax.persistence.Persistence;
 
 public class DBUtils {
 
+	private static String persistenceUnit = "local-pg";
+
 	public static EntityManager getEntityManager() {
 		// EntityManagerFactory emf =
 		// Persistence.createEntityManagerFactory(JPA_CONF_NAME, Collections
@@ -13,9 +15,13 @@ public class DBUtils {
 		// SchemaSessionCustomizer.class.getName()));
 		// emf.getCache().evictAll();
 		// EntityManager em = emf.createEntityManager();
-		EntityManagerFactory emf = Persistence.createEntityManagerFactory("local-pg");
+		EntityManagerFactory emf = Persistence.createEntityManagerFactory(persistenceUnit);
 		EntityManager em = emf.createEntityManager();
 		return em;
+	}
+
+	public static void setPersistenceUnit(String persistenceUnit) {
+		DBUtils.persistenceUnit = persistenceUnit;
 	}
 
 }
