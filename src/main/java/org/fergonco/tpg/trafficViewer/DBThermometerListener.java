@@ -11,6 +11,7 @@ import org.fergonco.tpg.trafficViewer.jpa.Shift;
 import org.fergonco.tpg.trafficViewer.jpa.TPGStop;
 import org.fergonco.tpg.trafficViewer.osmrouting.OSMRouting;
 import org.fergonco.tpg.trafficViewer.osmrouting.OSMRoutingResult;
+import org.fergonco.tpg.trafficViewer.osmrouting.OSMUtils;
 import org.geotools.geometry.jts.JTS;
 import org.geotools.referencing.CRS;
 import org.opengis.geometry.MismatchedDimensionException;
@@ -63,10 +64,8 @@ public class DBThermometerListener implements ThermometerListener {
 			em.getTransaction().begin();
 
 			Shift shift = new Shift();
-			shift.setEndLat((float) endCoordinate.y);
-			shift.setEndLon((float) endCoordinate.x);
-			shift.setStartLat((float) startCoordinate.y);
-			shift.setStartLon((float) startCoordinate.x);
+			shift.setEndPoint(OSMUtils.buildPoint(endCoordinate, 4326));
+			shift.setStartPoint(OSMUtils.buildPoint(startCoordinate, 4326));
 			Geometry flatLineString = null;
 			try {
 				CoordinateReferenceSystem crs4326 = CRS.decode("EPSG:4326");

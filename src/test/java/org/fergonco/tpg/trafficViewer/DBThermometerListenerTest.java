@@ -8,6 +8,7 @@ import java.util.Date;
 import java.util.List;
 
 import javax.persistence.EntityManager;
+import javax.persistence.PersistenceException;
 import javax.xml.parsers.ParserConfigurationException;
 
 import org.fergonco.tpg.trafficViewer.jpa.OSMShift;
@@ -30,9 +31,13 @@ public class DBThermometerListenerTest {
 	public void clean() {
 		EntityManager em = DBUtils.getEntityManager();
 		em.getTransaction().begin();
-		em.createQuery("DELETE FROM OSMShift s").executeUpdate();
-		em.createQuery("DELETE FROM Shift s").executeUpdate();
-		em.getTransaction().commit();
+		try {
+			em.createQuery("DELETE FROM OSMShift s").executeUpdate();
+			em.createQuery("DELETE FROM Shift s").executeUpdate();
+			em.getTransaction().commit();
+		} catch (PersistenceException e) {
+			em.getTransaction().rollback();
+		}
 	}
 
 	@Test

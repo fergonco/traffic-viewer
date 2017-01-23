@@ -1,9 +1,13 @@
 package org.fergonco.tpg.trafficViewer.jpa;
 
+import javax.persistence.Column;
+import javax.persistence.Convert;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+
+import com.vividsolutions.jts.geom.Geometry;
 
 @Entity
 public class Shift {
@@ -14,10 +18,12 @@ public class Shift {
 	private long timestamp;
 	private String vehicleId;
 	private int speed;
-	private float startLat;
-	private float startLon;
-	private float endLat;
-	private float endLon;
+	@Column(columnDefinition = "geometry('POINT', 4326)")
+	@Convert(converter = JTSConverter.class)
+	private Geometry startPoint;
+	@Column(columnDefinition = "geometry('POINT', 4326)")
+	@Convert(converter = JTSConverter.class)
+	private Geometry endPoint;
 
 	public long getId() {
 		return id;
@@ -39,36 +45,24 @@ public class Shift {
 		this.vehicleId = vehicleId;
 	}
 
-	public float getStartLat() {
-		return startLat;
+	public Geometry getStartPoint() {
+		return startPoint;
 	}
 
-	public void setStartLat(float startLat) {
-		this.startLat = startLat;
+	public void setStartPoint(Geometry startPoint) {
+		this.startPoint = startPoint;
 	}
 
-	public float getStartLon() {
-		return startLon;
+	public Geometry getEndPoint() {
+		return endPoint;
 	}
 
-	public void setStartLon(float startLon) {
-		this.startLon = startLon;
+	public void setEndPoint(Geometry endPoint) {
+		this.endPoint = endPoint;
 	}
 
-	public float getEndLat() {
-		return endLat;
-	}
-
-	public void setEndLat(float endLat) {
-		this.endLat = endLat;
-	}
-
-	public float getEndLon() {
-		return endLon;
-	}
-
-	public void setEndLon(float endLon) {
-		this.endLon = endLon;
+	public void setId(long id) {
+		this.id = id;
 	}
 
 	public int getSpeed() {

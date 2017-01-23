@@ -24,4 +24,10 @@ public class OSMUtils {
 		return gf.createPoint(coordinate);
 	}
 
+	public static Geometry buildPoint(Coordinate coordinate, int srid) {
+		Geometry ret = buildPoint(coordinate);
+		ret.setSRID(srid);
+		return ret;
+	}
+
 }

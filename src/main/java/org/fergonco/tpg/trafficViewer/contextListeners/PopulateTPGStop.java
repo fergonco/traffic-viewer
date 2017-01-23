@@ -16,7 +16,6 @@ import org.fergonco.tpg.trafficViewer.jpa.TPGStop;
 import org.fergonco.tpg.trafficViewer.osmrouting.OSMUtils;
 
 import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.Geometry;
 
 @WebListener
 public class PopulateTPGStop implements ServletContextListener {
@@ -38,9 +37,7 @@ public class PopulateTPGStop implements ServletContextListener {
 					double lat = Double.parseDouble(parts[2]);
 					TPGStop stop = new TPGStop();
 					stop.setCode(stopCode);
-					Geometry point = OSMUtils.buildPoint(new Coordinate(lon, lat));
-					point.setSRID(4326);
-					stop.setGeom(point);
+					stop.setGeom(OSMUtils.buildPoint(new Coordinate(lon, lat), 4326));
 					em.persist(stop);
 				}
 				em.getTransaction().commit();
