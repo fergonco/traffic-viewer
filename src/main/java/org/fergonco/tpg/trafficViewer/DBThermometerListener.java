@@ -81,6 +81,7 @@ public class DBThermometerListener implements ThermometerListener {
 			double h = (currentStep.getActualTimestamp() - previousStep.getActualTimestamp()) / (1000.0 * 60 * 60);
 			shift.setSpeed((int) Math.round(km / h));
 			shift.setVehicleId(currentStep.getDepartureCode());
+			shift.setTimestamp(currentStep.getActualTimestamp());
 			em.persist(shift);
 
 			String[] wayIds = result.getWayIds();

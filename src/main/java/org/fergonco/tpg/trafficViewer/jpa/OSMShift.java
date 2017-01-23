@@ -26,4 +26,7 @@ public class OSMShift {
 		this.shift = shift;
 	}
 
+	public Shift getShift() {
+		return shift;
+	}
 }

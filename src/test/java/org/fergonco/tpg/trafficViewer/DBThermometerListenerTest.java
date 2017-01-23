@@ -1,6 +1,7 @@
 package org.fergonco.tpg.trafficViewer;
 
 import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertTrue;
 
 import java.io.IOException;
 import java.util.Date;
@@ -9,6 +10,7 @@ import java.util.List;
 import javax.persistence.EntityManager;
 import javax.xml.parsers.ParserConfigurationException;
 
+import org.fergonco.tpg.trafficViewer.jpa.OSMShift;
 import org.fergonco.tpg.trafficViewer.jpa.Shift;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -53,6 +55,11 @@ public class DBThermometerListenerTest {
 		List<Shift> shifts = em.createQuery("SELECT s FROM Shift s ", Shift.class).getResultList();
 		assertEquals(1, shifts.size());
 		assertEquals(now, shifts.get(0).getTimestamp());
-		System.out.println(shifts);
+		List<OSMShift> osmShifts = em.createQuery("SELECT s FROM OSMShift s ", OSMShift.class).getResultList();
+		assertTrue(1 < osmShifts.size());
+		for (OSMShift osmShift : osmShifts) {
+			assertEquals(shifts.get(0), osmShift.getShift());
+		}
+		assertEquals(now, shifts.get(0).getTimestamp());
 	}
 }
