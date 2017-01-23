@@ -20,7 +20,7 @@ public class JTSConverter implements AttributeConverter<Geometry, Object> {
 	private WKBReader reader;
 
 	public JTSConverter() {
-		writer = new WKBWriter();
+		writer = new WKBWriter(2, true);
 		reader = new WKBReader();
 	}
 

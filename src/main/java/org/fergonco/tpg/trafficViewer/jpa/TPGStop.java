@@ -18,6 +18,14 @@ public class TPGStop {
 	@Convert(converter = JTSConverter.class)
 	private Geometry geom;
 
+	public void setCode(String code) {
+		this.code = code;
+	}
+
+	public void setGeom(Geometry geom) {
+		this.geom = geom;
+	}
+
 	@Override
 	public String toString() {
 		Coordinate coordinate = geom.getCentroid().getCoordinate();
