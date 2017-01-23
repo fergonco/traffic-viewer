@@ -12,7 +12,16 @@ alter database tpg owner to tpg;
 create extension postgis;
 create extension hstore;
 
+Create osm and jpa schemas
+----------------------------------------
+
+psql -h localhost -U tpg -p54322 -c "create schema osm"; 
+psql -h localhost -U tpg -p54322 -c "create schema app";
+
+Launch app to create stops
+----------------------------
+
 Populate stop table
 ----------------------
 
-psql -h localhost -U tpg -d tpgtest -p54322 -f src/main/sql/tpgstops.sql 
+psql -h localhost -U tpg -p54322 -f src/main/sql/tpgstops.sql 
