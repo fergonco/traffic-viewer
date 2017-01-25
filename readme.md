@@ -60,4 +60,4 @@ create or replace view app.osm_speeds as
 			where highway in ('motorway','trunk','primary','secondary','tertiary', 'unclassified','residential',
 					'service','motorway_link','trunk_link','primary_link','secondary_link','tertiary_link')) as osm
 		left outer join app.osmshiftlastinfo 
-		on (app.osmshiftlastinfo.osmid=osm.fid);
+		on (app.osmshiftlastinfo.osmid=osm.osm_id);
