@@ -6,6 +6,7 @@ import java.io.IOException;
 import javax.persistence.EntityManager;
 import javax.xml.parsers.ParserConfigurationException;
 
+import org.apache.log4j.Logger;
 import org.fergonco.tpg.trafficViewer.jpa.OSMShift;
 import org.fergonco.tpg.trafficViewer.jpa.Shift;
 import org.fergonco.tpg.trafficViewer.jpa.TPGStop;
@@ -30,6 +31,8 @@ import co.geomati.tpg.ThermometerListener;
 
 public class DBThermometerListener implements ThermometerListener {
 
+	private static Logger logger = Logger.getLogger(DBThermometerListener.class);
+
 	private static final String TRAFFIC_VIEWER_OSM_OVERRIDES = "TRAFFIC_VIEWER_OSM_OVERRIDES";
 	private static final String TRAFFIC_VIEWER_OSM_NETWORK = "TRAFFIC_VIEWER_OSM_NETWORK";
 	private OSMRouting osmRouting = new OSMRouting();
@@ -37,6 +40,7 @@ public class DBThermometerListener implements ThermometerListener {
 	public DBThermometerListener(File osmxml, File overrides)
 			throws ParserConfigurationException, SAXException, IOException {
 		osmRouting.init(osmxml, overrides);
+		logger.info("initialized");
 	}
 
 	public DBThermometerListener() throws ParserConfigurationException, SAXException, IOException {
@@ -47,15 +51,20 @@ public class DBThermometerListener implements ThermometerListener {
 					+ " must be defined when using empty parameters constructor");
 		}
 		osmRouting.init(new File(osmNetworkPath), new File(osmOverridesPath));
+
+		logger.info("initialized");
 	}
 
 	@Override
 	public void stepActualTimestampChanged(Step previousStep, Step currentStep) {
+		logger.info("Previous: " + previousStep);
+		logger.info("Current: " + currentStep);
 		if (previousStep != null) {
 			EntityManager em = DBUtils.getEntityManager();
 			TPGStop start = em.find(TPGStop.class, previousStep.getStopCode());
 			TPGStop end = em.find(TPGStop.class, currentStep.getStopCode());
 
+			logger.info("Finding path from " + start.getCoordinate() + " to " + end.getCoordinate());
 			OSMRoutingResult result = osmRouting.getPath(start.getCoordinate(), end.getCoordinate());
 			LineString path = result.getLineString();
 			Coordinate startCoordinate = path.getCoordinateN(0);

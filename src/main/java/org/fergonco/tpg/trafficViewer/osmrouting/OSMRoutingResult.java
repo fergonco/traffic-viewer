@@ -12,6 +12,9 @@ public class OSMRoutingResult {
 	private GraphPath<OSMNode, OSMStep> result;
 
 	public OSMRoutingResult(GraphPath<OSMNode, OSMStep> result) {
+		if (result == null) {
+			throw new NullPointerException();
+		}
 		this.result = result;
 	}
 

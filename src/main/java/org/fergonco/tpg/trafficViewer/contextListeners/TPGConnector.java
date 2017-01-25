@@ -5,6 +5,7 @@ import java.util.List;
 
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
+import javax.servlet.annotation.WebListener;
 import javax.xml.parsers.ParserConfigurationException;
 
 import org.fergonco.tpg.trafficViewer.DBThermometerListener;
@@ -21,7 +22,7 @@ import co.geomati.tpg.WeatherArchiver;
 import co.geomati.tpg.utils.TPG;
 import co.geomati.tpg.utils.TPGCachedParser;
 
-//@WebListener
+@WebListener
 public class TPGConnector implements ServletContextListener {
 
 	private ThermometerMonitor monitor;
@@ -41,8 +42,8 @@ public class TPGConnector implements ServletContextListener {
 			throw new RuntimeException("Cannot initialize OSMRouting", e);
 		}
 
-		ThermometerComparator[] comparators = new ThermometerComparator[] {
-				new ThermometerComparator(dayFrame, tpg, listener, new NullThermometerArchiver(), "Y", "VATH", "FEMA"),
+		ThermometerComparator[] comparators = new ThermometerComparator[] { new ThermometerComparator(dayFrame, tpg,
+				listener, new NullThermometerArchiver(), "Y", "VATH", "FERNEY-VOLTAIRE"),
 				// new ThermometerComparator(dayFrame, tpg, listener, new
 				// NullThermometerArchiver(), "18", "BLAN", "CERN")
 

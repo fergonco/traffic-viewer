@@ -68,10 +68,12 @@ public class OSMRouting {
 			for (OSMNode osmEndStop : endStops) {
 				OSMRoutingResult routingResult = getPathOSMStops(osmStartStop.getCoordinate(),
 						osmEndStop.getCoordinate());
-				double length = routingResult.getLineString().getLength();
-				if (length < min) {
-					min = length;
-					argMin = routingResult;
+				if (routingResult != null) {
+					double length = routingResult.getLineString().getLength();
+					if (length < min) {
+						min = length;
+						argMin = routingResult;
+					}
 				}
 			}
 		}
@@ -95,7 +97,11 @@ public class OSMRouting {
 		OSMNode a = idNodes.get(startNodeId);
 		OSMNode b = idNodes.get(endNodeId);
 		GraphPath<OSMNode, OSMStep> result = DijkstraShortestPath.findPathBetween(graph, a, b);
-		return new OSMRoutingResult(result);
+		if (result != null) {
+			return new OSMRoutingResult(result);
+		} else {
+			return null;
+		}
 	}
 
 	public Iterable<OSMWay> getWays() {

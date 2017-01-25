@@ -42,18 +42,26 @@ public class DBThermometerListenerTest {
 
 	@Test
 	public void testAddStep() throws ParserConfigurationException, SAXException, IOException {
+		testStep("VATH", "THGA");
+		clean();
+		testStep("SGGA", "JMON");
+		clean();
+		testStep("SHUM", "CERN");
+	}
+
+	private void testStep(String stop1, String stop2) throws ParserConfigurationException, SAXException, IOException {
 		DBThermometerListener listener = new DBThermometerListener();
 		Step previousStep = new Step();
 		long now = new Date().getTime();
 		previousStep.setActualTimestamp(now - 4 * 60 * 1000);
 		previousStep.setDepartureCode("12345");
 		previousStep.setReliable(true);
-		previousStep.setStopCode("SHUM");
+		previousStep.setStopCode(stop1);
 		Step currentStep = new Step();
 		currentStep.setActualTimestamp(now);
 		currentStep.setDepartureCode("12346");
 		currentStep.setReliable(true);
-		currentStep.setStopCode("CERN");
+		currentStep.setStopCode(stop2);
 		listener.stepActualTimestampChanged(previousStep, currentStep);
 
 		EntityManager em = DBUtils.getEntityManager();
