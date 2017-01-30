@@ -49,7 +49,8 @@ public class OSMRouting {
 				graph.addVertex(currentNode);
 				graph.addVertex(nextNode);
 				graph.addEdge(currentNode, nextNode, new OSMStep(osmWay));
-				if (!"yes".equals(osmWay.getTag("oneway")) && !"roundabout".equals(osmWay.getTag("junction"))) {
+				boolean twoWay = !"yes".equals(osmWay.getTag("oneway")) && !"roundabout".equals(osmWay.getTag("junction"));
+				if (twoWay) {
 					graph.addEdge(nextNode, currentNode, new OSMStep(osmWay));
 				}
 			}
