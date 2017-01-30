@@ -65,4 +65,16 @@ public class OSMWay {
 		return argMin;
 	}
 
+	public boolean isSenseForward(OSMNode startNode, OSMNode endNode) {
+		OSMNode previousNode = null;
+		for (OSMNode osmNode : nodes) {
+			if (osmNode == startNode) {
+				return endNode != previousNode;
+			}
+			previousNode = osmNode;
+		}
+
+		throw new IllegalArgumentException("Start node does not belong to the way: " + startNode);
+	}
+
 }

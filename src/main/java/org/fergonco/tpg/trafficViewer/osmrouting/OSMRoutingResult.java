@@ -27,17 +27,20 @@ public class OSMRoutingResult {
 		return OSMUtils.buildLineString(path);
 	}
 
-	public String[] getWayIds() {
-		ArrayList<String> ret = new ArrayList<>();
+	public OSMWayIdAndSense[] getWayIdsAndSenses() {
+		ArrayList<OSMWayIdAndSense> ret = new ArrayList<>();
 		List<OSMStep> edges = result.getEdgeList();
 		for (OSMStep step : edges) {
+			OSMNode startNode = step.getStartNode();
+			OSMNode endNode = step.getEndNode();
 			OSMWay way = step.getWay();
-			if (!ret.contains(way.getId())) {
-				ret.add(way.getId());
+			OSMWayIdAndSense wayIdSense = new OSMWayIdAndSense(way.getId(), way.isSenseForward(startNode, endNode));
+			if (!ret.contains(wayIdSense)) {
+				ret.add(wayIdSense);
 			}
 		}
 
-		return ret.toArray(new String[ret.size()]);
+		return ret.toArray(new OSMWayIdAndSense[ret.size()]);
 	}
 
 }

@@ -52,12 +52,227 @@ create or replace view osmtransport as select * from osm_line where operator in 
 Speeds view
 ----------------
 
-create or replace view app.osmshiftinfo as select osmid, speed, timestamp, vehicleid, startpoint, endpoint from app.osmshift osms, app.shift s where s.id=osms.shift_id;
+create or replace view app.osmshiftinfo as select osmid, forward, speed, timestamp, vehicleid, startpoint, endpoint from app.osmshift osms, app.shift s where s.id=osms.shift_id;
 create or replace view app.osmshiftlastinfo as select a.* from app.osmshiftinfo a left outer join app.osmshiftinfo b on (a.osmid=b.osmid and a.timestamp<b.timestamp) where b.osmid is null;
 create or replace view app.osm_speeds as 
-	select osmid, speed, timestamp, vehicleid, startpoint, endpoint, way 
+	select osmid, forward, speed, timestamp, vehicleid, startpoint, endpoint, way 
 		from (select * from osm_line 
 			where highway in ('motorway','trunk','primary','secondary','tertiary', 'unclassified','residential',
 					'service','motorway_link','trunk_link','primary_link','secondary_link','tertiary_link')) as osm
 		left outer join app.osmshiftlastinfo 
 		on (app.osmshiftlastinfo.osmid=osm.osm_id);
+
+Geoserver
+----------
+
+	<?xml version="1.0" encoding="ISO-8859-1"?>
+	<StyledLayerDescriptor version="1.0.0" 
+	                       xsi:schemaLocation="http://www.opengis.net/sld StyledLayerDescriptor.xsd" 
+	                       xmlns="http://www.opengis.net/sld" 
+	                       xmlns:ogc="http://www.opengis.net/ogc" 
+	                       xmlns:xlink="http://www.w3.org/1999/xlink" 
+	                       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	  <!-- a named layer is the basic building block of an sld document -->
+	
+	  <NamedLayer>
+	    <Name>Default Line</Name>
+	    <UserStyle>
+	      <!-- they have names, titles and abstracts -->
+	
+	      <Title>A boring default style</Title>
+	      <Abstract>A sample style that just prints out a green line</Abstract>
+	      <!-- FeatureTypeStyles describe how to render different features -->
+	      <!-- a feature type for lines -->
+	
+	      <FeatureTypeStyle>
+	        <!--FeatureTypeName>Feature</FeatureTypeName-->
+	        <Rule>
+	          <Name>Rule all</Name>
+	          <Title>Green Line</Title>
+	          <LineSymbolizer>
+	            <Geometry>
+	              <ogc:PropertyName>way</ogc:PropertyName>
+	            </Geometry>     
+	            <Stroke>
+	              <CssParameter name="stroke">#000000</CssParameter>
+	              <CssParameter name="stroke-width">1</CssParameter>
+	            </Stroke>
+	          </LineSymbolizer>
+	        </Rule>
+	
+	
+	        <Rule>
+	          <Name>Rule_15_f</Name>
+	          <Title>[0, 15[ forward</Title>
+	          <ogc:Filter>
+	            <ogc:And>
+	              <ogc:PropertyIsLessThan>
+	                <ogc:PropertyName>speed</ogc:PropertyName>
+	                <ogc:Literal>15</ogc:Literal>
+	              </ogc:PropertyIsLessThan>
+	              <ogc:PropertyIsEqualTo>
+	                <ogc:PropertyName>forward</ogc:PropertyName>
+	                <ogc:Literal>true</ogc:Literal>
+	              </ogc:PropertyIsEqualTo>
+	            </ogc:And>
+	          </ogc:Filter>
+	          <LineSymbolizer>
+	            <Geometry>
+	              <ogc:PropertyName>way</ogc:PropertyName>
+	            </Geometry>     
+	            <Stroke>
+	              <CssParameter name="stroke">#FF0000</CssParameter>
+	              <CssParameter name="stroke-width">4</CssParameter>
+	            </Stroke>
+	            <PerpendicularOffset>3</PerpendicularOffset>
+	          </LineSymbolizer>
+	        </Rule>
+	        <Rule>
+	          <Name>Rule_15_fb</Name>
+	          <Title>[0, 15[ backward</Title>
+	          <ogc:Filter>
+	            <ogc:And>
+	              <ogc:PropertyIsLessThan>
+	                <ogc:PropertyName>speed</ogc:PropertyName>
+	                <ogc:Literal>15</ogc:Literal>
+	              </ogc:PropertyIsLessThan>
+	              <ogc:PropertyIsEqualTo>
+	                <ogc:PropertyName>forward</ogc:PropertyName>
+	                <ogc:Literal>false</ogc:Literal>
+	              </ogc:PropertyIsEqualTo>
+	            </ogc:And>
+	          </ogc:Filter>
+	          <LineSymbolizer>
+	            <Geometry>
+	              <ogc:PropertyName>way</ogc:PropertyName>
+	            </Geometry>     
+	            <Stroke>
+	              <CssParameter name="stroke">#FF0000</CssParameter>
+	              <CssParameter name="stroke-width">4</CssParameter>
+	            </Stroke>
+	            <PerpendicularOffset>-3</PerpendicularOffset>
+	          </LineSymbolizer>
+	        </Rule>
+	
+	
+	        <Rule>
+	          <Name>Rule15_40F</Name>
+	          <Title>[15, 40[ forward</Title>
+	          <ogc:Filter>
+	            <ogc:And>
+	              <ogc:PropertyIsGreaterThanOrEqualTo>
+	                <ogc:PropertyName>speed</ogc:PropertyName>
+	                <ogc:Literal>15</ogc:Literal>
+	              </ogc:PropertyIsGreaterThanOrEqualTo>
+	              <ogc:PropertyIsLessThan>
+	                <ogc:PropertyName>speed</ogc:PropertyName>
+	                <ogc:Literal>40</ogc:Literal>
+	              </ogc:PropertyIsLessThan>
+	              <ogc:PropertyIsEqualTo>
+	                <ogc:PropertyName>forward</ogc:PropertyName>
+	                <ogc:Literal>true</ogc:Literal>
+	              </ogc:PropertyIsEqualTo>
+	            </ogc:And>
+	          </ogc:Filter>
+	          <LineSymbolizer>
+	            <Geometry>
+	              <ogc:PropertyName>way</ogc:PropertyName>
+	            </Geometry>     
+	            <Stroke>
+	              <CssParameter name="stroke">#ffff00</CssParameter>
+	              <CssParameter name="stroke-width">4</CssParameter>
+	            </Stroke>
+	            <PerpendicularOffset>3</PerpendicularOffset>
+	          </LineSymbolizer>
+	        </Rule>
+	        <Rule>
+	          <Name>Rule 15_40B</Name>
+	          <Title>[15, 40[ backward</Title>
+	          <ogc:Filter>
+	            <ogc:And>
+	              <ogc:PropertyIsGreaterThanOrEqualTo>
+	                <ogc:PropertyName>speed</ogc:PropertyName>
+	                <ogc:Literal>15</ogc:Literal>
+	              </ogc:PropertyIsGreaterThanOrEqualTo>
+	              <ogc:PropertyIsLessThan>
+	                <ogc:PropertyName>speed</ogc:PropertyName>
+	                <ogc:Literal>40</ogc:Literal>
+	              </ogc:PropertyIsLessThan>
+	              <ogc:PropertyIsEqualTo>
+	                <ogc:PropertyName>forward</ogc:PropertyName>
+	                <ogc:Literal>false</ogc:Literal>
+	              </ogc:PropertyIsEqualTo>
+	            </ogc:And>
+	          </ogc:Filter>
+	          <LineSymbolizer>
+	            <Geometry>
+	              <ogc:PropertyName>way</ogc:PropertyName>
+	            </Geometry>     
+	            <Stroke>
+	              <CssParameter name="stroke">#ffff00</CssParameter>
+	              <CssParameter name="stroke-width">4</CssParameter>
+	            </Stroke>
+	            <PerpendicularOffset>-3</PerpendicularOffset>
+	          </LineSymbolizer>
+	        </Rule>
+	
+	
+	        <Rule>
+	          <Name>Rule_40F</Name>
+	          <Title>[40, Inf[ forward</Title>
+	          <ogc:Filter>
+	            <ogc:And>
+	              <ogc:PropertyIsGreaterThanOrEqualTo>
+	                <ogc:PropertyName>speed</ogc:PropertyName>
+	                <ogc:Literal>40</ogc:Literal>
+	              </ogc:PropertyIsGreaterThanOrEqualTo>
+	              <ogc:PropertyIsEqualTo>
+	                <ogc:PropertyName>forward</ogc:PropertyName>
+	                <ogc:Literal>true</ogc:Literal>
+	              </ogc:PropertyIsEqualTo>
+	            </ogc:And>
+	          </ogc:Filter>
+	          <LineSymbolizer>
+	            <Geometry>
+	              <ogc:PropertyName>way</ogc:PropertyName>
+	            </Geometry>     
+	            <Stroke>
+	              <CssParameter name="stroke">#0000FF</CssParameter>
+	              <CssParameter name="stroke-width">4</CssParameter>
+	            </Stroke>
+	            <PerpendicularOffset>3</PerpendicularOffset>
+	          </LineSymbolizer>
+	        </Rule>
+	        <Rule>
+	          <Name>Rule_40B</Name>
+	          <Title>[40, Inf[ backward</Title>
+	          <ogc:Filter>
+	            <ogc:And>
+	              <ogc:PropertyIsGreaterThanOrEqualTo>
+	                <ogc:PropertyName>speed</ogc:PropertyName>
+	                <ogc:Literal>40</ogc:Literal>
+	              </ogc:PropertyIsGreaterThanOrEqualTo>
+	              <ogc:PropertyIsEqualTo>
+	                <ogc:PropertyName>forward</ogc:PropertyName>
+	                <ogc:Literal>false</ogc:Literal>
+	              </ogc:PropertyIsEqualTo>
+	            </ogc:And>
+	          </ogc:Filter>
+	          <LineSymbolizer>
+	            <Geometry>
+	              <ogc:PropertyName>way</ogc:PropertyName>
+	            </Geometry>     
+	            <Stroke>
+	              <CssParameter name="stroke">#0000FF</CssParameter>
+	              <CssParameter name="stroke-width">4</CssParameter>
+	            </Stroke>
+	            <PerpendicularOffset>-3</PerpendicularOffset>
+	          </LineSymbolizer>
+	        </Rule>
+	
+	      </FeatureTypeStyle>
+	    </UserStyle>
+	  </NamedLayer>
+	</StyledLayerDescriptor>
+
+		

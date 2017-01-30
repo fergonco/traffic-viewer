@@ -13,6 +13,7 @@ import org.fergonco.tpg.trafficViewer.jpa.TPGStop;
 import org.fergonco.tpg.trafficViewer.osmrouting.OSMRouting;
 import org.fergonco.tpg.trafficViewer.osmrouting.OSMRoutingResult;
 import org.fergonco.tpg.trafficViewer.osmrouting.OSMUtils;
+import org.fergonco.tpg.trafficViewer.osmrouting.OSMWayIdAndSense;
 import org.geotools.geometry.jts.JTS;
 import org.geotools.referencing.CRS;
 import org.opengis.geometry.MismatchedDimensionException;
@@ -91,11 +92,12 @@ public class DBThermometerListener implements ThermometerListener {
 			shift.setTimestamp(currentStep.getActualTimestamp());
 			em.persist(shift);
 
-			String[] wayIds = result.getWayIds();
-			for (String wayId : wayIds) {
+			OSMWayIdAndSense[] wayIdsAndSenses = result.getWayIdsAndSenses();
+			for (OSMWayIdAndSense wayIdAndSense : wayIdsAndSenses) {
 				OSMShift osmShift = new OSMShift();
 				osmShift.setShift(shift);
-				osmShift.setOsmId(Long.parseLong(wayId));
+				osmShift.setOsmId(Long.parseLong(wayIdAndSense.getOsmId()));
+				osmShift.setForward(wayIdAndSense.isForward());
 				em.persist(osmShift);
 			}
 

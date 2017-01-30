@@ -14,6 +14,7 @@ public class OSMShift {
 	private long id;
 
 	private long osmId;
+	private boolean forward;
 
 	@ManyToOne
 	private Shift shift;
@@ -28,5 +29,9 @@ public class OSMShift {
 
 	public Shift getShift() {
 		return shift;
+	}
+
+	public void setForward(boolean forward) {
+		this.forward = forward;
 	}
 }

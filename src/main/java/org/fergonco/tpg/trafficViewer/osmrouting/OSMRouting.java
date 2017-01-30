@@ -12,7 +12,6 @@ import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.StringUtils;
 import org.jgrapht.GraphPath;
 import org.jgrapht.alg.shortestpath.DijkstraShortestPath;
 import org.jgrapht.graph.DefaultDirectedGraph;
@@ -48,10 +47,11 @@ public class OSMRouting {
 				OSMNode nextNode = wayNodes[i + 1];
 				graph.addVertex(currentNode);
 				graph.addVertex(nextNode);
-				graph.addEdge(currentNode, nextNode, new OSMStep(osmWay));
-				boolean twoWay = !"yes".equals(osmWay.getTag("oneway")) && !"roundabout".equals(osmWay.getTag("junction"));
+				graph.addEdge(currentNode, nextNode, new OSMStep(currentNode, nextNode, osmWay));
+				boolean twoWay = !"yes".equals(osmWay.getTag("oneway"))
+						&& !"roundabout".equals(osmWay.getTag("junction"));
 				if (twoWay) {
-					graph.addEdge(nextNode, currentNode, new OSMStep(osmWay));
+					graph.addEdge(nextNode, currentNode, new OSMStep(nextNode, currentNode, osmWay));
 				}
 			}
 		}
@@ -156,11 +156,12 @@ public class OSMRouting {
 		if (result.pathFound()) {
 			System.out.println("path found!");
 			String linestringWKT = wktWriter.write(result.getLineString());
-			String[] wayIds = result.getWayIds();
+			OSMWayIdAndSense[] wayIdsAndSense = result.getWayIdsAndSenses();
 			builder.append("insert into test_shortestpath (geom) values(ST_GeomFromText('").append(linestringWKT)
 					.append("', 4326));");
-			builder.append("create or replace view test_affectedways as select * from osm_line where osm_id in (")
-					.append(StringUtils.join(wayIds, ",")).append(");\n");
+			// builder.append("create or replace view test_affectedways as
+			// select * from osm_line where osm_id in (")
+			// .append(StringUtils.join(wayIds, ",")).append(");\n");
 		}
 		FileOutputStream output = new FileOutputStream("/tmp/result.sql");
 		IOUtils.write(builder.toString(), output);
