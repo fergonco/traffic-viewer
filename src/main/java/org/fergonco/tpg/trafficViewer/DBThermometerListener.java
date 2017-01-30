@@ -82,8 +82,7 @@ public class DBThermometerListener implements ThermometerListener {
 				MathTransform transform = CRS.findMathTransform(crs4326, crs3857);
 				flatLineString = JTS.transform(path, transform);
 			} catch (FactoryException | MismatchedDimensionException | TransformException e) {
-				e.printStackTrace();
-				// TODO should never happen and if it does, we should log
+				logger.error("Should never happen", e);
 			}
 			double km = flatLineString.getLength() / 1000;
 			double h = (currentStep.getActualTimestamp() - previousStep.getActualTimestamp()) / (1000.0 * 60 * 60);
