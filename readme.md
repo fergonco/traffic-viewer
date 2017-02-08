@@ -112,13 +112,15 @@ create table app.timestamped_osmshiftinfo as
 			where 
 				b.osmid = c.osmid
 				and
+				b.forward = c.forward
+				and
 				a.timestamp > c.timestamp
 				and
 				c.timestamp > b.timestamp
-		);  
+		);
 
 -- Create a table to add the geometry
-		
+
 create or replace view app.timestamped_osm_speeds as 
 	select
 		osmid, forward, speed, draw_timestamp, timestamp, vehicleid, way 

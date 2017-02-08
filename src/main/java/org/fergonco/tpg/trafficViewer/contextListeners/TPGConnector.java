@@ -42,8 +42,12 @@ public class TPGConnector implements ServletContextListener {
 			throw new RuntimeException("Cannot initialize OSMRouting", e);
 		}
 
-		ThermometerComparator[] comparators = new ThermometerComparator[] { new ThermometerComparator(dayFrame, tpg,
-				listener, new NullThermometerArchiver(), "Y", "VATH", "FERNEY-VOLTAIRE"),
+		ThermometerComparator[] comparators = new ThermometerComparator[] { //
+				// new ThermometerComparator(dayFrame, tpg, listener, new
+				// NullThermometerArchiver(), "Y", "VATH",
+				// "FERNEY-VOLTAIRE"),
+				new ThermometerComparator(dayFrame, tpg, listener, new NullThermometerArchiver(), "Y", "FEMA",
+						"VAL-THOIRY"),
 				// new ThermometerComparator(dayFrame, tpg, listener, new
 				// NullThermometerArchiver(), "18", "BLAN", "CERN")
 
