@@ -93,6 +93,54 @@ create or replace view app.osm_speeds as
 	on 
 		(app.osmshiftlastinfo.osmid=osm.osm_id);
 
+-- Create a table adding to the osmshiftinfo a timestamp for drawing
+
+create table app.timestamped_osmshiftinfo as
+	select 
+		to_timestamp(a.timestamp/1000) as draw_timestamp, b.*
+	from 
+		(select distinct timestamp from app.osmshiftinfo) a,
+		app.osmshiftinfo b
+	where
+		a.timestamp >= b.timestamp
+		and
+		not exists (
+			select
+				1
+			from
+				app.osmshiftinfo c 
+			where 
+				b.osmid = c.osmid
+				and
+				a.timestamp > c.timestamp
+				and
+				c.timestamp > b.timestamp
+		);  
+
+-- Create a table to add the geometry
+		
+create or replace view app.timestamped_osm_speeds as 
+	select
+		osmid, forward, speed, draw_timestamp, timestamp, vehicleid, way 
+	from
+		(
+			select
+				*
+			from
+				osm_line 
+			where
+				highway in
+					(
+						'motorway','trunk','primary','secondary','tertiary', 'unclassified','residential',
+						'service','motorway_link','trunk_link','primary_link','secondary_link','tertiary_link'
+					)
+		) as osm
+	left outer join
+		app.timestamped_osmshiftinfo osmshift 
+	on 
+		(osmshift.osmid=osm.osm_id);
+
+
 Geoserver
 ----------
 
