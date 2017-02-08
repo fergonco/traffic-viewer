@@ -19,7 +19,14 @@ define([ "message-bus" ], function(bus) {
       bus.send("zoom-to", {
          "x" : 6.03,
          "y" : 46.24,
-         "zoomLevel" : 14
+         "zoomLevel" : 13
+      });
+      bus.send("map:createControl", {
+         "controlId" : "navigation",
+         "controlType" : "navigation"
+      });
+      bus.send("map:activateControl", {
+         "controlId" : "navigation"
       });
       // portal.properties
       // map.centerLonLat=6.03,46.24
