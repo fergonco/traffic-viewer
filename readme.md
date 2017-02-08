@@ -52,15 +52,46 @@ create or replace view osmtransport as select * from osm_line where operator in 
 Speeds view
 ----------------
 
-create or replace view app.osmshiftinfo as select osmid, forward, speed, timestamp, vehicleid, startpoint, endpoint from app.osmshift osms, app.shift s where s.id=osms.shift_id;
-create or replace view app.osmshiftlastinfo as select a.* from app.osmshiftinfo a left outer join app.osmshiftinfo b on (a.osmid=b.osmid and a.timestamp<b.timestamp) where b.osmid is null;
+create or replace view app.osmshiftinfo as 
+	select 
+		osmid, forward, speed, timestamp, vehicleid, startpoint, endpoint
+	from
+		app.osmshift osms, app.shift s
+	where
+		s.id=osms.shift_id;
+		
+create or replace view app.osmshiftlastinfo as
+	select
+		a.*
+	from
+		app.osmshiftinfo a 
+	left outer join
+		app.osmshiftinfo b
+	on
+		(a.osmid=b.osmid and a.timestamp<b.timestamp and a.forward=b.forward)
+	where
+		b.osmid is null;
+		
 create or replace view app.osm_speeds as 
-	select osmid, forward, speed, timestamp, vehicleid, startpoint, endpoint, way 
-		from (select * from osm_line 
-			where highway in ('motorway','trunk','primary','secondary','tertiary', 'unclassified','residential',
-					'service','motorway_link','trunk_link','primary_link','secondary_link','tertiary_link')) as osm
-		left outer join app.osmshiftlastinfo 
-		on (app.osmshiftlastinfo.osmid=osm.osm_id);
+	select
+		osmid, forward, speed, timestamp, vehicleid, startpoint, endpoint, way 
+	from
+		(
+			select
+				*
+			from
+				osm_line 
+			where
+				highway in
+					(
+						'motorway','trunk','primary','secondary','tertiary', 'unclassified','residential',
+						'service','motorway_link','trunk_link','primary_link','secondary_link','tertiary_link'
+					)
+		) as osm
+	left outer join
+		app.osmshiftlastinfo 
+	on 
+		(app.osmshiftlastinfo.osmid=osm.osm_id);
 
 Geoserver
 ----------
@@ -124,7 +155,7 @@ Geoserver
 	              <CssParameter name="stroke">#FF0000</CssParameter>
 	              <CssParameter name="stroke-width">4</CssParameter>
 	            </Stroke>
-	            <PerpendicularOffset>3</PerpendicularOffset>
+	            <PerpendicularOffset>4</PerpendicularOffset>
 	          </LineSymbolizer>
 	        </Rule>
 	        <Rule>
@@ -150,7 +181,7 @@ Geoserver
 	              <CssParameter name="stroke">#FF0000</CssParameter>
 	              <CssParameter name="stroke-width">4</CssParameter>
 	            </Stroke>
-	            <PerpendicularOffset>-3</PerpendicularOffset>
+	            <PerpendicularOffset>-4</PerpendicularOffset>
 	          </LineSymbolizer>
 	        </Rule>
 	
@@ -179,10 +210,10 @@ Geoserver
 	              <ogc:PropertyName>way</ogc:PropertyName>
 	            </Geometry>     
 	            <Stroke>
-	              <CssParameter name="stroke">#ffff00</CssParameter>
+	              <CssParameter name="stroke">#FFA500</CssParameter>
 	              <CssParameter name="stroke-width">4</CssParameter>
 	            </Stroke>
-	            <PerpendicularOffset>3</PerpendicularOffset>
+	            <PerpendicularOffset>4</PerpendicularOffset>
 	          </LineSymbolizer>
 	        </Rule>
 	        <Rule>
@@ -209,10 +240,10 @@ Geoserver
 	              <ogc:PropertyName>way</ogc:PropertyName>
 	            </Geometry>     
 	            <Stroke>
-	              <CssParameter name="stroke">#ffff00</CssParameter>
+	              <CssParameter name="stroke">#FFA500</CssParameter>
 	              <CssParameter name="stroke-width">4</CssParameter>
 	            </Stroke>
-	            <PerpendicularOffset>-3</PerpendicularOffset>
+	            <PerpendicularOffset>-4</PerpendicularOffset>
 	          </LineSymbolizer>
 	        </Rule>
 	
@@ -240,7 +271,7 @@ Geoserver
 	              <CssParameter name="stroke">#0000FF</CssParameter>
 	              <CssParameter name="stroke-width">4</CssParameter>
 	            </Stroke>
-	            <PerpendicularOffset>3</PerpendicularOffset>
+	            <PerpendicularOffset>4</PerpendicularOffset>
 	          </LineSymbolizer>
 	        </Rule>
 	        <Rule>
@@ -266,7 +297,7 @@ Geoserver
 	              <CssParameter name="stroke">#0000FF</CssParameter>
 	              <CssParameter name="stroke-width">4</CssParameter>
 	            </Stroke>
-	            <PerpendicularOffset>-3</PerpendicularOffset>
+	            <PerpendicularOffset>-4</PerpendicularOffset>
 	          </LineSymbolizer>
 	        </Rule>
 	
@@ -274,5 +305,3 @@ Geoserver
 	    </UserStyle>
 	  </NamedLayer>
 	</StyledLayerDescriptor>
-
-		
