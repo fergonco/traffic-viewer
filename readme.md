@@ -44,13 +44,29 @@ ALTER TABLE osm_line SET SCHEMA osm;
 ALTER TABLE osm_polygon SET SCHEMA osm;
 ALTER TABLE osm_roads SET SCHEMA osm;
 
+Roads layer
+------------
+
+create table app.osm_roads as
+	select
+		*
+	from
+		osm_line 
+	where
+		highway in
+			(
+				'motorway','trunk','primary','secondary','tertiary', 'unclassified','residential',
+				'service','motorway_link','trunk_link','primary_link','secondary_link','tertiary_link'
+			);
+create index on app.osm_roads (osm_id);
+
 Transport network
 -------------------
 
 create or replace view osmtransport as select * from osm_line where operator in ('RDTA', 'TPG');
 
-Speeds view
-----------------
+Shift + OSMShift join
+------------------------
 
 create or replace view app.osmshiftinfo as 
 	select 
@@ -59,6 +75,9 @@ create or replace view app.osmshiftinfo as
 		app.osmshift osms, app.shift s
 	where
 		s.id=osms.shift_id;
+
+Last speed info
+------------------
 		
 create or replace view app.osmshiftlastinfo as
 	select
@@ -93,6 +112,9 @@ create or replace view app.osm_speeds as
 	on 
 		(app.osmshiftlastinfo.osmid=osm.osm_id);
 
+navigable osm speeds
+----------------------
+
 -- Create a table adding to the osmshiftinfo a timestamp for drawing
 
 create table app.timestamped_osmshiftinfo as
@@ -118,6 +140,8 @@ create table app.timestamped_osmshiftinfo as
 				and
 				c.timestamp > b.timestamp
 		);
+create index ON app.timestamped_osmshiftinfo (osmid);
+create index ON app.timestamped_osmshiftinfo (draw_timestamp);
 
 -- Create a table to add the geometry
 
@@ -125,22 +149,10 @@ create or replace view app.timestamped_osm_speeds as
 	select
 		osmid, forward, speed, draw_timestamp, timestamp, vehicleid, way 
 	from
-		(
-			select
-				*
-			from
-				osm_line 
-			where
-				highway in
-					(
-						'motorway','trunk','primary','secondary','tertiary', 'unclassified','residential',
-						'service','motorway_link','trunk_link','primary_link','secondary_link','tertiary_link'
-					)
-		) as osm
-	left outer join
+		app.osm_roads osm,
 		app.timestamped_osmshiftinfo osmshift 
-	on 
-		(osmshift.osmid=osm.osm_id);
+	where
+		osmshift.osmid=osm.osm_id;
 
 
 Geoserver
@@ -166,20 +178,19 @@ Geoserver
 	      <!-- a feature type for lines -->
 	
 	      <FeatureTypeStyle>
-	        <!--FeatureTypeName>Feature</FeatureTypeName-->
-	        <Rule>
-	          <Name>Rule all</Name>
-	          <Title>Green Line</Title>
-	          <LineSymbolizer>
-	            <Geometry>
-	              <ogc:PropertyName>way</ogc:PropertyName>
-	            </Geometry>     
-	            <Stroke>
-	              <CssParameter name="stroke">#000000</CssParameter>
-	              <CssParameter name="stroke-width">1</CssParameter>
-	            </Stroke>
-	          </LineSymbolizer>
-	        </Rule>
+<!-- 	        <Rule> -->
+<!-- 	          <Name>Rule all</Name> -->
+<!-- 	          <Title>Green Line</Title> -->
+<!-- 	          <LineSymbolizer> -->
+<!-- 	            <Geometry> -->
+<!-- 	              <ogc:PropertyName>way</ogc:PropertyName> -->
+<!-- 	            </Geometry>      -->
+<!-- 	            <Stroke> -->
+<!-- 	              <CssParameter name="stroke">#000000</CssParameter> -->
+<!-- 	              <CssParameter name="stroke-width">1</CssParameter> -->
+<!-- 	            </Stroke> -->
+<!-- 	          </LineSymbolizer> -->
+<!-- 	        </Rule> -->
 	
 	
 	        <Rule>

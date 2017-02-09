@@ -10,6 +10,13 @@ define([ "message-bus" ], function(bus) {
 
    bus.listen("modules-loaded", function(e, message) {
       bus.send("map:addLayer", {
+         "layerId" : "osm_roads",
+         "wms" : {
+            "baseUrl" : "http://localhost:6305/geoserver/wms",
+            "wmsName" : "tpg:osm_roads"
+         }
+      });
+      bus.send("map:addLayer", {
          "layerId" : "osm_speeds",
          "wms" : {
             "baseUrl" : "http://localhost:6305/geoserver/wms",
