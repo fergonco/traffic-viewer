@@ -158,6 +158,12 @@ create or replace view app.timestamped_osm_speeds as
 Geoserver
 ----------
 
+# limitar el uso de CRS
+
+Separados por comas y sin el prefijo "EPSG:"
+
+# estilo
+
 	<?xml version="1.0" encoding="ISO-8859-1"?>
 	<StyledLayerDescriptor version="1.0.0" 
 	                       xsi:schemaLocation="http://www.opengis.net/sld StyledLayerDescriptor.xsd" 
