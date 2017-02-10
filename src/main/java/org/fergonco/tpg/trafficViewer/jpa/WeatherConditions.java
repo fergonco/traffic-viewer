@@ -10,7 +10,7 @@ import javax.persistence.Id;
 import org.apache.commons.lang.builder.ReflectionToStringBuilder;
 
 @Entity
-public class WeatherForecast {
+public class WeatherConditions {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -54,6 +54,42 @@ public class WeatherForecast {
 
 	public void setSnow3h(Double snow3h) {
 		this.snow3h = snow3h;
+	}
+
+	public Integer getWeather() {
+		return weather;
+	}
+
+	public void setWeather(Integer weather) {
+		this.weather = weather;
+	}
+
+	public long getId() {
+		return id;
+	}
+
+	public long getTimestamp() {
+		return timestamp;
+	}
+
+	public double getTemperature() {
+		return temperature;
+	}
+
+	public double getPressure() {
+		return pressure;
+	}
+
+	public double getHumidity() {
+		return humidity;
+	}
+
+	public Double getRain3h() {
+		return rain3h;
+	}
+
+	public Double getSnow3h() {
+		return snow3h;
 	}
 
 	@Override
