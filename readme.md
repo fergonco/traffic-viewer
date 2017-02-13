@@ -1,12 +1,16 @@
 # Build
 
+mvn package
+docker build . -t fergonco/traffic-viewer
+docker push fergonco/traffic-viewer
+
 # Development
 
 Application is accessed through nginx:
 
 http://localhost/border-rampage
 
-Nginx needs to know host address. Therefore, start with this command:
+Nginx needs to know host address in order to access through port 80, which is necessary since GeoServer is supposed to be on the same server as the application. Therefore, start with this command:
 
 	docker run --name nginx --link gs:gs --add-host="host:172.17.0.1" -p 80:80 -v /var/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro -d nginx:alpine
 
@@ -21,8 +25,10 @@ and replace 172.17.0.1 with the IP of the host in the docker network. Then inclu
 Prerequisites:
 
 * nginx docker mapping /geoserver to a geoserver docker instance
-* geoserver docker instance
+* geoserver docker instance with access to postgresql docker instance
+	docker run -d -p 6305:8080 -v /var/geoserver:/var/local/geoserver --name gs --link pg:pg oscarfonts/geoserver
 * postgresql/postgis docker instance
+	docker run -p54322:5432 -d -t -v /app-conf/postgresql/:/var/lib/postgresql -e POSTGRES_USER=geomatico -e POSTGRES_PASS= --name pg kartoza/postgis:9.3-2.1
 * traffic-viewer instance
 
 ## Create database
@@ -46,7 +52,7 @@ wget 'http://overpass-api.de/api/map?bbox=5.9627,46.2145,6.1287,46.2782' -O lign
 
 ## Postgis loading
 
-osm2pgsql --prefix '' --host localhost --port 54322 --username tpg --password --create --database tpg ligne-y.osm.xml
+osm2pgsql --prefix 'osm' --host localhost --port 54322 --username tpg --password --create --database tpg ligne-y.osm.xml
 
 ## Set primary keys and schema to OSM tables
 
@@ -66,16 +72,16 @@ create table app.osm_roads as
 	select
 		*
 	from
-		osm_line 
+		osm.osm_line 
 	where
 		highway in
 			(
 				'motorway','trunk','primary','secondary','tertiary', 'unclassified','residential',
 				'service','motorway_link','trunk_link','primary_link','secondary_link','tertiary_link'
 			);
-create index on app.osm_roads (osm_id);
+create index on osm.osm_roads (osm_id);
 
-## Launch app to create stops
+## Launch app to create stops and other tables
 
 ## Transport network (not in use)
 
