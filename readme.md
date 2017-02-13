@@ -1,8 +1,31 @@
-Installation
-=============
+# Build
 
-Create database
----------------------
+# Development
+
+Application is accessed through nginx:
+
+http://localhost/border-rampage
+
+Nginx needs to know host address. Therefore, start with this command:
+
+	docker run --name nginx --link gs:gs --add-host="host:172.17.0.1" -p 80:80 -v /var/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro -d nginx:alpine
+
+and replace 172.17.0.1 with the IP of the host in the docker network. Then include in /var/nginx/default.conf:
+
+    location /border-rampage {
+        proxy_pass http://host:8080/traffic-viewer/;
+    }
+
+# Deploy
+
+Prerequisites:
+
+* nginx docker mapping /geoserver to a geoserver docker instance
+* geoserver docker instance
+* postgresql/postgis docker instance
+* traffic-viewer instance
+
+## Create database
 
 create database tpg;
 create user tpg login nosuperuser inherit nocreatedb nocreaterole;
@@ -12,27 +35,20 @@ alter database tpg owner to tpg;
 create extension postgis;
 create extension hstore;
 
-Create osm and jpa schemas
-----------------------------------------
+## Create osm and jpa schemas
 
 psql -h localhost -U tpg -p54322 -c "create schema osm"; 
 psql -h localhost -U tpg -p54322 -c "create schema app";
 
-Launch app to create stops
-----------------------------
-
-OSM Data download
---------------------
+## OSM Data download
 
 wget 'http://overpass-api.de/api/map?bbox=5.9627,46.2145,6.1287,46.2782' -O ligne-y.osm.xml
 
-Postgis loading
---------------------
+## Postgis loading
 
 osm2pgsql --prefix '' --host localhost --port 54322 --username tpg --password --create --database tpg ligne-y.osm.xml
 
-Set primary keys and schema to OSM tables
------------------------------------------
+## Set primary keys and schema to OSM tables
 
 ALTER TABLE osm_point ADD COLUMN fid serial;
 ALTER TABLE osm_line ADD COLUMN fid serial;
@@ -44,8 +60,7 @@ ALTER TABLE osm_line SET SCHEMA osm;
 ALTER TABLE osm_polygon SET SCHEMA osm;
 ALTER TABLE osm_roads SET SCHEMA osm;
 
-Roads layer
-------------
+## Roads layer
 
 create table app.osm_roads as
 	select
@@ -60,13 +75,13 @@ create table app.osm_roads as
 			);
 create index on app.osm_roads (osm_id);
 
-Transport network
--------------------
+## Launch app to create stops
+
+## Transport network (not in use)
 
 create or replace view osmtransport as select * from osm_line where operator in ('RDTA', 'TPG');
 
-Shift + OSMShift join
-------------------------
+## Shift + OSMShift join
 
 create or replace view app.osmshiftinfo as 
 	select 
@@ -76,8 +91,7 @@ create or replace view app.osmshiftinfo as
 	where
 		s.id=osms.shift_id;
 
-Last speed info
-------------------
+## Last speed info (not in use)
 		
 create or replace view app.osmshiftlastinfo as
 	select
@@ -112,12 +126,12 @@ create or replace view app.osm_speeds as
 	on 
 		(app.osmshiftlastinfo.osmid=osm.osm_id);
 
-navigable osm speeds
-----------------------
+## navigable osm speeds
 
 -- Create a table adding to the osmshiftinfo a timestamp for drawing
 
-create table app.timestamped_osmshiftinfo as
+create materialized view app.timestamped_osmshiftinfo as
+-- create table app.timestamped_osmshiftinfo as
 	select 
 		to_timestamp(a.timestamp/1000) as draw_timestamp, b.*
 	from 
@@ -154,15 +168,16 @@ create or replace view app.timestamped_osm_speeds as
 	where
 		osmshift.osmid=osm.osm_id;
 
+-- refresh the materialized view
+refresh materialized view app.timestamped_osmshiftinfo ;
 
-Geoserver
-----------
+## Geoserver
 
-# limitar el uso de CRS
+### limitar el uso de CRS
 
 Separados por comas y sin el prefijo "EPSG:"
 
-# estilo
+### estilo
 
 	<?xml version="1.0" encoding="ISO-8859-1"?>
 	<StyledLayerDescriptor version="1.0.0" 

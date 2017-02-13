@@ -52,10 +52,11 @@ define([ "message-bus", "iso8601" ], function(bus, iso8601) {
       // bus.send("layers-loaded");
       // bus.send("layer-visibility", ["meteo-eeuu", true]);
       bus.send("ajax", {
-         "url" : "http://localhost:6305/geoserver/ows?service=wms&version=1.3.0&request=GetCapabilities",
-         "dataType": "text",
+         "url" : "/geoserver/ows?service=wms&version=1.3.0&request=GetCapabilities",
+         "dataType" : "text",
          "success" : function(data) {
-            var timestamps = data.match("<Dimension name=\"time\" default=\"current\" units=\"ISO8601\">(.*)</Dimension>")[1];
+            var timestamps = data
+               .match("<Dimension name=\"time\" default=\"current\" units=\"ISO8601\">(.*)</Dimension>")[1];
             var timestampArray = timestamps.split(",");
             bus.send("add-layer", {
                "timestamps" : timestampArray
