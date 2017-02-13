@@ -89,99 +89,101 @@ create or replace view osmtransport as select * from osm_line where operator in 
 
 ## Shift + OSMShift join
 
-create or replace view app.osmshiftinfo as 
-	select 
-		osmid, forward, speed, timestamp, vehicleid, startpoint, endpoint
-	from
-		app.osmshift osms, app.shift s
-	where
-		s.id=osms.shift_id;
+	create or replace view app.osmshiftinfo as 
+		select 
+			osmid, forward, speed, timestamp, vehicleid, startpoint, endpoint
+		from
+			app.osmshift osms, app.shift s
+		where
+			s.id=osms.shift_id;
 
 ## Last speed info (not in use)
 		
-create or replace view app.osmshiftlastinfo as
-	select
-		a.*
-	from
-		app.osmshiftinfo a 
-	left outer join
-		app.osmshiftinfo b
-	on
-		(a.osmid=b.osmid and a.timestamp<b.timestamp and a.forward=b.forward)
-	where
-		b.osmid is null;
-		
-create or replace view app.osm_speeds as 
-	select
-		osmid, forward, speed, timestamp, vehicleid, startpoint, endpoint, way 
-	from
-		(
-			select
-				*
-			from
-				osm_line 
-			where
-				highway in
-					(
-						'motorway','trunk','primary','secondary','tertiary', 'unclassified','residential',
-						'service','motorway_link','trunk_link','primary_link','secondary_link','tertiary_link'
-					)
-		) as osm
-	left outer join
-		app.osmshiftlastinfo 
-	on 
-		(app.osmshiftlastinfo.osmid=osm.osm_id);
+	create or replace view app.osmshiftlastinfo as
+		select
+			a.*
+		from
+			app.osmshiftinfo a 
+		left outer join
+			app.osmshiftinfo b
+		on
+			(a.osmid=b.osmid and a.timestamp<b.timestamp and a.forward=b.forward)
+		where
+			b.osmid is null;
+			
+	create or replace view app.osm_speeds as 
+		select
+			osmid, forward, speed, timestamp, vehicleid, startpoint, endpoint, way 
+		from
+			(
+				select
+					*
+				from
+					osm_line 
+				where
+					highway in
+						(
+							'motorway','trunk','primary','secondary','tertiary', 'unclassified','residential',
+							'service','motorway_link','trunk_link','primary_link','secondary_link','tertiary_link'
+						)
+			) as osm
+		left outer join
+			app.osmshiftlastinfo 
+		on 
+			(app.osmshiftlastinfo.osmid=osm.osm_id);
 
 ## navigable osm speeds
 
--- Create a table adding to the osmshiftinfo a timestamp for drawing
-
-create materialized view app.timestamped_osmshiftinfo as
--- create table app.timestamped_osmshiftinfo as
-	select 
-		to_timestamp(a.timestamp/1000) as draw_timestamp, b.*
-	from 
-		(select distinct timestamp from app.osmshiftinfo) a,
-		app.osmshiftinfo b
-	where
-		a.timestamp >= b.timestamp
-		and
-		not exists (
-			select
-				1
-			from
-				app.osmshiftinfo c 
-			where 
-				b.osmid = c.osmid
-				and
-				b.forward = c.forward
-				and
-				a.timestamp > c.timestamp
-				and
-				c.timestamp > b.timestamp
-		);
-create index ON app.timestamped_osmshiftinfo (osmid);
-create index ON app.timestamped_osmshiftinfo (draw_timestamp);
-
--- Create a table to add the geometry
-
-create or replace view app.timestamped_osm_speeds as 
-	select
-		osmid, forward, speed, draw_timestamp, timestamp, vehicleid, way 
-	from
-		app.osm_roads osm,
-		app.timestamped_osmshiftinfo osmshift 
-	where
-		osmshift.osmid=osm.osm_id;
-
--- refresh the materialized view
-refresh materialized view app.timestamped_osmshiftinfo ;
+	-- Create a table adding to the osmshiftinfo a timestamp for drawing
+	
+	create materialized view app.timestamped_osmshiftinfo as
+	-- create table app.timestamped_osmshiftinfo as
+		select 
+			to_timestamp(a.timestamp/1000) as draw_timestamp, b.*
+		from 
+			(select distinct timestamp from app.osmshiftinfo) a,
+			app.osmshiftinfo b
+		where
+			a.timestamp >= b.timestamp
+			and
+			not exists (
+				select
+					1
+				from
+					app.osmshiftinfo c 
+				where 
+					b.osmid = c.osmid
+					and
+					b.forward = c.forward
+					and
+					a.timestamp > c.timestamp
+					and
+					c.timestamp > b.timestamp
+			);
+	create index ON app.timestamped_osmshiftinfo (osmid);
+	create index ON app.timestamped_osmshiftinfo (draw_timestamp);
+	
+	-- Create a table to add the geometry
+	
+	create or replace view app.timestamped_osm_speeds as 
+		select
+			osmid, forward, speed, draw_timestamp, timestamp, vehicleid, way 
+		from
+			app.osm_roads osm,
+			app.timestamped_osmshiftinfo osmshift 
+		where
+			osmshift.osmid=osm.osm_id;
+	
+	-- refresh the materialized view
+	refresh materialized view app.timestamped_osmshiftinfo ;
 
 ## Geoserver
 
 ### limitar el uso de CRS
 
-Separados por comas y sin el prefijo "EPSG:"
+Separados por comas y sin el prefijo "EPSG:" : 
+
+	Servicios > WMS > Lista de SRS limitada > 900913, 4326
 
 ### estilo
 
