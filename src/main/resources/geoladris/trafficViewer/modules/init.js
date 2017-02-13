@@ -12,14 +12,14 @@ define([ "message-bus", "iso8601" ], function(bus, iso8601) {
       bus.send("map:addLayer", {
          "layerId" : "osm_roads",
          "wms" : {
-            "baseUrl" : "http://localhost:6305/geoserver/wms",
+            "baseUrl" : "/geoserver/wms",
             "wmsName" : "tpg:osm_roads"
          }
       });
       bus.send("map:addLayer", {
          "layerId" : "osm_speeds",
          "wms" : {
-            "baseUrl" : "http://localhost:6305/geoserver/wms",
+            "baseUrl" : "/geoserver/wms",
             "wmsName" : "tpg:timestamped_osm_speeds"
          }
       });
