@@ -5,13 +5,17 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.HashMap;
 
+import javax.persistence.EntityManager;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
 import org.apache.commons.io.IOUtils;
+import org.fergonco.tpg.trafficViewer.DBUtils;
+import org.fergonco.tpg.trafficViewer.jpa.TPGStop;
 import org.jgrapht.GraphPath;
 import org.jgrapht.alg.shortestpath.DijkstraShortestPath;
 import org.jgrapht.graph.DefaultDirectedGraph;
@@ -114,10 +118,12 @@ public class OSMRouting {
 	}
 
 	public static void main(String[] args) throws Exception {
+
+		DBUtils.setSchemaName("app");
+		EntityManager em = DBUtils.getEntityManager();
+
 		OSMRouting osmRouting = new OSMRouting();
 		osmRouting.init(new File("ligne-y.osm.xml"), new File("osm_overrides.xml"));
-		OSMRoutingResult result = osmRouting.getPath(new Coordinate(5.979067, 46.232062),
-				new Coordinate(6.101175, 46.226193));
 
 		// Ferney-Mairie
 		// new Coordinate(6.1081094,46.2555700));
@@ -151,20 +157,39 @@ public class OSMRouting {
 		}
 
 		builder.append(
-				"create table if not exists test_shortestpath (id serial primary key, geom geometry('LINESTRING', 4326));\n");
+				"create table if not exists test_shortestpath (id serial primary key, stop1 varchar, stop2 varchar, geom geometry('LINESTRING', 4326));\n");
 		builder.append("delete from test_shortestpath ;\n");
-		if (result.pathFound()) {
-			System.out.println("path found!");
-			String linestringWKT = wktWriter.write(result.getLineString());
-			OSMWayIdAndSense[] wayIdsAndSense = result.getWayIdsAndSenses();
-			builder.append("insert into test_shortestpath (geom) values(ST_GeomFromText('").append(linestringWKT)
-					.append("', 4326));");
+
+		String[] stops = new String[] { //
+				"VATH", "THGA", "THMA", "PAGN", "POLT", "SGBO", //
+				"SGGA", "JMON", //
+				"CFUS", "HTAI", "PLIO", "MLVT", "SHUM", "CERN", "MAIX", "HTOU", "MAIL", "VROT", "PFON", "LMLD", "ZIMG",
+				"PRGM", "SIGN", "RENF", "BLDO", "GDHA", "ICC0", "TOCO", "WTC0", "AERO", "AREN", "PXPH", "FRET", "TRTI",
+				"GSDN", "FVDO", "BRUN", "JAGI", "AJUR", "FEMA"//
+		};
+		for (int i = 0; i < stops.length - 1; i++) {
+			TPGStop start = em.find(TPGStop.class, stops[i]);
+			TPGStop end = em.find(TPGStop.class, stops[i + 1]);
+			String geomSQL = "null";
+			try {
+				OSMRoutingResult result = osmRouting.getPath(start.getCoordinate(), end.getCoordinate());
+				if (result != null) {
+					String linestringWKT = wktWriter.write(result.getLineString());
+					geomSQL = "ST_GeomFromText('" + linestringWKT + "', 4326)";
+				}
+			} catch (RuntimeException e) {
+				e.printStackTrace();
+			}
+			builder.append("insert into test_shortestpath (stop1, stop2, geom) values('" + stops[i] + "', '"
+					+ stops[i + 1] + "', " + geomSQL + ");");
+			// OSMWayIdAndSense[] wayIdsAndSense =
+			// result.getWayIdsAndSenses();
 			// builder.append("create or replace view test_affectedways as
 			// select * from osm_line where osm_id in (")
 			// .append(StringUtils.join(wayIds, ",")).append(");\n");
 		}
 		FileOutputStream output = new FileOutputStream("/tmp/result.sql");
-		IOUtils.write(builder.toString(), output);
+		IOUtils.write(builder.toString(), output, Charset.forName("utf-8"));
 		output.close();
 	}
 
