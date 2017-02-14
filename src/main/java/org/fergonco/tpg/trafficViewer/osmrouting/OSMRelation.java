@@ -54,7 +54,7 @@ public class OSMRelation {
 		ways.remove(toRemove);
 	}
 
-	public OSMNode[] getNClosestNodes(Coordinate coordinate, int n) {
+	public OSMNode[] getOrderedNClosestNodes(Coordinate coordinate, int n) {
 		TreeSet<OSMNode> sortedNodes = new TreeSet<>(new Comparator<OSMNode>() {
 
 			@Override

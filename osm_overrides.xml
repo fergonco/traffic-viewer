@@ -6,4 +6,20 @@
 	</way>
 	<delete-way id="80119629" />
 	<add-way id="131232782" />
+
+	<!-- CERN -->
+	<add-node id="1550672551" />
+
+	<!-- Maisonex -->
+	<add-node id="1550672646" />
+	<add-node id="1266403290" />
+
+	<!-- Fuel station connection Y to tram line -->
+	<create-way id="-1" />
+	<way id="-1">
+		<nd ref="804743492" />
+		<nd ref="3473942054" />
+	</way>
+	<add-way id="-1" />
+
 </osm-relation-overrides>

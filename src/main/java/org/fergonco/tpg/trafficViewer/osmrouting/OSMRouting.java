@@ -63,14 +63,32 @@ public class OSMRouting {
 	}
 
 	public OSMRoutingResult getPath(Coordinate start, Coordinate end) {
-
-		// Get all the OSM stops nearest than 100m
-		OSMNode[] startStops = relation.getNClosestNodes(start, 2);
-		OSMNode[] endStops = relation.getNClosestNodes(end, 2);
+		double distanceBetweenStops = start.distance(end);
+		OSMNode[] startStops = relation.getOrderedNClosestNodes(start, 2);
+		OSMNode[] endStops = relation.getOrderedNClosestNodes(end, 2);
 		double min = Double.MAX_VALUE;
 		OSMRoutingResult argMin = null;
-		for (OSMNode osmStartStop : startStops) {
-			for (OSMNode osmEndStop : endStops) {
+		for (int i = 0; i < startStops.length; i++) {
+			OSMNode osmStartStop = startStops[i];
+			if (i > 0) {
+				/*
+				 * Distance from start stop is ten times or more the distance
+				 * from end to start then it is not a start stop. We asume the
+				 * first one is always valid
+				 */
+				double osmStartStopDistance = start.distance(osmStartStop.getCoordinate());
+				if (5 * osmStartStopDistance / distanceBetweenStops >= 1) {
+					break;
+				}
+			}
+			for (int j = 0; j < endStops.length; j++) {
+				OSMNode osmEndStop = endStops[j];
+				if (j > 0) {
+					double osmEndStopDistance = end.distance(osmEndStop.getCoordinate());
+					if (5 * osmEndStopDistance / distanceBetweenStops >= 1) {
+						break;
+					}
+				}
 				OSMRoutingResult routingResult = getPathOSMStops(osmStartStop.getCoordinate(),
 						osmEndStop.getCoordinate());
 				if (routingResult != null) {
@@ -264,12 +282,23 @@ public class OSMRouting {
 				currentWay = idWays.get(wayId);
 			} else if (currentWay != null && qName.equals("tag")) {
 				currentWay.setTag(attributes.getValue("k"), attributes.getValue("v"));
+			} else if (currentWay != null && qName.equals("nd")) {
+				String ref = attributes.getValue("ref");
+				OSMNode node = idNodes.get(ref);
+				currentWay.addNode(node);
 			} else if (qName.equals("delete-way")) {
 				String id = attributes.getValue("id");
 				OSMRouting.this.relation.removeWay(idWays.remove(id));
 			} else if (qName.equals("add-way")) {
 				String id = attributes.getValue("id");
 				OSMRouting.this.relation.addWay(idWays.get(id));
+			} else if (qName.equals("add-node")) {
+				String id = attributes.getValue("id");
+				OSMRouting.this.relation.addNode(idNodes.get(id));
+			} else if (qName.equals("create-way")) {
+				String id = attributes.getValue("id");
+				OSMWay newWay = new OSMWay(id);
+				idWays.put(id, newWay);
 			}
 		}
 
