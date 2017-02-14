@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 
 import javax.persistence.EntityManager;
+import javax.persistence.Query;
 import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.log4j.Logger;
@@ -106,7 +107,9 @@ public class DBThermometerListener implements ThermometerListener {
 			}
 
 			em.getTransaction().commit();
-			System.out.println("/t/t NEW SHIFT!!!");
+
+			Query q = em.createNativeQuery("refresh materialized view app.timestamped_osmshiftinfo ;");
+			q.executeUpdate();
 		}
 	}
 
