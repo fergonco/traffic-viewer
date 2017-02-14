@@ -6,7 +6,10 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 
 import javax.persistence.EntityManager;
 import javax.xml.parsers.ParserConfigurationException;
@@ -77,7 +80,7 @@ public class OSMRouting {
 				 * first one is always valid
 				 */
 				double osmStartStopDistance = start.distance(osmStartStop.getCoordinate());
-				if (5 * osmStartStopDistance / distanceBetweenStops >= 1) {
+				if (3 * osmStartStopDistance / distanceBetweenStops >= 1) {
 					break;
 				}
 			}
@@ -85,7 +88,7 @@ public class OSMRouting {
 				OSMNode osmEndStop = endStops[j];
 				if (j > 0) {
 					double osmEndStopDistance = end.distance(osmEndStop.getCoordinate());
-					if (5 * osmEndStopDistance / distanceBetweenStops >= 1) {
+					if (3 * osmEndStopDistance / distanceBetweenStops >= 1) {
 						break;
 					}
 				}
@@ -185,6 +188,9 @@ public class OSMRouting {
 				"PRGM", "SIGN", "RENF", "BLDO", "GDHA", "ICC0", "TOCO", "WTC0", "AERO", "AREN", "PXPH", "FRET", "TRTI",
 				"GSDN", "FVDO", "BRUN", "JAGI", "AJUR", "FEMA"//
 		};
+		List<String> list = Arrays.asList(stops);
+		Collections.reverse(list);
+		stops = (String[]) list.toArray();
 		for (int i = 0; i < stops.length - 1; i++) {
 			TPGStop start = em.find(TPGStop.class, stops[i]);
 			TPGStop end = em.find(TPGStop.class, stops[i + 1]);

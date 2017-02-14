@@ -4,7 +4,6 @@
 		changeset="31466724" uid="617875" user="MFlamm">
 		<tag k="oneway" v="no" />
 	</way>
-	<delete-way id="80119629" />
 	<add-way id="131232782" />
 
 	<!-- CERN -->
@@ -21,5 +20,25 @@
 		<nd ref="3473942054" />
 	</way>
 	<add-way id="-1" />
+	<create-way id="-2" />
+	<way id="-2">
+		<nd ref="1853009692" />
+		<nd ref="3473942054" />
+	</way>
+	<add-way id="-2" />
+
+	<!-- Blandonet-Renfile -->
+	<add-way id="222760044" />
+	<add-way id="222829393" />
+	<add-way id="222829392" />
+	<add-way id="222829394" />
+
+	<!-- Grand Hangar-Blandonet -->
+	<add-way id="222707331" />
+	<add-way id="275688289" />
+
+	<!-- aeroport -->
+	<delete-way id="61559459" />
+	<add-way id="80119629" />
 
 </osm-relation-overrides>
