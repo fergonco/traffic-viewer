@@ -57,7 +57,7 @@ public class DBThermometerListener implements ThermometerListener {
 	}
 
 	@Override
-	public void stepActualTimestampChanged(Step previousStep, Step currentStep) {
+	public void stepActualTimestampChanged(Step previousStep, Step currentStep, String destination) {
 		logger.info("Previous: " + previousStep);
 		logger.info("Current: " + currentStep);
 		if (previousStep != null) {
@@ -65,8 +65,12 @@ public class DBThermometerListener implements ThermometerListener {
 			TPGStop start = em.find(TPGStop.class, previousStep.getStopCode());
 			TPGStop end = em.find(TPGStop.class, currentStep.getStopCode());
 
-			logger.info("Finding path from " + start.getCoordinate() + " to " + end.getCoordinate());
-			OSMRoutingResult result = osmRouting.getPath(start.getCoordinate(), end.getCoordinate());
+			logger.info("Finding path from " + start.getCode() + " to " + end.getCode());
+			String startNodeId = start.getNodeId(destination);
+			String endNodeId = end.getNodeId(destination);
+			logger.info("startNodeId: " + startNodeId);
+			logger.info("endNodeId: " + endNodeId);
+			OSMRoutingResult result = osmRouting.getPathFromNodeOutsideGraph(startNodeId, endNodeId);
 			LineString path = result.getLineString();
 			Coordinate startCoordinate = path.getCoordinateN(0);
 			Coordinate endCoordinate = path.getCoordinateN(path.getNumPoints() - 1);

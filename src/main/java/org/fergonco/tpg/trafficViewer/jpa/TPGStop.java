@@ -1,12 +1,7 @@
 package org.fergonco.tpg.trafficViewer.jpa;
 
-import javax.persistence.Column;
-import javax.persistence.Convert;
 import javax.persistence.Entity;
 import javax.persistence.Id;
-
-import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.Geometry;
 
 @Entity
 public class TPGStop {
@@ -14,25 +9,26 @@ public class TPGStop {
 	@Id
 	private String code;
 
-	@Column(columnDefinition = "geometry('POINT', 4326)")
-	@Convert(converter = JTSConverter.class)
-	private Geometry geom;
+	private long osmid1;
+	private String destination1;
+	private long osmid2;
+	private String destination2;
 
 	public void setCode(String code) {
 		this.code = code;
 	}
 
-	public void setGeom(Geometry geom) {
-		this.geom = geom;
+	public String getCode() {
+		return code;
 	}
 
-	@Override
-	public String toString() {
-		Coordinate coordinate = geom.getCentroid().getCoordinate();
-		return code + "(" + coordinate.y + ", " + coordinate.x + ")";
-	}
-
-	public Coordinate getCoordinate() {
-		return geom.getCentroid().getCoordinate();
+	public String getNodeId(String destination) {
+		if (destination.equals(destination1)) {
+			return Long.toString(osmid1);
+		} else if (destination.equals(destination2)) {
+			return Long.toString(osmid2);
+		} else {
+			throw new IllegalArgumentException("Unknown destination: " + destination);
+		}
 	}
 }

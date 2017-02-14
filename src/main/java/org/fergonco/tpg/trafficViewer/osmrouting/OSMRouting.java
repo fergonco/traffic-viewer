@@ -65,46 +65,10 @@ public class OSMRouting {
 
 	}
 
-	public OSMRoutingResult getPath(Coordinate start, Coordinate end) {
-		double distanceBetweenStops = start.distance(end);
-		OSMNode[] startStops = relation.getOrderedNClosestNodes(start, 2);
-		OSMNode[] endStops = relation.getOrderedNClosestNodes(end, 2);
-		double min = Double.MAX_VALUE;
-		OSMRoutingResult argMin = null;
-		for (int i = 0; i < startStops.length; i++) {
-			OSMNode osmStartStop = startStops[i];
-			if (i > 0) {
-				/*
-				 * Distance from start stop is ten times or more the distance
-				 * from end to start then it is not a start stop. We asume the
-				 * first one is always valid
-				 */
-				double osmStartStopDistance = start.distance(osmStartStop.getCoordinate());
-				if (3 * osmStartStopDistance / distanceBetweenStops >= 1) {
-					break;
-				}
-			}
-			for (int j = 0; j < endStops.length; j++) {
-				OSMNode osmEndStop = endStops[j];
-				if (j > 0) {
-					double osmEndStopDistance = end.distance(osmEndStop.getCoordinate());
-					if (3 * osmEndStopDistance / distanceBetweenStops >= 1) {
-						break;
-					}
-				}
-				OSMRoutingResult routingResult = getPathOSMStops(osmStartStop.getCoordinate(),
-						osmEndStop.getCoordinate());
-				if (routingResult != null) {
-					double length = routingResult.getLineString().getLength();
-					if (length < min) {
-						min = length;
-						argMin = routingResult;
-					}
-				}
-			}
-		}
-
-		return argMin;
+	public OSMRoutingResult getPathFromNodeOutsideGraph(String startNodeId, String endNodeId) {
+		Coordinate startCoordinate = idNodes.get(startNodeId).getCoordinate();
+		Coordinate endCoordinate = idNodes.get(endNodeId).getCoordinate();
+		return getPathOSMStops(startCoordinate, endCoordinate);
 	}
 
 	private OSMRoutingResult getPathOSMStops(Coordinate start, Coordinate end) {
@@ -119,7 +83,7 @@ public class OSMRouting {
 		return getPath(startNode.getId(), endNode.getId());
 	}
 
-	public OSMRoutingResult getPath(String startNodeId, String endNodeId) {
+	private OSMRoutingResult getPath(String startNodeId, String endNodeId) {
 		OSMNode a = idNodes.get(startNodeId);
 		OSMNode b = idNodes.get(endNodeId);
 		GraphPath<OSMNode, OSMStep> result = DijkstraShortestPath.findPathBetween(graph, a, b);
@@ -188,15 +152,21 @@ public class OSMRouting {
 				"PRGM", "SIGN", "RENF", "BLDO", "GDHA", "ICC0", "TOCO", "WTC0", "AERO", "AREN", "PXPH", "FRET", "TRTI",
 				"GSDN", "FVDO", "BRUN", "JAGI", "AJUR", "FEMA"//
 		};
+
+		// String destination = "FERNEY-VOLTAIRE";
+		String destination = "VAL-THOIRY";
 		List<String> list = Arrays.asList(stops);
 		Collections.reverse(list);
 		stops = (String[]) list.toArray();
+
 		for (int i = 0; i < stops.length - 1; i++) {
 			TPGStop start = em.find(TPGStop.class, stops[i]);
 			TPGStop end = em.find(TPGStop.class, stops[i + 1]);
+			String startNodeId = start.getNodeId(destination);
+			String endNodeId = end.getNodeId(destination);
 			String geomSQL = "null";
 			try {
-				OSMRoutingResult result = osmRouting.getPath(start.getCoordinate(), end.getCoordinate());
+				OSMRoutingResult result = osmRouting.getPathFromNodeOutsideGraph(startNodeId, endNodeId);
 				if (result != null) {
 					String linestringWKT = wktWriter.write(result.getLineString());
 					geomSQL = "ST_GeomFromText('" + linestringWKT + "', 4326)";
