@@ -18,10 +18,6 @@ public class OSMRoutingResult {
 		this.result = result;
 	}
 
-	public boolean pathFound() {
-		return result != null;
-	}
-
 	public LineString getLineString() {
 		List<OSMNode> path = result.getVertexList();
 		return OSMUtils.buildLineString(path);
