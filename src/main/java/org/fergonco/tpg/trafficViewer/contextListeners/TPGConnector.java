@@ -33,7 +33,7 @@ public class TPGConnector implements ServletContextListener {
 		int end3amNextDay = 27 * 60 * 60 * 1000;
 		DayFrame dayFrame = new DayFrame(start4am, end3amNextDay);
 
-		TPGCachedParser tpg = new TPGCachedParser(new TPG());
+		TPGCachedParser tpg = new TPGCachedParser(new TPG(), 5);
 
 		DBThermometerListener listener;
 		try {
@@ -43,9 +43,8 @@ public class TPGConnector implements ServletContextListener {
 		}
 
 		ThermometerComparator[] comparators = new ThermometerComparator[] { //
-				// new ThermometerComparator(dayFrame, tpg, listener, new
-				// NullThermometerArchiver(), "Y", "VATH",
-				// "FERNEY-VOLTAIRE"),
+				new ThermometerComparator(dayFrame, tpg, listener, new NullThermometerArchiver(), "Y", "VATH",
+						"FERNEY-VOLTAIRE"),
 				new ThermometerComparator(dayFrame, tpg, listener, new NullThermometerArchiver(), "Y", "FEMA",
 						"VAL-THOIRY"),
 				// new ThermometerComparator(dayFrame, tpg, listener, new
