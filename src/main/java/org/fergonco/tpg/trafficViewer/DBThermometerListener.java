@@ -108,6 +108,8 @@ public class DBThermometerListener implements ThermometerListener {
 
 			Query q = em.createNativeQuery("refresh materialized view app.timestamped_osmshiftinfo ;");
 			q.executeUpdate();
+			q = em.createNativeQuery("vacuum analyze app.timestamped_osmshiftinfo ;");
+			q.executeUpdate();
 
 			em.getTransaction().commit();
 		}
