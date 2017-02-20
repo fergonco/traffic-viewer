@@ -23,6 +23,10 @@ define([ "message-bus", "iso8601" ], function(bus, iso8601) {
             "wmsName" : "tpg:timestamped_osm_speeds"
          }
       });
+      bus.send("map:layerVisibility", {
+         "layerId" : "osm_speeds",
+         "visibility" : false
+      });
       bus.send("zoom-to", {
          "x" : 6.03,
          "y" : 46.24,
@@ -69,6 +73,11 @@ define([ "message-bus", "iso8601" ], function(bus, iso8601) {
       });
 
       bus.listen("time-slider.selection", function(e, date) {
+         // layer is visible only after first time selection event
+         bus.send("map:layerVisibility", {
+            "layerId" : "osm_speeds",
+            "visibility" : true
+         });
          bus.send("map:mergeLayerParameters", {
             "layerId" : "osm_speeds",
             "parameters" : {
