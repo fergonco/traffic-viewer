@@ -1,5 +1,9 @@
 define([ "message-bus", "iso8601" ], function(bus, iso8601) {
 
+   var timeSlider = document.createElement('div');
+   timeSlider.id = "TimeSlider";
+   document.body.append(timeSlider);
+
    var femap = document.createElement('div');
    femap.id = "fullscreenmap";
    document.body.append(femap);

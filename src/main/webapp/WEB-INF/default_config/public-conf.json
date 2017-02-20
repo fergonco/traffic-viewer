@@ -3,5 +3,10 @@
 		"map": {
 			"htmlId": "fullscreenmap"
 		}
+	},
+	"time-slider": {
+		"time-slider": {
+			"htmlId": "TimeSlider"
+		}
 	}
 }
