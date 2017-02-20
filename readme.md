@@ -31,6 +31,10 @@ Prerequisites:
 	docker run -p54322:5432 -d -t -v /app-conf/postgresql/:/var/lib/postgresql -e POSTGRES_USER=geomatico -e POSTGRES_PASS= --name pg kartoza/postgis:9.3-2.1
 * traffic-viewer instance
 
+Program PG to execute regularly:
+
+	vacuum analyze app.timestamped_osmshiftinfo ;
+
 ## Create database
 
 create database tpg;
@@ -137,53 +141,17 @@ create or replace view osmtransport as select * from osm_line where operator in 
 
 	create or replace view app.osmshiftinfo as 
 		select 
-			osmid, forward, speed, timestamp, vehicleid, startpoint, endpoint
+			geom, startnode, endnode, speed, timestamp, vehicleid, startpoint, endpoint
 		from
 			app.osmshift osms, app.shift s
 		where
 			s.id=osms.shift_id;
-
-## Last speed info (not in use)
-		
-	create or replace view app.osmshiftlastinfo as
-		select
-			a.*
-		from
-			app.osmshiftinfo a 
-		left outer join
-			app.osmshiftinfo b
-		on
-			(a.osmid=b.osmid and a.timestamp<b.timestamp and a.forward=b.forward)
-		where
-			b.osmid is null;
-			
-	create or replace view app.osm_speeds as 
-		select
-			osmid, forward, speed, timestamp, vehicleid, startpoint, endpoint, way 
-		from
-			(
-				select
-					*
-				from
-					osm_line 
-				where
-					highway in
-						(
-							'motorway','trunk','primary','secondary','tertiary', 'unclassified','residential',
-							'service','motorway_link','trunk_link','primary_link','secondary_link','tertiary_link'
-						)
-			) as osm
-		left outer join
-			app.osmshiftlastinfo 
-		on 
-			(app.osmshiftlastinfo.osmid=osm.osm_id);
 
 ## navigable osm speeds
 
 	-- Create a table adding to the osmshiftinfo a timestamp for drawing
 	
 	create materialized view app.timestamped_osmshiftinfo as
-	-- create table app.timestamped_osmshiftinfo as
 		select 
 			to_timestamp(a.timestamp/1000) as draw_timestamp, b.*
 		from 
@@ -198,27 +166,17 @@ create or replace view osmtransport as select * from osm_line where operator in 
 				from
 					app.osmshiftinfo c 
 				where 
-					b.osmid = c.osmid
+					b.startnode = c.startnode
 					and
-					b.forward = c.forward
+					b.endnode = c.endnode
 					and
 					a.timestamp > c.timestamp
 					and
 					c.timestamp > b.timestamp
 			);
-	create index ON app.timestamped_osmshiftinfo (osmid);
+	create index ON app.timestamped_osmshiftinfo (startnode);
+	create index ON app.timestamped_osmshiftinfo (endnode);
 	create index ON app.timestamped_osmshiftinfo (draw_timestamp);
-	
-	-- Create a table to add the geometry
-	
-	create or replace view app.timestamped_osm_speeds as 
-		select
-			osmid, forward, speed, draw_timestamp, timestamp, vehicleid, way 
-		from
-			app.osm_roads osm,
-			app.timestamped_osmshiftinfo osmshift 
-		where
-			osmshift.osmid=osm.osm_id;
 	
 	-- refresh the materialized view
 	refresh materialized view app.timestamped_osmshiftinfo ;
@@ -230,6 +188,8 @@ create or replace view osmtransport as select * from osm_line where operator in 
 Separados por comas y sin el prefijo "EPSG:" : 
 
 	Servicios > WMS > Lista de SRS limitada > 900913, 4326
+	
+### load app.osm\_roads and app.timestamped_osmshiftinfo 
 
 ### estilo
 
@@ -253,39 +213,18 @@ Separados por comas y sin el prefijo "EPSG:" :
 	      <!-- a feature type for lines -->
 	
 	      <FeatureTypeStyle>
-<!-- 	        <Rule> -->
-<!-- 	          <Name>Rule all</Name> -->
-<!-- 	          <Title>Green Line</Title> -->
-<!-- 	          <LineSymbolizer> -->
-<!-- 	            <Geometry> -->
-<!-- 	              <ogc:PropertyName>way</ogc:PropertyName> -->
-<!-- 	            </Geometry>      -->
-<!-- 	            <Stroke> -->
-<!-- 	              <CssParameter name="stroke">#000000</CssParameter> -->
-<!-- 	              <CssParameter name="stroke-width">1</CssParameter> -->
-<!-- 	            </Stroke> -->
-<!-- 	          </LineSymbolizer> -->
-<!-- 	        </Rule> -->
-	
-	
 	        <Rule>
-	          <Name>Rule_15_f</Name>
-	          <Title>[0, 15[ forward</Title>
+	          <Name>Rule_15</Name>
+	          <Title>[0, 15[</Title>
 	          <ogc:Filter>
-	            <ogc:And>
-	              <ogc:PropertyIsLessThan>
-	                <ogc:PropertyName>speed</ogc:PropertyName>
-	                <ogc:Literal>15</ogc:Literal>
-	              </ogc:PropertyIsLessThan>
-	              <ogc:PropertyIsEqualTo>
-	                <ogc:PropertyName>forward</ogc:PropertyName>
-	                <ogc:Literal>true</ogc:Literal>
-	              </ogc:PropertyIsEqualTo>
-	            </ogc:And>
+	            <ogc:PropertyIsLessThan>
+	              <ogc:PropertyName>speed</ogc:PropertyName>
+	              <ogc:Literal>15</ogc:Literal>
+	            </ogc:PropertyIsLessThan>
 	          </ogc:Filter>
 	          <LineSymbolizer>
 	            <Geometry>
-	              <ogc:PropertyName>way</ogc:PropertyName>
+	              <ogc:PropertyName>geom</ogc:PropertyName>
 	            </Geometry>     
 	            <Stroke>
 	              <CssParameter name="stroke">#FF0000</CssParameter>
@@ -294,37 +233,10 @@ Separados por comas y sin el prefijo "EPSG:" :
 	            <PerpendicularOffset>4</PerpendicularOffset>
 	          </LineSymbolizer>
 	        </Rule>
-	        <Rule>
-	          <Name>Rule_15_fb</Name>
-	          <Title>[0, 15[ backward</Title>
-	          <ogc:Filter>
-	            <ogc:And>
-	              <ogc:PropertyIsLessThan>
-	                <ogc:PropertyName>speed</ogc:PropertyName>
-	                <ogc:Literal>15</ogc:Literal>
-	              </ogc:PropertyIsLessThan>
-	              <ogc:PropertyIsEqualTo>
-	                <ogc:PropertyName>forward</ogc:PropertyName>
-	                <ogc:Literal>false</ogc:Literal>
-	              </ogc:PropertyIsEqualTo>
-	            </ogc:And>
-	          </ogc:Filter>
-	          <LineSymbolizer>
-	            <Geometry>
-	              <ogc:PropertyName>way</ogc:PropertyName>
-	            </Geometry>     
-	            <Stroke>
-	              <CssParameter name="stroke">#FF0000</CssParameter>
-	              <CssParameter name="stroke-width">4</CssParameter>
-	            </Stroke>
-	            <PerpendicularOffset>-4</PerpendicularOffset>
-	          </LineSymbolizer>
-	        </Rule>
-	
 	
 	        <Rule>
-	          <Name>Rule15_40F</Name>
-	          <Title>[15, 40[ forward</Title>
+	          <Name>Rule15_40</Name>
+	          <Title>[15, 40[</Title>
 	          <ogc:Filter>
 	            <ogc:And>
 	              <ogc:PropertyIsGreaterThanOrEqualTo>
@@ -335,15 +247,11 @@ Separados por comas y sin el prefijo "EPSG:" :
 	                <ogc:PropertyName>speed</ogc:PropertyName>
 	                <ogc:Literal>40</ogc:Literal>
 	              </ogc:PropertyIsLessThan>
-	              <ogc:PropertyIsEqualTo>
-	                <ogc:PropertyName>forward</ogc:PropertyName>
-	                <ogc:Literal>true</ogc:Literal>
-	              </ogc:PropertyIsEqualTo>
 	            </ogc:And>
 	          </ogc:Filter>
 	          <LineSymbolizer>
 	            <Geometry>
-	              <ogc:PropertyName>way</ogc:PropertyName>
+	              <ogc:PropertyName>geom</ogc:PropertyName>
 	            </Geometry>     
 	            <Stroke>
 	              <CssParameter name="stroke">#FFA500</CssParameter>
@@ -352,88 +260,25 @@ Separados por comas y sin el prefijo "EPSG:" :
 	            <PerpendicularOffset>4</PerpendicularOffset>
 	          </LineSymbolizer>
 	        </Rule>
+	
 	        <Rule>
-	          <Name>Rule 15_40B</Name>
-	          <Title>[15, 40[ backward</Title>
+	          <Name>Rule_40</Name>
+	          <Title>[40, Inf[</Title>
 	          <ogc:Filter>
-	            <ogc:And>
-	              <ogc:PropertyIsGreaterThanOrEqualTo>
-	                <ogc:PropertyName>speed</ogc:PropertyName>
-	                <ogc:Literal>15</ogc:Literal>
-	              </ogc:PropertyIsGreaterThanOrEqualTo>
-	              <ogc:PropertyIsLessThan>
-	                <ogc:PropertyName>speed</ogc:PropertyName>
-	                <ogc:Literal>40</ogc:Literal>
-	              </ogc:PropertyIsLessThan>
-	              <ogc:PropertyIsEqualTo>
-	                <ogc:PropertyName>forward</ogc:PropertyName>
-	                <ogc:Literal>false</ogc:Literal>
-	              </ogc:PropertyIsEqualTo>
-	            </ogc:And>
+              <ogc:PropertyIsGreaterThanOrEqualTo>
+                <ogc:PropertyName>speed</ogc:PropertyName>
+                <ogc:Literal>40</ogc:Literal>
+              </ogc:PropertyIsGreaterThanOrEqualTo>
 	          </ogc:Filter>
 	          <LineSymbolizer>
 	            <Geometry>
-	              <ogc:PropertyName>way</ogc:PropertyName>
-	            </Geometry>     
-	            <Stroke>
-	              <CssParameter name="stroke">#FFA500</CssParameter>
-	              <CssParameter name="stroke-width">4</CssParameter>
-	            </Stroke>
-	            <PerpendicularOffset>-4</PerpendicularOffset>
-	          </LineSymbolizer>
-	        </Rule>
-	
-	
-	        <Rule>
-	          <Name>Rule_40F</Name>
-	          <Title>[40, Inf[ forward</Title>
-	          <ogc:Filter>
-	            <ogc:And>
-	              <ogc:PropertyIsGreaterThanOrEqualTo>
-	                <ogc:PropertyName>speed</ogc:PropertyName>
-	                <ogc:Literal>40</ogc:Literal>
-	              </ogc:PropertyIsGreaterThanOrEqualTo>
-	              <ogc:PropertyIsEqualTo>
-	                <ogc:PropertyName>forward</ogc:PropertyName>
-	                <ogc:Literal>true</ogc:Literal>
-	              </ogc:PropertyIsEqualTo>
-	            </ogc:And>
-	          </ogc:Filter>
-	          <LineSymbolizer>
-	            <Geometry>
-	              <ogc:PropertyName>way</ogc:PropertyName>
+	              <ogc:PropertyName>geom</ogc:PropertyName>
 	            </Geometry>     
 	            <Stroke>
 	              <CssParameter name="stroke">#0000FF</CssParameter>
 	              <CssParameter name="stroke-width">4</CssParameter>
 	            </Stroke>
 	            <PerpendicularOffset>4</PerpendicularOffset>
-	          </LineSymbolizer>
-	        </Rule>
-	        <Rule>
-	          <Name>Rule_40B</Name>
-	          <Title>[40, Inf[ backward</Title>
-	          <ogc:Filter>
-	            <ogc:And>
-	              <ogc:PropertyIsGreaterThanOrEqualTo>
-	                <ogc:PropertyName>speed</ogc:PropertyName>
-	                <ogc:Literal>40</ogc:Literal>
-	              </ogc:PropertyIsGreaterThanOrEqualTo>
-	              <ogc:PropertyIsEqualTo>
-	                <ogc:PropertyName>forward</ogc:PropertyName>
-	                <ogc:Literal>false</ogc:Literal>
-	              </ogc:PropertyIsEqualTo>
-	            </ogc:And>
-	          </ogc:Filter>
-	          <LineSymbolizer>
-	            <Geometry>
-	              <ogc:PropertyName>way</ogc:PropertyName>
-	            </Geometry>     
-	            <Stroke>
-	              <CssParameter name="stroke">#0000FF</CssParameter>
-	              <CssParameter name="stroke-width">4</CssParameter>
-	            </Stroke>
-	            <PerpendicularOffset>-4</PerpendicularOffset>
 	          </LineSymbolizer>
 	        </Rule>
 	

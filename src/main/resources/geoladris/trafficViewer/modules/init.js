@@ -20,7 +20,7 @@ define([ "message-bus", "iso8601" ], function(bus, iso8601) {
          "layerId" : "osm_speeds",
          "wms" : {
             "baseUrl" : "/geoserver/wms",
-            "wmsName" : "tpg:timestamped_osm_speeds"
+            "wmsName" : "tpg:timestamped_osmshiftinfo"
          }
       });
       bus.send("map:layerVisibility", {
@@ -39,22 +39,6 @@ define([ "message-bus", "iso8601" ], function(bus, iso8601) {
       bus.send("map:activateControl", {
          "controlId" : "navigation"
       });
-      // portal.properties
-      // map.centerLonLat=6.03,46.24
-      // map.initialZoomLevel=14
-
-      // bus.send("add-layer", {
-      // "id" : "meteo-eeuu",
-      // "groupId" : "landcover",
-      // "label" : "Radar EEUU",
-      // "active" : "true",
-      // "mapLayers" : [ {
-      // "baseUrl" : "http://localhost:6305/geoserver/wms",
-      // "wmsName" : "tpg:osm_speeds"
-      // } ]
-      // });
-      // bus.send("layers-loaded");
-      // bus.send("layer-visibility", ["meteo-eeuu", true]);
       bus.send("ajax", {
          "url" : "/geoserver/ows?service=wms&version=1.3.0&request=GetCapabilities",
          "dataType" : "text",

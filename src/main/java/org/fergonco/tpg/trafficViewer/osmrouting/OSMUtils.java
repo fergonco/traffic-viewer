@@ -1,5 +1,6 @@
 package org.fergonco.tpg.trafficViewer.osmrouting;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.vividsolutions.jts.geom.Coordinate;
@@ -26,6 +27,15 @@ public class OSMUtils {
 
 	public static Geometry buildPoint(Coordinate coordinate, int srid) {
 		Geometry ret = buildPoint(coordinate);
+		ret.setSRID(srid);
+		return ret;
+	}
+
+	public static Geometry buildLineString(OSMNode startNode, OSMNode endNode, int srid) {
+		ArrayList<OSMNode> nodes = new ArrayList<>();
+		nodes.add(startNode);
+		nodes.add(endNode);
+		LineString ret = buildLineString(nodes);
 		ret.setSRID(srid);
 		return ret;
 	}

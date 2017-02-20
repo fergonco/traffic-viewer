@@ -1,6 +1,5 @@
 package org.fergonco.tpg.trafficViewer.osmrouting;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.jgrapht.GraphPath;
@@ -23,20 +22,8 @@ public class OSMRoutingResult {
 		return OSMUtils.buildLineString(path);
 	}
 
-	public OSMWayIdAndSense[] getWayIdsAndSenses() {
-		ArrayList<OSMWayIdAndSense> ret = new ArrayList<>();
-		List<OSMStep> edges = result.getEdgeList();
-		for (OSMStep step : edges) {
-			OSMNode startNode = step.getStartNode();
-			OSMNode endNode = step.getEndNode();
-			OSMWay way = step.getWay();
-			OSMWayIdAndSense wayIdSense = new OSMWayIdAndSense(way.getId(), way.isSenseForward(startNode, endNode));
-			if (!ret.contains(wayIdSense)) {
-				ret.add(wayIdSense);
-			}
-		}
-
-		return ret.toArray(new OSMWayIdAndSense[ret.size()]);
+	public OSMStep[] getWayIdsAndSenses() {
+		return result.getEdgeList().toArray(new OSMStep[0]);
 	}
 
 }
