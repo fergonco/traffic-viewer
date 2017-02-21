@@ -78,6 +78,11 @@
 			<version>${plugins.version}</version>
 		</dependency>
 		<dependency>
+			<groupId>org.fao.unredd</groupId>
+			<artifactId>footnote</artifactId>
+			<version>${plugins.version}</version>
+		</dependency>
+		<dependency>
 			<groupId>de.csgis.geoladris</groupId>
 			<artifactId>ui</artifactId>
 			<version>1.0-SNAPSHOT</version>
