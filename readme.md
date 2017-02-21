@@ -150,12 +150,14 @@ create or replace view osmtransport as select * from osm_line where operator in 
 ## navigable osm speeds
 
 	-- Create a table adding to the osmshiftinfo a timestamp for drawing
-	
+	create index ON app.shift (timestamp);	
+	create index ON app.osmshift (startnode);
+	create index ON app.osmshift (endnode);
 	create materialized view app.timestamped_osmshiftinfo as
 		select 
 			to_timestamp(a.timestamp/1000) as draw_timestamp, b.*
 		from 
-			(select distinct timestamp from app.osmshiftinfo) a,
+			(select distinct timestamp from app.shift) a,
 			app.osmshiftinfo b
 		where
 			a.timestamp >= b.timestamp
@@ -174,8 +176,6 @@ create or replace view osmtransport as select * from osm_line where operator in 
 					and
 					c.timestamp > b.timestamp
 			);
-	create index ON app.timestamped_osmshiftinfo (startnode);
-	create index ON app.timestamped_osmshiftinfo (endnode);
 	create index ON app.timestamped_osmshiftinfo (draw_timestamp);
 	
 	-- refresh the materialized view
