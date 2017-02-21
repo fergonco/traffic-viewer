@@ -106,7 +106,9 @@ public class DBThermometerListener implements ThermometerListener {
 				osmShift.setGeom(OSMUtils.buildLineString(osmStep.getStartNode(), osmStep.getEndNode(), 4326));
 				em.persist(osmShift);
 			}
+			em.getTransaction().commit();
 
+			em.getTransaction().begin();
 			Query q = em.createNativeQuery("refresh materialized view app.timestamped_osmshiftinfo ;");
 			q.executeUpdate();
 			em.getTransaction().commit();
