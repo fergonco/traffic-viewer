@@ -1,8 +1,8 @@
 # Build
 
-mvn package
-docker build . -t fergonco/traffic-viewer
-docker push fergonco/traffic-viewer
+	mvn package
+	docker build . -t fergonco/traffic-viewer
+	docker push fergonco/traffic-viewer
 
 # Development
 
@@ -150,34 +150,57 @@ create or replace view osmtransport as select * from osm_line where operator in 
 
 ## navigable osm speeds
 
+	create materialized view app.timestamps as
+		select 
+			generate_series(
+				greatest(
+					min("timestamp"),
+					extract ( 
+						epoch from localtimestamp
+					)*1000 - 24*60*60*1000
+				)::bigint,
+				max("timestamp"),
+				15*60*1000
+			) as millis
+		from app.shift;
+
+	create materialized view app.recent_osmshiftinfo as
+		select
+			*
+		from
+			app.osmshiftinfo
+		where
+			timestamp > (
+				extract ( 
+					epoch from localtimestamp
+				)*1000 
+				-
+				24*60*60*1000
+			);
+	create index ON app.recent_osmshiftinfo (timestamp);  
+	
+
 	-- Create a table adding to the osmshiftinfo a timestamp for drawing
 	create materialized view app.timestamped_osmshiftinfo as
 		select 
-			to_timestamp(timestamps.draw_millis/1000) as draw_timestamp, osmshift.*
+			timestamps.millis as draw_timestamp, osmshift.*
 		from 
-			(	
-				select 
-					1000 * extract (epoch from generate_series(
-						to_timestamp(min("timestamp")/1000), 
-						to_timestamp(max("timestamp")/1000),
-						'15 minutes'::interval)) as draw_millis
-				from app.shift
-			) timestamps,
-			app.osmshiftinfo osmshift
+			app.timestamps timestamps,
+			app.recent_osmshiftinfo osmshift
 		where
-			timestamps.draw_millis >= osmshift.timestamp
+			timestamps.millis >= osmshift.timestamp
 			and
 			not exists (
 				select
 					1
 				from
-					app.osmshiftinfo osmshift2 
+					app.recent_osmshiftinfo osmshift2 
 				where 
 					osmshift.startnode = osmshift2.startnode
 					and
 					osmshift.endnode = osmshift2.endnode
 					and
-					timestamps.draw_millis > osmshift2.timestamp
+					timestamps.millis > osmshift2.timestamp
 					and
 					osmshift2.timestamp > osmshift.timestamp
 			);
