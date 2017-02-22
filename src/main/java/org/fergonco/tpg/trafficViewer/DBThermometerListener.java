@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 
 import javax.persistence.EntityManager;
-import javax.persistence.Query;
 import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.log4j.Logger;
@@ -107,18 +106,7 @@ public class DBThermometerListener implements ThermometerListener {
 				em.persist(osmShift);
 			}
 			em.getTransaction().commit();
-
-			refresh(em, "app.timestamps");
-			refresh(em, "app.recent_osmshiftinfo");
-			refresh(em, "app.timestamped_osmshiftinfo");
 		}
-	}
-
-	private void refresh(EntityManager em, String viewName) {
-		em.getTransaction().begin();
-		Query q = em.createNativeQuery("refresh materialized view " + viewName + ";");
-		q.executeUpdate();
-		em.getTransaction().commit();
 	}
 
 }
