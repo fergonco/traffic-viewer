@@ -108,11 +108,17 @@ public class DBThermometerListener implements ThermometerListener {
 			}
 			em.getTransaction().commit();
 
-			em.getTransaction().begin();
-			Query q = em.createNativeQuery("refresh materialized view app.timestamped_osmshiftinfo ;");
-			q.executeUpdate();
-			em.getTransaction().commit();
+			refresh(em, "app.timestamps");
+			refresh(em, "app.recent_osmshiftinfo");
+			refresh(em, "app.timestamped_osmshiftinfo");
 		}
+	}
+
+	private void refresh(EntityManager em, String viewName) {
+		em.getTransaction().begin();
+		Query q = em.createNativeQuery("refresh materialized view " + viewName + ";");
+		q.executeUpdate();
+		em.getTransaction().commit();
 	}
 
 }
