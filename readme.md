@@ -183,7 +183,7 @@ create or replace view osmtransport as select * from osm_line where operator in 
 	-- Create a table adding to the osmshiftinfo a timestamp for drawing
 	create materialized view app.timestamped_osmshiftinfo as
 		select 
-			timestamps.millis as draw_timestamp, osmshift.*
+			to_timestamp(timestamps.millis/1000) as draw_timestamp, osmshift.*
 		from 
 			app.timestamps timestamps,
 			app.recent_osmshiftinfo osmshift
