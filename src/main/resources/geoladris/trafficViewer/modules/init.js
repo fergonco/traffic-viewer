@@ -13,12 +13,26 @@ define([ "message-bus", "iso8601" ], function(bus, iso8601) {
    }, 5000);
 
    bus.listen("modules-loaded", function(e, message) {
+//      bus.send("map:addLayer", {
+//         "layerId" : "osm_roads",
+//         "wms" : {
+//            "baseUrl" : "/geoserver/wms",
+//            "wmsName" : "tpg:osm_roads"
+//         }
+//      });
       bus.send("map:addLayer", {
          "layerId" : "osm_roads",
-         "wms" : {
-            "baseUrl" : "/geoserver/wms",
-            "wmsName" : "tpg:osm_roads"
+         "osm" : {
+            "osmUrls" : [
+               "http://a.tile.openstreetmap.org/${z}/${x}/${y}.png",
+               "http://b.tile.openstreetmap.org/${z}/${x}/${y}.png",
+               "http://c.tile.openstreetmap.org/${z}/${x}/${y}.png"
+            ]
          }
+      });
+      bus.send("map:setLayerOpacity", {
+         "layerId" : "osm_roads",
+         "opacity" : 0.7
       });
       bus.send("map:addLayer", {
          "layerId" : "osm_speeds",
