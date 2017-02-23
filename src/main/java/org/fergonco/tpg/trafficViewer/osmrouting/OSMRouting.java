@@ -36,13 +36,13 @@ public class OSMRouting {
 	public OSMRelation relation = null;
 	private DefaultDirectedGraph<OSMNode, OSMStep> graph;
 
-	public void init(File osmxml, File overrides) throws ParserConfigurationException, SAXException, IOException {
+	public void init(File osmxml) throws ParserConfigurationException, SAXException, IOException {
 		SAXParserFactory factory = SAXParserFactory.newInstance();
 		SAXParser saxParser = factory.newSAXParser();
 		BufferedInputStream is = new BufferedInputStream(new FileInputStream(osmxml));
 		saxParser.parse(is, new SaxHandler());
 		is.close();
-		is = new BufferedInputStream(new FileInputStream(overrides));
+		is = new BufferedInputStream(this.getClass().getResourceAsStream("osm_overrides.xml"));
 		saxParser.parse(is, new OverridingSaxHandler());
 		is.close();
 
@@ -108,7 +108,7 @@ public class OSMRouting {
 		EntityManager em = DBUtils.getEntityManager();
 
 		OSMRouting osmRouting = new OSMRouting();
-		osmRouting.init(new File("ligne-y.osm.xml"), new File("osm_overrides.xml"));
+		osmRouting.init(new File("ligne-y.osm.xml"));
 
 		// Ferney-Mairie
 		// new Coordinate(6.1081094,46.2555700));

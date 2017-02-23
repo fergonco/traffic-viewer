@@ -34,24 +34,21 @@ public class DBThermometerListener implements ThermometerListener {
 
 	private static Logger logger = Logger.getLogger(DBThermometerListener.class);
 
-	private static final String TRAFFIC_VIEWER_OSM_OVERRIDES = "TRAFFIC_VIEWER_OSM_OVERRIDES";
 	private static final String TRAFFIC_VIEWER_OSM_NETWORK = "TRAFFIC_VIEWER_OSM_NETWORK";
 	private OSMRouting osmRouting = new OSMRouting();
 
-	public DBThermometerListener(File osmxml, File overrides)
-			throws ParserConfigurationException, SAXException, IOException {
-		osmRouting.init(osmxml, overrides);
+	public DBThermometerListener(File osmxml) throws ParserConfigurationException, SAXException, IOException {
+		osmRouting.init(osmxml);
 		logger.info("initialized");
 	}
 
 	public DBThermometerListener() throws ParserConfigurationException, SAXException, IOException {
 		String osmNetworkPath = System.getenv(TRAFFIC_VIEWER_OSM_NETWORK);
-		String osmOverridesPath = System.getenv(TRAFFIC_VIEWER_OSM_OVERRIDES);
-		if (osmNetworkPath == null || osmOverridesPath == null) {
-			throw new IllegalStateException(TRAFFIC_VIEWER_OSM_NETWORK + " and " + TRAFFIC_VIEWER_OSM_OVERRIDES
-					+ " must be defined when using empty parameters constructor");
+		if (osmNetworkPath == null) {
+			throw new IllegalStateException(
+					TRAFFIC_VIEWER_OSM_NETWORK + " must be defined when using empty parameters constructor");
 		}
-		osmRouting.init(new File(osmNetworkPath), new File(osmOverridesPath));
+		osmRouting.init(new File(osmNetworkPath));
 
 		logger.info("initialized");
 	}
