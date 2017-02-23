@@ -176,6 +176,26 @@
 						</executions>
 					</plugin>
 					<plugin>
+						<artifactId>maven-antrun-plugin</artifactId>
+						<version>1.4</version>
+						<executions>
+							<execution>
+								<id>copy</id>
+								<phase>prepare-package</phase>
+								<configuration>
+									<tasks>
+										<copy todir="${project.build.directory}/requirejs/geoladris">
+											<fileset dir="${project.build.directory}/classes/geoladris/" />
+										</copy>
+									</tasks>
+								</configuration>
+								<goals>
+									<goal>run</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+					<plugin>
 						<groupId>org.fao.unredd</groupId>
 						<artifactId>jwebclient-analyzer-maven-plugin</artifactId>
 						<version>${core.version}</version>
