@@ -1,8 +1,6 @@
 # Build
 
-	mvn package
-	docker build . -t fergonco/traffic-viewer
-	docker push fergonco/traffic-viewer
+	mvn, mkdockers.sh, pushdockers.sh
 
 # Development
 
