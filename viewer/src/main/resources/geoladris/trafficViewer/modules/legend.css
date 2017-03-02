@@ -1,0 +1,39 @@
+#LegendTab {
+	width: 100%;
+}
+
+#LegendContent {
+	position: absolute;
+	background-color: gray;
+	bottom: 0px;
+	width: 200px;
+	right: 0px;
+	overflow: hidden;
+}
+
+.HiddenLegendContent {
+	height: 1em;
+}
+
+.VisibleLegendContent {
+	height: auto;
+}
+
+.LegendSquare {
+	width: 1em;
+	height: 1em;
+	display: inline-block;
+	clear: both;
+}
+
+#RedLegendSquare {
+	background-color: red;
+}
+
+#OrangeLegendSquare {
+	background-color: #ffa500;
+}
+
+#BlueLegendSquare {
+	background-color: blue;
+}
