@@ -8,24 +8,5 @@
 		"time-slider": {
 			"htmlId": "TimeSlider"
 		}
-	},
-	"footnote": {
-		"footnote": {
-			"htmlId": null,
-			"notes": [
-				{
-					"text" : "Developer:",
-					"link" : "http://fergonco.org/"	
-				},
-				{
-					"text" : "Network data: ©OpenStreetMap",
-					"link" : "http://openstreetmap.org/"	
-				},
-				{
-					"text" : "Public transport data: transports publics genevois (TPG)",
-					"link" : "http://data.tpg.ch"	
-				}
-			]
-		}
 	}
 }
