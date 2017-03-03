@@ -1,18 +1,20 @@
-#LegendTab {
-	width: 100%;
-}
-
 #LegendContent {
 	position: absolute;
-	background-color: gray;
 	bottom: 0px;
-	width: 200px;
 	right: 0px;
 	overflow: hidden;
+	font-size: 4vmin;
+}
+
+#LegendTab {
+	float: right;
+	background-color: blue;
+	color: white;
+	padding: 0.1em;
 }
 
 .HiddenLegendContent {
-	height: 1em;
+	height: 6vmin;
 }
 
 .VisibleLegendContent {
@@ -23,7 +25,8 @@
 	width: 1em;
 	height: 1em;
 	display: inline-block;
-	clear: both;
+	margin: 5px;
+	vertical-align: middle;
 }
 
 #RedLegendSquare {
@@ -36,4 +39,16 @@
 
 #BlueLegendSquare {
 	background-color: blue;
+}
+
+#LegendLineContainer {
+	clear: both;
+	border: 1px solid black;
+	background-color: white;
+}
+
+.LegendLine {
+	font-size: 3vmin;
+	clear: both;
+	margin: 5px;
 }
