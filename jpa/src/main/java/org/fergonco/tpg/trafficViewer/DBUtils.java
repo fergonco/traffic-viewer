@@ -17,7 +17,7 @@ public class DBUtils {
 	private static final String TRAFFIC_VIEWER_DB_USER = "TRAFFIC_VIEWER_DB_USER";
 	private static final String TRAFFIC_VIEWER_DB_PASSWORD = "TRAFFIC_VIEWER_DB_PASSWORD";
 	private static String persistenceUnit = "local-pg";
-	private static String schemaName = null;
+	private static String schemaName = "app";
 
 	public static EntityManager getEntityManager() {
 		Map<String, String> configurationMap = new HashMap<>();
