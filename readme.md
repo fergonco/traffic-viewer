@@ -1,6 +1,6 @@
 # Build
 
-	mvn, mkdockers.sh, pushdockers.sh
+	mvn package, mkdockers.sh, pushdockers.sh
 
 # Development
 
@@ -28,10 +28,6 @@ Prerequisites:
 * postgresql/postgis docker instance
 	docker run -p54322:5432 -d -t -v /app-conf/postgresql/:/var/lib/postgresql -e POSTGRES_USER=geomatico -e POSTGRES_PASS= --name pg kartoza/postgis:9.3-2.1
 * traffic-viewer instance
-
-Program PG to execute regularly:
-
-	vacuum analyze app.timestamped_osmshiftinfo ;
 
 ## Create database
 
@@ -312,3 +308,16 @@ Separados por comas y sin el prefijo "EPSG:" :
 	    </UserStyle>
 	  </NamedLayer>
 	</StyledLayerDescriptor>
+
+## Monit
+
+The service can be monitored in the /dbstatus/ url:
+
+	check host border-rampage with address fergonco.org
+	    if failed
+	        port 80 protocol http
+	        request "/dbstatus/" with content = "weather: success\ntransport: success"
+	    then alert
+
+
+	
