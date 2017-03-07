@@ -1,0 +1,7 @@
+{
+	"requirejs" : {
+		"paths" : {
+			"Mustache" : "../jslib/mustache"
+		}
+	}
+}
