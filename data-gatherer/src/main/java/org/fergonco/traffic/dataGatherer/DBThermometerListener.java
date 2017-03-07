@@ -7,7 +7,6 @@ import javax.persistence.EntityManager;
 import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.log4j.Logger;
-import org.fergonco.tpg.trafficViewer.DBUtils;
 import org.fergonco.tpg.trafficViewer.jpa.OSMShift;
 import org.fergonco.tpg.trafficViewer.jpa.Shift;
 import org.fergonco.tpg.trafficViewer.jpa.TPGStop;
@@ -38,12 +37,17 @@ public class DBThermometerListener implements ThermometerListener {
 	private static final String TRAFFIC_VIEWER_OSM_NETWORK = "TRAFFIC_VIEWER_OSM_NETWORK";
 	private OSMRouting osmRouting = new OSMRouting();
 
-	public DBThermometerListener(File osmxml) throws ParserConfigurationException, SAXException, IOException {
+	private EntityManager em;
+
+	public DBThermometerListener(EntityManager em, File osmxml)
+			throws ParserConfigurationException, SAXException, IOException {
+		this.em = em;
 		osmRouting.init(osmxml);
 		logger.info("initialized");
 	}
 
-	public DBThermometerListener() throws ParserConfigurationException, SAXException, IOException {
+	public DBThermometerListener(EntityManager em) throws ParserConfigurationException, SAXException, IOException {
+		this.em = em;
 		String osmNetworkPath = System.getenv(TRAFFIC_VIEWER_OSM_NETWORK);
 		if (osmNetworkPath == null) {
 			throw new IllegalStateException(
@@ -59,7 +63,6 @@ public class DBThermometerListener implements ThermometerListener {
 		logger.info("Previous: " + previousStep);
 		logger.info("Current: " + currentStep);
 		if (previousStep != null) {
-			EntityManager em = DBUtils.getEntityManager();
 			TPGStop start = em.find(TPGStop.class, previousStep.getStopCode());
 			TPGStop end = em.find(TPGStop.class, currentStep.getStopCode());
 
