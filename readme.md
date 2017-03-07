@@ -1,6 +1,8 @@
 # Build
 
-	mvn package, mkdockers.sh, pushdockers.sh
+	mvn package
+	mkdockers.sh
+	pushdockers.sh
 
 # Development
 
