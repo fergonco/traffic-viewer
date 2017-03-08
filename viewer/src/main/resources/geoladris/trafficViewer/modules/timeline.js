@@ -3,7 +3,7 @@ define(
    function(bus, Mustache) {
 
       var timestamps = [];
-      var scaleFactor = 0.0001;
+      var scaleFactor = 0.00007;
       var minTimestamp = null;
       var maxTimestamp = null;
       var selectedTimestamp = null;
@@ -48,6 +48,7 @@ define(
             }
          }
          applyTemplate();
+         container.scrollLeft = (maxTimestamp - minTimestamp) * scaleFactor;
          setNearestTime(new Date().getTime());
       });
 
@@ -97,7 +98,7 @@ define(
          }
 
          selectedTimestamp = nearestTimestamp;
-         
+
          bus.send("timeline:selection", {
             "timestamp" : selectedTimestamp
          });
@@ -111,8 +112,8 @@ define(
             var current = container.scrollLeft;
             var target = (selectedTimestamp - minTimestamp) * scaleFactor;
             animate({
-               delay : 20,
-               duration : 500,
+               delay : 10,
+               duration : Math.abs(target - current) * 2,
                delta : function(progress) {
                   return progress;
                },
