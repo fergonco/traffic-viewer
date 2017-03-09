@@ -238,12 +238,12 @@ Separados por comas y sin el prefijo "EPSG:" :
 	
 	      <FeatureTypeStyle>
 	        <Rule>
-	          <Name>Rule_15</Name>
-	          <Title>[0, 15[</Title>
+	          <Name>Rule_20</Name>
+	          <Title>[0, 20[</Title>
 	          <ogc:Filter>
 	            <ogc:PropertyIsLessThan>
 	              <ogc:PropertyName>speed</ogc:PropertyName>
-	              <ogc:Literal>15</ogc:Literal>
+	              <ogc:Literal>20</ogc:Literal>
 	            </ogc:PropertyIsLessThan>
 	          </ogc:Filter>
 	          <LineSymbolizer>
@@ -251,7 +251,7 @@ Separados por comas y sin el prefijo "EPSG:" :
 	              <ogc:PropertyName>geom</ogc:PropertyName>
 	            </Geometry>     
 	            <Stroke>
-	              <CssParameter name="stroke">#FF0000</CssParameter>
+	              <CssParameter name="stroke">#ff0000</CssParameter>
 	              <CssParameter name="stroke-width">4</CssParameter>
 	            </Stroke>
 	            <PerpendicularOffset>4</PerpendicularOffset>
@@ -259,13 +259,40 @@ Separados por comas y sin el prefijo "EPSG:" :
 	        </Rule>
 	
 	        <Rule>
-	          <Name>Rule15_40</Name>
-	          <Title>[15, 40[</Title>
+	          <Name>Rule20_30</Name>
+	          <Title>[20, 30[</Title>
 	          <ogc:Filter>
 	            <ogc:And>
 	              <ogc:PropertyIsGreaterThanOrEqualTo>
 	                <ogc:PropertyName>speed</ogc:PropertyName>
-	                <ogc:Literal>15</ogc:Literal>
+	                <ogc:Literal>20</ogc:Literal>
+	              </ogc:PropertyIsGreaterThanOrEqualTo>
+	              <ogc:PropertyIsLessThan>
+	                <ogc:PropertyName>speed</ogc:PropertyName>
+	                <ogc:Literal>30</ogc:Literal>
+	              </ogc:PropertyIsLessThan>
+	            </ogc:And>
+	          </ogc:Filter>
+	          <LineSymbolizer>
+	            <Geometry>
+	              <ogc:PropertyName>geom</ogc:PropertyName>
+	            </Geometry>     
+	            <Stroke>
+	              <CssParameter name="stroke">#ffba00</CssParameter>
+	              <CssParameter name="stroke-width">4</CssParameter>
+	            </Stroke>
+	            <PerpendicularOffset>4</PerpendicularOffset>
+	          </LineSymbolizer>
+	        </Rule>
+	        
+	        <Rule>
+	          <Name>Rule30_40</Name>
+	          <Title>[30, 40[</Title>
+	          <ogc:Filter>
+	            <ogc:And>
+	              <ogc:PropertyIsGreaterThanOrEqualTo>
+	                <ogc:PropertyName>speed</ogc:PropertyName>
+	                <ogc:Literal>30</ogc:Literal>
 	              </ogc:PropertyIsGreaterThanOrEqualTo>
 	              <ogc:PropertyIsLessThan>
 	                <ogc:PropertyName>speed</ogc:PropertyName>
@@ -278,7 +305,7 @@ Separados por comas y sin el prefijo "EPSG:" :
 	              <ogc:PropertyName>geom</ogc:PropertyName>
 	            </Geometry>     
 	            <Stroke>
-	              <CssParameter name="stroke">#FFA500</CssParameter>
+	              <CssParameter name="stroke">#ffff00</CssParameter>
 	              <CssParameter name="stroke-width">4</CssParameter>
 	            </Stroke>
 	            <PerpendicularOffset>4</PerpendicularOffset>
@@ -289,17 +316,17 @@ Separados por comas y sin el prefijo "EPSG:" :
 	          <Name>Rule_40</Name>
 	          <Title>[40, Inf[</Title>
 	          <ogc:Filter>
-              <ogc:PropertyIsGreaterThanOrEqualTo>
-                <ogc:PropertyName>speed</ogc:PropertyName>
-                <ogc:Literal>40</ogc:Literal>
-              </ogc:PropertyIsGreaterThanOrEqualTo>
+	            <ogc:PropertyIsGreaterThanOrEqualTo>
+	              <ogc:PropertyName>speed</ogc:PropertyName>
+	              <ogc:Literal>40</ogc:Literal>
+	            </ogc:PropertyIsGreaterThanOrEqualTo>
 	          </ogc:Filter>
 	          <LineSymbolizer>
 	            <Geometry>
 	              <ogc:PropertyName>geom</ogc:PropertyName>
 	            </Geometry>     
 	            <Stroke>
-	              <CssParameter name="stroke">#0000FF</CssParameter>
+	              <CssParameter name="stroke">#00ff00</CssParameter>
 	              <CssParameter name="stroke-width">4</CssParameter>
 	            </Stroke>
 	            <PerpendicularOffset>4</PerpendicularOffset>
