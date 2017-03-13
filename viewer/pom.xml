@@ -55,11 +55,6 @@
 		</dependency>
 		<dependency>
 			<groupId>org.fao.unredd</groupId>
-			<artifactId>ol2</artifactId>
-			<version>${plugins.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.fao.unredd</groupId>
 			<artifactId>time-slider</artifactId>
 			<version>${plugins.version}</version>
 		</dependency>

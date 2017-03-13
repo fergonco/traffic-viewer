@@ -1,6 +1,6 @@
 {
-	"ol2": {
-		"map": {
+	"trafficViewer": {
+		"leaflet": {
 			"htmlId": "fullscreenmap"
 		}
 	},
