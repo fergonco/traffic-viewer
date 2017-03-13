@@ -55,11 +55,11 @@ define([ "message-bus", "iso8601" ], function(bus, iso8601) {
             var timeDimension = data
                .match("<Dimension name=\"time\" default=\"current\" units=\"ISO8601\">(.*)</Dimension>");
             if (timeDimension != null) {
-                var timestamps = timeDimension[1];
-                var timestampArray = timestamps.split(",");
-                bus.send("add-timestamps", {
-                "timestamps" : timestampArray
-                });
+               var timestamps = timeDimension[1];
+               var timestampArray = timestamps.split(",");
+               bus.send("add-timestamps", {
+                  "timestamps" : timestampArray
+               });
             } else {
                alert("No hay datos temporales");
             }
