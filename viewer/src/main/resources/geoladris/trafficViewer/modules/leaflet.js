@@ -44,10 +44,8 @@ define([ "message-bus", "module", "leaflet" ], function(bus, module, L) {
       }
       if (layer != null) {
          layerInfos[message.layerId] = {
-            "leafletId" : L.stamp(layer),
-            "opacity" : 1
+            "leafletId" : L.stamp(layer)
          }
-         layer.visible = true;
          rootLayer.addLayer(layer);
          bus.send("map:layerAdded", [ message ]);
       }
@@ -58,21 +56,9 @@ define([ "message-bus", "module", "leaflet" ], function(bus, module, L) {
       return rootLayer.getLayer(leafletId);
    }
 
-   bus.listen("map:layerVisibility", function(event, message) {
-      var layerInfo = layerInfos[message.layerId];
-      var layer = getLayer(message.layerId);
-      layer.setOpacity(message.visibility ? layerInfo.opacity : 0);
-      layer.visible = message.visibility;
-   });
    bus.listen("map:setLayerOpacity", function(event, message) {
-      var layerInfo = layerInfos[message.layerId];
-      layerInfo.opacity = message.opacity;
-
-      // If the layer is visible update opacity
       var layer = getLayer(message.layerId);
-      if (layer.visible) {
-         layer.setOpacity(layerInfo.opacity);
-      }
+      layer.setOpacity(message.opacity);
    });
 
    bus.listen("map:mergeLayerParameters", function(e, message) {
