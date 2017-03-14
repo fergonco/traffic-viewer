@@ -1,5 +1,7 @@
 define([ "message-bus", "iso8601" ], function(bus, iso8601) {
 
+   var speedsLayerAdded = false;
+
    var timeSlider = document.createElement('div');
    timeSlider.id = "TimeSlider";
    document.body.append(timeSlider);
@@ -24,17 +26,6 @@ define([ "message-bus", "iso8601" ], function(bus, iso8601) {
       bus.send("map:setLayerOpacity", {
          "layerId" : "osm_roads",
          "opacity" : 0.7
-      });
-      bus.send("map:addLayer", {
-         "layerId" : "osm_speeds",
-         "wms" : {
-            "baseUrl" : "/geoserver/wms",
-            "wmsName" : "tpg:timestamped_osmshiftinfo"
-         }
-      });
-      bus.send("map:layerVisibility", {
-         "layerId" : "osm_speeds",
-         "visibility" : false
       });
       bus.send("zoom-to", {
          "x" : 6.03,
@@ -70,17 +61,27 @@ define([ "message-bus", "iso8601" ], function(bus, iso8601) {
       });
 
       bus.listen("timeline:selection", function(e, message) {
-         // layer is visible only after first time selection event
-         bus.send("map:layerVisibility", {
-            "layerId" : "osm_speeds",
-            "visibility" : true
-         });
-         bus.send("map:mergeLayerParameters", {
-            "layerId" : "osm_speeds",
-            "parameters" : {
-               "time" : new Date(message.timestamp).toISOString()
-            }
-         });
+         var timeString = new Date(message.timestamp).toISOString();
+         if (!speedsLayerAdded) {
+            speedsLayerAdded = true;
+            bus.send("map:addLayer", {
+               "layerId" : "osm_speeds",
+               "wms" : {
+                  "baseUrl" : "/geoserver/wms",
+                  "wmsName" : "tpg:timestamped_osmshiftinfo",
+                  "parameters" : {
+                     "time" : timeString
+                  }
+               }
+            });
+         } else {
+            bus.send("map:mergeLayerParameters", {
+               "layerId" : "osm_speeds",
+               "parameters" : {
+                  "time" : timeString
+               }
+            });
+         }
       });
    });
 });

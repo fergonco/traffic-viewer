@@ -39,6 +39,9 @@ define([ "message-bus", "module", "leaflet" ], function(bus, module, L) {
             "format" : message.wms.imageFormat || 'image/png',
             "transparent" : true
          });
+         if (message.wms.parameters) {
+            layer.setParams(message.wms.parameters);
+         }
       } else {
          console.error("layer type not supported");
       }
