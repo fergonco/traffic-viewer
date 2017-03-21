@@ -1,0 +1,32 @@
+{
+	"holiday": [{
+		"country": "france",
+		"days": [
+			"1 Jan", "17 Apr", "1 May", "8 May", "25 May", "5 Jun", "14 Jul", "15 Aug", "1 Nov", "11 Nov", "25 Dec"
+		]
+	}, {
+		"country": "switzerland",
+		"days": [
+			"1 Jan", "14 Apr", "17 Apr", "25 Mai", "5 Jun", "1 Aug", "7 Sep", "25 Dec", "31 Dec"
+		]
+	}],
+	"school": [{
+		"country": "france",
+		"intervals": [
+			["3 jan", "18 feb"],
+			["6 mar", "15 apr"],
+			["2 mai", "8 Jul"],
+			["4 sep", "21 oct"],
+			["6 nov", "23 dec"]
+		]
+	}, {
+		"country": "switzerland",
+		"intervals": [
+			["9 jan", "10 feb"],
+			["20 fev", "12 apr"],
+			["24 apr", "30 jun"],
+			["28 aug", "20 oct"],
+			["30 oct", "22 dec"]
+		]
+	}]
+}
