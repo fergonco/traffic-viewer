@@ -25,12 +25,6 @@ docker rm traffic-viewer-dbstatus
 set -e
 docker run -d -p 8082:8080 --link pg:pg -e TRAFFIC_VIEWER_DB_URL=jdbc:postgresql://pg:5432/tpg -e TRAFFIC_VIEWER_DB_USER=tpg -e TRAFFIC_VIEWER_DB_PASSWORD=$PASSWORD --name traffic-viewer-dbstatus fergonco/traffic-viewer-dbstatus
 
-set +e
-docker stop traffic-viewer-segmentspeeds
-docker rm traffic-viewer-segmentspeeds
-set -e
-docker run -d -p 8083:8080 --link pg:pg -e TRAFFIC_VIEWER_DB_URL=jdbc:postgresql://pg:5432/tpg -e TRAFFIC_VIEWER_DB_USER=tpg -e TRAFFIC_VIEWER_DB_PASSWORD=$PASSWORD --name traffic-viewer-segmentspeeds fergonco/traffic-viewer-segmentspeeds
-
 echo 'Navigate to http://localhost/border-rampage-docker/'
 
 
