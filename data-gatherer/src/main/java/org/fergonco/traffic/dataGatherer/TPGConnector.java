@@ -33,7 +33,7 @@ public class TPGConnector implements ServletContextListener {
 		int end3amNextDay = 27 * 60 * 60 * 1000;
 		DayFrame dayFrame = new DayFrame(start4am, end3amNextDay);
 
-		TPGCachedParser tpg = new TPGCachedParser(new TPG(), 5);
+		TPGCachedParser tpg = new TPGCachedParser(new TPG(), 10);
 
 		DBThermometerListener listener;
 		try {
