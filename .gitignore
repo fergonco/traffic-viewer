@@ -4,3 +4,4 @@
 target/
 
 .R*
+.Rproj.user
