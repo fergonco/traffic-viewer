@@ -31,6 +31,7 @@ public class DBUtils {
 		if (System.getenv(TRAFFIC_VIEWER_DB_PASSWORD) != null) {
 			configurationMap.put("javax.persistence.jdbc.password", System.getenv(TRAFFIC_VIEWER_DB_PASSWORD));
 		}
+		configurationMap.put("eclipselink.logging.level", "WARNING");
 		EntityManagerFactory emf = Persistence.createEntityManagerFactory(persistenceUnit, configurationMap);
 		EntityManager em = emf.createEntityManager();
 		return em;
