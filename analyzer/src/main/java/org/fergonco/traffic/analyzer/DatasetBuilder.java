@@ -39,10 +39,11 @@ public class DatasetBuilder {
 
 			WeatherConditions weatherConditions = null;
 			try {
-				Query weatherConditionsQuery = em
-						.createNativeQuery("select * from app.WeatherConditions w " + "where w.timestamp=("
-								+ "select max(w2.timestamp) from app.WeatherConditions w2 where w2.timestamp < "
-								+ shift.getTimestamp() + ");", WeatherConditions.class);
+				Query weatherConditionsQuery = em.createNativeQuery("select * from app.WeatherConditions w "
+						+ "where w.timestamp=("
+						+ "select max(w2.timestamp) from app.WeatherConditions w2 where w2.timestamp < "
+						+ shift.getTimestamp() + " and w2.timestamp + 6*60*60*1000 > " + shift.getTimestamp() + ");",
+						WeatherConditions.class);
 				weatherConditions = (WeatherConditions) weatherConditionsQuery.getSingleResult();
 
 			} catch (NoResultException e) {
