@@ -16,6 +16,7 @@ public class DBUtils {
 	private static final String TRAFFIC_VIEWER_DB_URL = "TRAFFIC_VIEWER_DB_URL";
 	private static final String TRAFFIC_VIEWER_DB_USER = "TRAFFIC_VIEWER_DB_USER";
 	private static final String TRAFFIC_VIEWER_DB_PASSWORD = "TRAFFIC_VIEWER_DB_PASSWORD";
+	private static final String TRAFFIC_VIEWER_JPA_LOG_LEVEL = "TRAFFIC_VIEWER_JPA_LOG_LEVEL";
 	private static String persistenceUnit = "local-pg";
 	private static String schemaName = "app";
 
@@ -31,7 +32,9 @@ public class DBUtils {
 		if (System.getenv(TRAFFIC_VIEWER_DB_PASSWORD) != null) {
 			configurationMap.put("javax.persistence.jdbc.password", System.getenv(TRAFFIC_VIEWER_DB_PASSWORD));
 		}
-		configurationMap.put("eclipselink.logging.level", "WARNING");
+		if (System.getenv(TRAFFIC_VIEWER_JPA_LOG_LEVEL) != null) {
+			configurationMap.put("eclipselink.logging.level", System.getenv(TRAFFIC_VIEWER_JPA_LOG_LEVEL));
+		}
 		EntityManagerFactory emf = Persistence.createEntityManagerFactory(persistenceUnit, configurationMap);
 		EntityManager em = emf.createEntityManager();
 		return em;
