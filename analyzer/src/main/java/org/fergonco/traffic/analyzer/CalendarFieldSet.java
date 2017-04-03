@@ -17,6 +17,7 @@ import com.google.gson.Gson;
 public class CalendarFieldSet implements OutputFieldSet {
 
 	private Map<Integer, String> dayNames;
+	private Map<Integer, String> previousDay;
 	private SchoolCalendar schoolCalendar;
 
 	public CalendarFieldSet() throws IOException {
@@ -34,11 +35,21 @@ public class CalendarFieldSet implements OutputFieldSet {
 		dayNames.put(Calendar.FRIDAY, "friday");
 		dayNames.put(Calendar.SATURDAY, "saturday");
 		dayNames.put(Calendar.SUNDAY, "sunday");
+
+		previousDay = new HashMap<>();
+		previousDay.put(Calendar.MONDAY, "sunday");
+		previousDay.put(Calendar.TUESDAY, "monday");
+		previousDay.put(Calendar.WEDNESDAY, "tuesday");
+		previousDay.put(Calendar.THURSDAY, "wednesday");
+		previousDay.put(Calendar.FRIDAY, "thursday");
+		previousDay.put(Calendar.SATURDAY, "friday");
+		previousDay.put(Calendar.SUNDAY, "saturday");
 	}
 
 	@Override
 	public String[] getNames() {
-		return new String[] { "minutes", "morningrush", "weekday", "holidayfr", "holidaych", "schoolfr", "schoolch" };
+		return new String[] { "minutesHour", "minutesDay", "morningrush", "weekday", "holidayfr", "holidaych",
+				"schoolfr", "schoolch" };
 	}
 
 	@Override
@@ -48,16 +59,29 @@ public class CalendarFieldSet implements OutputFieldSet {
 		Calendar calendar = Calendar.getInstance();
 		calendar.setTime(date);
 		calendar.setTimeZone(TimeZone.getTimeZone("GMT+1"));
+		int minutesInHour = calendar.get(Calendar.MINUTE);
 		int minutesSinceMidnight = calendar.get(Calendar.HOUR_OF_DAY) * 60 + calendar.get(Calendar.MINUTE);
-		boolean morningrush = minutesSinceMidnight > 420 && minutesSinceMidnight < 570;
-		String dayOfWeek = dayNames.get(calendar.get(Calendar.DAY_OF_WEEK));
+		String dayOfWeek;
+		if (minutesSinceMidnight < 120) {
+			// last services after midnight moved to previous day
+			minutesSinceMidnight += 60 * 24;
+			dayOfWeek = previousDay.get(calendar.get(Calendar.DAY_OF_WEEK));
+		} else {
+			dayOfWeek = dayNames.get(calendar.get(Calendar.DAY_OF_WEEK));
+		}
+		boolean morningrush = minutesSinceMidnight > 400 && minutesSinceMidnight < 550;
 		boolean holidayFrance = schoolCalendar.isHoliday("france", timestamp);
 		boolean holidaySwitzerland = schoolCalendar.isHoliday("switzerland", timestamp);
 		boolean schoolFrance = schoolCalendar.isSchool("france", timestamp);
 		boolean schoolSwitzerland = schoolCalendar.isSchool("switzerland", timestamp);
 
-		return new Object[] { minutesSinceMidnight, morningrush, dayOfWeek, holidayFrance, holidaySwitzerland,
-				schoolFrance, schoolSwitzerland };
+		return new Object[] { minutesInHour, minutesSinceMidnight, indicator(morningrush), dayOfWeek,
+				indicator(holidayFrance), indicator(holidaySwitzerland), indicator(schoolFrance),
+				indicator(schoolSwitzerland) };
+	}
+
+	private Object indicator(boolean booleanVariable) {
+		return booleanVariable ? 1 : 0;
 	}
 
 }
