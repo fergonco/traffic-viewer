@@ -47,7 +47,6 @@ public class DatasetBuilder {
 				weatherConditions = (WeatherConditions) weatherConditionsQuery.getSingleResult();
 
 			} catch (NoResultException e) {
-				e.printStackTrace();
 			}
 
 			OutputContext outputContext = new OutputContext(shift, weatherConditions);
