@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.text.ParseException;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TimeZone;
@@ -55,10 +54,9 @@ public class CalendarFieldSet implements OutputFieldSet {
 	@Override
 	public Object[] getValues(OutputContext outputContext) throws ParseException {
 		long timestamp = outputContext.getShift().getTimestamp();
-		Date date = new Date(timestamp);
 		Calendar calendar = Calendar.getInstance();
-		calendar.setTime(date);
-		calendar.setTimeZone(TimeZone.getTimeZone("GMT+1"));
+		calendar.setTimeInMillis(timestamp);
+		calendar.setTimeZone(TimeZone.getTimeZone("Europe/Rome"));
 		int minutesInHour = calendar.get(Calendar.MINUTE);
 		int minutesSinceMidnight = calendar.get(Calendar.HOUR_OF_DAY) * 60 + calendar.get(Calendar.MINUTE);
 		String dayOfWeek;
