@@ -18,6 +18,10 @@ public class Shift {
 	private long timestamp;
 	private String vehicleId;
 	private int speed;
+	private String sourceType;
+	private String sourceStartPoint;
+	private String sourceEndPoint;
+	private String sourceShiftId;
 	@Column(columnDefinition = "geometry('POINT', 4326)")
 	@Convert(converter = JTSConverter.class)
 	private Geometry startPoint;
@@ -71,6 +75,38 @@ public class Shift {
 
 	public void setSpeed(int speed) {
 		this.speed = speed;
+	}
+
+	public String getSourceType() {
+		return sourceType;
+	}
+
+	public void setSourceType(String sourceType) {
+		this.sourceType = sourceType;
+	}
+
+	public String getSourceStartPoint() {
+		return sourceStartPoint;
+	}
+
+	public void setSourceStartPoint(String sourceStartPoint) {
+		this.sourceStartPoint = sourceStartPoint;
+	}
+
+	public String getSourceEndPoint() {
+		return sourceEndPoint;
+	}
+
+	public void setSourceEndPoint(String sourceEndPoint) {
+		this.sourceEndPoint = sourceEndPoint;
+	}
+
+	public String getSourceShiftId() {
+		return sourceShiftId;
+	}
+
+	public void setSourceShiftId(String sourceShiftId) {
+		this.sourceShiftId = sourceShiftId;
 	}
 
 }

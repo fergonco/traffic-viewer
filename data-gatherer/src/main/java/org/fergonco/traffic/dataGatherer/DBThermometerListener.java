@@ -2,8 +2,12 @@ package org.fergonco.traffic.dataGatherer;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
 
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
+import javax.persistence.TypedQuery;
 import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.log4j.Logger;
@@ -76,9 +80,27 @@ public class DBThermometerListener implements ThermometerListener {
 			Coordinate startCoordinate = path.getCoordinateN(0);
 			Coordinate endCoordinate = path.getCoordinateN(path.getNumPoints() - 1);
 
+			// Remove existing shift
 			em.getTransaction().begin();
+			String sourceShiftId = getDateId(currentStep) + "+" + currentStep.getDepartureCode();
+			try {
+				TypedQuery<Shift> query = em.createQuery("SELECT s FROM Shift s WHERE s.sourceShiftId=:sourceShiftId",
+						Shift.class);
+				query.setParameter("sourceShiftId", sourceShiftId);
+				Shift existingShift = query.getSingleResult();
+				long shiftId = existingShift.getId();
+				em.createQuery("DELETE FROM OSMShift s WHERE s.shift=:shift").setParameter("shift", existingShift)
+						.executeUpdate();
+				em.createQuery("DELETE FROM Shift s WHERE s.id=:id").setParameter("id", shiftId).executeUpdate();
+			} catch (NoResultException e) {
+			}
 
+			// Insert shift
 			Shift shift = new Shift();
+			shift.setSourceShiftId(sourceShiftId);
+			shift.setSourceStartPoint(previousStep.getStopCode());
+			shift.setSourceEndPoint(currentStep.getStopCode());
+			shift.setSourceType("TPG");
 			shift.setEndPoint(OSMUtils.buildPoint(endCoordinate, 4326));
 			shift.setStartPoint(OSMUtils.buildPoint(startCoordinate, 4326));
 			Geometry flatLineString = null;
@@ -108,6 +130,16 @@ public class DBThermometerListener implements ThermometerListener {
 			}
 			em.getTransaction().commit();
 		}
+	}
+
+	private String getDateId(Step currentStep) {
+		GregorianCalendar c = new GregorianCalendar();
+		c.setTimeInMillis(currentStep.getActualTimestamp());
+		int dayOfMonth = c.get(Calendar.DAY_OF_MONTH);
+		if (c.get(Calendar.HOUR_OF_DAY) < 2) {
+			dayOfMonth--;
+		}
+		return dayOfMonth + "-" + c.get(Calendar.MONTH) + "-" + c.get(Calendar.YEAR);
 	}
 
 }

@@ -1,78 +1,159 @@
 package org.fergonco.tpg.trafficViewer;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.argThat;
-import static org.mockito.Mockito.atLeast;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
+import java.util.List;
 
 import javax.persistence.EntityManager;
-import javax.persistence.EntityTransaction;
 import javax.xml.parsers.ParserConfigurationException;
 
-import org.fergonco.tpg.trafficViewer.jpa.OSMShift;
 import org.fergonco.tpg.trafficViewer.jpa.Shift;
-import org.fergonco.tpg.trafficViewer.jpa.TPGStop;
 import org.fergonco.traffic.dataGatherer.DBThermometerListener;
+import org.junit.Before;
 import org.junit.Test;
-import org.mockito.ArgumentMatcher;
 import org.xml.sax.SAXException;
 
 import co.geomati.tpg.Step;
 
 public class DBThermometerListenerTest {
 
-	@Test
-	public void testStep() throws ParserConfigurationException, SAXException, IOException {
-		String stop1 = "STOP1";
-		String stop2 = "STOP2";
-		String destination = "DESTINATION EVERYWHERE";
-		// mock stops
-		TPGStop tpgStop1 = mock(TPGStop.class);
-		when(tpgStop1.getNodeId(destination)).thenReturn("1161861705");
-		TPGStop tpgStop2 = mock(TPGStop.class);
-		when(tpgStop2.getNodeId(destination)).thenReturn("1186330722");
-		// Mock transaction
-		EntityTransaction mockTransaction = mock(EntityTransaction.class);
-		// Mock EntityManager
-		EntityManager mockEntityManager = mock(EntityManager.class);
-		when(mockEntityManager.find(TPGStop.class, stop1)).thenReturn(tpgStop1);
-		when(mockEntityManager.find(TPGStop.class, stop2)).thenReturn(tpgStop2);
-		when(mockEntityManager.getTransaction()).thenReturn(mockTransaction);
+	private static EntityManager em;
+	private Step previousStep;
+	private Step currentStep;
+	private long now;
+	private long someMinutesAgo;
+	private DBThermometerListener listener;
 
-		DBThermometerListener listener = new DBThermometerListener(mockEntityManager, new File("ligne-y.osm.xml"));
-		Step previousStep = new Step();
-		long now = new Date().getTime();
-		previousStep.setActualTimestamp(now - 4 * 60 * 1000);
+	@Before
+	public void clean() throws ParserConfigurationException, SAXException, IOException {
+		DBUtils.setPersistenceUnit("test");
+		em = DBUtils.getEntityManager();
+		em.getTransaction().begin();
+		em.createQuery("DELETE FROM OSMShift").executeUpdate();
+		em.createQuery("DELETE FROM Shift").executeUpdate();
+		em.getTransaction().commit();
+		now = new Date().getTime();
+		someMinutesAgo = now - 10 * 60 * 1000;
+		previousStep = new Step();
+		previousStep.setStopCode("SHUM");
 		previousStep.setDepartureCode("12345");
-		previousStep.setReliable(true);
-		previousStep.setStopCode(stop1);
-		Step currentStep = new Step();
-		currentStep.setActualTimestamp(now);
+		previousStep.setTimestamp(someMinutesAgo);
+		previousStep.setActualTimestamp(someMinutesAgo + 5);
+		currentStep = new Step();
+		currentStep.setStopCode("CERN");
 		currentStep.setDepartureCode("12346");
-		currentStep.setReliable(true);
-		currentStep.setStopCode(stop2);
-		listener.stepActualTimestampChanged(previousStep, currentStep, destination);
+		currentStep.setTimestamp(now);
+		currentStep.setActualTimestamp(now + 5);
+		listener = new DBThermometerListener(em, new File("ligne-y.osm.xml"));
+	}
 
-		verify(mockEntityManager, times(1)).persist(argThat(new ArgumentMatcher<Shift>() {
+	@Test
+	public void insert() {
+		listener.stepActualTimestampChanged(previousStep, currentStep, "FERNEY-VOLTAIRE");
 
-			@Override
-			public boolean matches(Object argument) {
-				if (argument instanceof Shift) {
-					Shift shift = (Shift) argument;
-					return shift.getTimestamp() == now;
-				}
-				return false;
-			}
-		}));
-		verify(mockEntityManager, atLeast(2)).persist(any(OSMShift.class));
-		verify(mockTransaction, times(1)).begin();
-		verify(mockTransaction, times(1)).commit();
+		List<Shift> list = em.createQuery("SELECT s FROM Shift s", Shift.class).getResultList();
+		assertEquals(1, list.size());
+	}
+
+	@Test
+	public void avoidRepeated() {
+		insert();
+		int speed = em.createQuery("SELECT s FROM Shift s", Shift.class).getSingleResult().getSpeed();
+
+		// Correct the current shift by indicating a later arrival
+		currentStep.setActualTimestamp(now + 30 * 1000);
+		listener.stepActualTimestampChanged(previousStep, currentStep, "FERNEY-VOLTAIRE");
+
+		// Same shift, therefore same record
+		List<Shift> list = em.createQuery("SELECT s FROM Shift s", Shift.class).getResultList();
+		assertEquals(1, list.size());
+
+		// speed is slower
+		int newSpeed = em.createQuery("SELECT s FROM Shift s", Shift.class).getSingleResult().getSpeed();
+		assertTrue(newSpeed < speed);
+	}
+
+	@Test
+	public void newShiftNextDay() {
+		insert();
+
+		Step newPreviousStep = new Step();
+		newPreviousStep.setStopCode("SHUM");
+		newPreviousStep.setDepartureCode("12347");
+		newPreviousStep.setTimestamp(someMinutesAgo + 24 * 60 * 60 * 1000);
+		newPreviousStep.setActualTimestamp(someMinutesAgo + 24 * 60 * 60 * 1000 + 5);
+		Step newCurrentStep = new Step();
+		newCurrentStep.setStopCode("CERN");
+		newCurrentStep.setDepartureCode("12348");
+		newCurrentStep.setTimestamp(now + 24 * 60 * 60 * 1000);
+		newCurrentStep.setActualTimestamp(now + 24 * 60 * 60 * 1000 + 5);
+		listener.stepActualTimestampChanged(newPreviousStep, newCurrentStep, "FERNEY-VOLTAIRE");
+
+		// Same shift, therefore same record
+		List<Shift> list = em.createQuery("SELECT s FROM Shift s", Shift.class).getResultList();
+		assertEquals(2, list.size());
+	}
+
+	@Test
+	public void sameShiftAfterMidnight() {
+		// any day at midnight
+		Calendar c = new GregorianCalendar();
+		c.setTime(new Date());
+		c.set(Calendar.HOUR_OF_DAY, 23);
+		c.set(Calendar.MINUTE, 59);
+		c.set(Calendar.SECOND, 59);
+		long almostMidnight = c.getTimeInMillis();
+
+		Step newPreviousStep = new Step();
+		newPreviousStep.setStopCode("SHUM");
+		newPreviousStep.setDepartureCode("12347");
+		newPreviousStep.setTimestamp(almostMidnight - 5 * 60 * 1000);
+		newPreviousStep.setActualTimestamp(almostMidnight - 5 * 60 * 1000);
+		Step newCurrentStep = new Step();
+		newCurrentStep.setStopCode("CERN");
+		newCurrentStep.setDepartureCode("12348");
+		newCurrentStep.setTimestamp(almostMidnight);
+		newCurrentStep.setActualTimestamp(almostMidnight);
+		listener.stepActualTimestampChanged(newPreviousStep, newCurrentStep, "FERNEY-VOLTAIRE");
+
+		// First shift
+		List<Shift> list = em.createQuery("SELECT s FROM Shift s", Shift.class).getResultList();
+		assertEquals(1, list.size());
+
+		// Correct the current shift by indicating a later arrival
+		long afterMidnight = almostMidnight + 3 * 1000;
+		newCurrentStep.setActualTimestamp(afterMidnight);
+		listener.stepActualTimestampChanged(newPreviousStep, newCurrentStep, "FERNEY-VOLTAIRE");
+
+		// First shift
+		list = em.createQuery("SELECT s FROM Shift s", Shift.class).getResultList();
+		assertEquals(1, list.size());
+	}
+
+	@Test
+	public void newShiftWithDifferentDepartureCode() {
+		insert();
+
+		Step newPreviousStep = new Step();
+		newPreviousStep.setStopCode("SHUM");
+		newPreviousStep.setDepartureCode("12347");
+		newPreviousStep.setTimestamp(someMinutesAgo);
+		newPreviousStep.setActualTimestamp(someMinutesAgo + 5);
+		Step newCurrentStep = new Step();
+		newCurrentStep.setStopCode("CERN");
+		newCurrentStep.setDepartureCode("12348");
+		newCurrentStep.setTimestamp(now);
+		newCurrentStep.setActualTimestamp(now + 5);
+		listener.stepActualTimestampChanged(newPreviousStep, newCurrentStep, "FERNEY-VOLTAIRE");
+
+		// Same shift, therefore same record
+		List<Shift> list = em.createQuery("SELECT s FROM Shift s", Shift.class).getResultList();
+		assertEquals(2, list.size());
 	}
 }
