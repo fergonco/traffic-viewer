@@ -7,10 +7,11 @@ import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class APIClient {
-	private final static Logger logger = Logger.getLogger(APIClient.class);
+	private final static Logger logger = LogManager.getLogger(APIClient.class);
 
 	private String key;
 	private final String baseURL;

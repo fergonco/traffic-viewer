@@ -10,7 +10,8 @@ import javax.persistence.NoResultException;
 import javax.persistence.TypedQuery;
 import javax.xml.parsers.ParserConfigurationException;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.fergonco.tpg.trafficViewer.jpa.OSMShift;
 import org.fergonco.tpg.trafficViewer.jpa.Shift;
 import org.fergonco.tpg.trafficViewer.jpa.TPGStop;
@@ -36,7 +37,7 @@ import co.geomati.tpg.ThermometerListener;
 
 public class DBThermometerListener implements ThermometerListener {
 
-	private static Logger logger = Logger.getLogger(DBThermometerListener.class);
+	private static Logger logger = LogManager.getLogger(DBThermometerListener.class);
 
 	private static final String TRAFFIC_VIEWER_OSM_NETWORK = "TRAFFIC_VIEWER_OSM_NETWORK";
 	private OSMRouting osmRouting = new OSMRouting();
@@ -117,6 +118,10 @@ public class DBThermometerListener implements ThermometerListener {
 			shift.setSpeed((int) Math.round(km / h));
 			shift.setVehicleId(currentStep.getDepartureCode());
 			shift.setTimestamp(currentStep.getActualTimestamp());
+			logger.debug("New Shift to be inserted from " + previousStep.getStopCode() + "("
+					+ previousStep.getActualTimestamp() + ") to " + currentStep.getStopCode() + "("
+					+ currentStep.getActualTimestamp() + "). Path length: " + flatLineString.getLength() + ". Speed:"
+					+ shift.getSpeed());
 			em.persist(shift);
 
 			OSMStep[] wayIdsAndSenses = result.getWayIdsAndSenses();
