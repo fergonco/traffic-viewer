@@ -3,9 +3,7 @@ package org.fergonco.traffic.analyzer;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collections;
-import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
@@ -23,16 +21,6 @@ import org.fergonco.tpg.trafficViewer.jpa.WeatherConditions;
 
 public class DatasetBuilder {
 
-	private String getShiftId(Shift shift) {
-		GregorianCalendar c = new GregorianCalendar();
-		c.setTimeInMillis(shift.getTimestamp());
-		int dayOfMonth = c.get(Calendar.DAY_OF_MONTH);
-		if (c.get(Calendar.HOUR_OF_DAY) < 2) {
-			dayOfMonth--;
-		}
-		return dayOfMonth + "-" + c.get(Calendar.MONTH) + "-" + c.get(Calendar.YEAR) + "+" + shift.getVehicleId();
-	}
-
 	public void build() throws IOException, ParseException {
 		EntityManager em = DBUtils.getEntityManager();
 		TypedQuery<OSMShift> query = em.createQuery(
@@ -48,7 +36,7 @@ public class DatasetBuilder {
 		HashMap<String, ArrayList<Shift>> idShiftDuplicates = new HashMap<>();
 		for (OSMShift osmShift : osmShifts) {
 			Shift shift = osmShift.getShift();
-			String shiftId = getShiftId(shift);
+			String shiftId = IdFieldSet.getShiftId(shift);
 			ArrayList<Shift> shiftDuplicates = idShiftDuplicates.get(shiftId);
 			if (shiftDuplicates == null) {
 				shiftDuplicates = new ArrayList<>();
@@ -77,8 +65,8 @@ public class DatasetBuilder {
 			}
 		}
 
-		OutputFieldSet[] outputFieldSets = new OutputFieldSet[] { new ShiftFieldSet(), new CalendarFieldSet(),
-				new WeatherFieldSet() };
+		OutputFieldSet[] outputFieldSets = new OutputFieldSet[] { new IdFieldSet(), new ShiftFieldSet(),
+				new CalendarFieldSet(), new WeatherFieldSet() };
 		ArrayList<Object> outputLine = new ArrayList<>();
 		for (OutputFieldSet outputFieldSet : outputFieldSets) {
 			Collections.addAll(outputLine, outputFieldSet.getNames());
@@ -88,7 +76,7 @@ public class DatasetBuilder {
 			Shift shift = osmShift.getShift();
 
 			// Check if this is the right duplicate
-			String shiftId = getShiftId(shift);
+			String shiftId = IdFieldSet.getShiftId(shift);
 			Shift rightShift = idRightShift.get(shiftId);
 			if (rightShift == null || rightShift.getId() != shift.getId()) {
 				// wrong duplicate
