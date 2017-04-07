@@ -1,12 +1,29 @@
-library(ggplot2);
+library(ggplot2)
 
-speeds <-read.csv("tocern.csv")
+
+speeds <- read.csv("tocern.csv")
 
 scatterplots <- function() {
-  for (i in names(speeds)) {
-    scatterplot <- ggplot(data = speeds, aes_string(x=i, y="speed")) + geom_point(shape=1)
-    print(scatterplot)
+  plots <- list()
+  independentVariables <- c(
+    "minutesDay",
+    "minutesHour",
+    "morningrush",
+    "weekday",
+    "holidayfr",
+    "holidaych",
+    "schoolfr",
+    "schoolch",
+    "humidity",
+    "pressure",
+    "temperature",
+    "weather"
+  )
+  for (i in independentVariables) {
+    plots[[i]] <-
+      ggplot(data = speeds, aes_string(x = i, y = "speed")) + geom_point(shape = 1)
   }
+  do.call(grid.arrange, c(plots, list(ncol = 3)))
 }
 
 scatterplots()
