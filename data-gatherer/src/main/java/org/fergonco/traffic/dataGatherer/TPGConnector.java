@@ -8,7 +8,6 @@ import javax.servlet.ServletContextListener;
 import javax.servlet.annotation.WebListener;
 import javax.xml.parsers.ParserConfigurationException;
 
-import org.fergonco.tpg.trafficViewer.DBUtils;
 import org.xml.sax.SAXException;
 
 import co.geomati.tpg.DayFrame;
@@ -37,7 +36,7 @@ public class TPGConnector implements ServletContextListener {
 
 		DBThermometerListener listener;
 		try {
-			listener = new DBThermometerListener(DBUtils.getEntityManager());
+			listener = new DBThermometerListener();
 		} catch (ParserConfigurationException | SAXException | IOException e) {
 			throw new RuntimeException("Cannot initialize OSMRouting", e);
 		}

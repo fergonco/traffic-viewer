@@ -50,7 +50,7 @@ public class DBThermometerListenerTest {
 		currentStep.setDepartureCode("12346");
 		currentStep.setTimestamp(now);
 		currentStep.setActualTimestamp(now + 5);
-		listener = new DBThermometerListener(em, new File("ligne-y.osm.xml"));
+		listener = new DBThermometerListener(new File("ligne-y.osm.xml"));
 	}
 
 	@Test
