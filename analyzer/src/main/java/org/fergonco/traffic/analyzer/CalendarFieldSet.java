@@ -79,7 +79,8 @@ public class CalendarFieldSet implements OutputFieldSet {
 	}
 
 	private Object indicator(boolean booleanVariable) {
-		return booleanVariable ? 1 : 0;
+		return booleanVariable;
+		// return booleanVariable ? 1 : 0;
 	}
 
 }
