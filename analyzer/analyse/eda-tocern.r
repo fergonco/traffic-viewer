@@ -1,6 +1,6 @@
 library(ggplot2)
 library(gridExtra)
-#library(arm)
+library(arm)
 
 speeds <- read.csv("tocern.csv")
 
@@ -48,37 +48,21 @@ scatterplots <- function() {
   do.call(grid.arrange, c(plots, list(ncol = 4)))
 }
 
+residualPlots <- function() {
+  fittedVsResidualsPlot <- ggplot(data = fit, aes(y=.resid, x=.fitted)) + geom_point() + geom_hline(yintercept = 0) + geom_smooth(se = FALSE) + labs(x="Fitted values", y="Residuals")
+  qqPlot <- ggplot(fit, aes(sample = .resid)) + geom_qq() + geom_abline(intercept = mean(fit$residuals), slope = sd(fit$residuals))
+  residualHistogram <- ggplot(fit, aes(x = .resid)) + geom_histogram(binwidth = 1)
+  grid.arrange(fittedVsResidualsPlot, qqPlot, residualHistogram, ncol = 2)
+}
+
 histograms()
 scatterplots()
 
-# fit <- lm(data = speeds, speed ~ minutesDay + weekday + schoolfr + humidity + pressure + temperature + weather)
-# print(summary(fit))
-# coefplot(model, xlim=c(-10, 10))
-# 
-# library(broom)
-# fitf <- augment(fit)
-# residualPlot <- ggplot(data = fitf, aes(x=.fitted, y=.resid)) + geom_point()# + geom_hline(yintercept = 0) + geom_smooth(se = FALSE) + labs(x="Fitted values", y="Residuals")
-# print(residualPlot)
+fit <- lm(data = speeds, speed ~ minutesDay + weekday + schoolfr + humidity + pressure + temperature + weather)
+print(summary(fit))
+arm::coefplot(model, xlim=c(-10, 10))
 
-# layout(matrix(c(1,2,3,4),2,2)) # optional 4 graphs/page
-# plot(model)
-
-
-
-# print(summary(model))
-# print(coefficients(model))
-# plot(residuals(model))
-# print(summary(model)$adj.r.squared)
-
-
-
-
-
-
-
-
-
-
+residualPlots()
 
 
 # summary (speeds$speed)
