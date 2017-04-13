@@ -1,6 +1,6 @@
 library(ggplot2)
 library(gridExtra)
-library(arm)
+#library(arm)
 
 speeds <- read.csv("tocern.csv")
 
@@ -12,7 +12,7 @@ histograms <- function() {
   # response variable histogram coloured and faceted by a predictor variable
   plots[[length(plots)+1]] <- ggplot(data=speeds, aes(x=speed, fill=weekday)) + geom_density()
   plots[[length(plots)+1]] <- ggplot(data=speeds, aes(x=speed, fill=weekday)) + geom_density() + facet_wrap(~weekday)
-  plots[[length(plots)+1]] <- ggplot(data=speeds, aes(x=speed, fill=weather)) + geom_histogram()+ facet_wrap(~weather)
+  plots[[length(plots)+1]] <- ggplot(data=speeds, aes(x=speed, fill=weather)) + geom_histogram(binwidth = 5)+ facet_wrap(~weather)
   
   # scatter plots speed~minutesDay coloured by a third variable
   plots[[length(plots)+1]] <- ggplot(data=speeds, aes(x=minutesDay, y=speed)) + geom_point()
@@ -20,11 +20,11 @@ histograms <- function() {
   plots[[length(plots)+1]] <- ggplot(data=speeds, aes(x=minutesDay, y=speed, color=weekday)) + geom_point()
   
   # predictor histograms
-  plots[[length(plots)+1]] <- ggplot(data=speeds, aes(x=weather)) + geom_histogram()
-  plots[[length(plots)+1]] <- ggplot(data=speeds, aes(x=temperature)) + geom_histogram()
-  plots[[length(plots)+1]] <- ggplot(data=speeds, aes(x=humidity)) + geom_histogram()
-  plots[[length(plots)+1]] <- ggplot(data=speeds, aes(x=pressure)) + geom_histogram()
-  plots[[length(plots)+1]] <- ggplot(data=speeds, aes(x=weekday)) + geom_histogram()
+  plots[[length(plots)+1]] <- ggplot(data=speeds, aes(x=weather)) + geom_histogram(stat = "count")
+  plots[[length(plots)+1]] <- ggplot(data=speeds, aes(x=temperature)) + geom_histogram(binwidth = 2)
+  plots[[length(plots)+1]] <- ggplot(data=speeds, aes(x=humidity)) + geom_histogram(binwidth = 5)
+  plots[[length(plots)+1]] <- ggplot(data=speeds, aes(x=pressure)) + geom_histogram(binwidth = 3)
+  plots[[length(plots)+1]] <- ggplot(data=speeds, aes(x=weekday)) + geom_histogram(stat = "count")
   print(summary(speeds[,c("holidaych", "holidayfr", "schoolch", "schoolfr")]))
   
   do.call(grid.arrange, c(plots, ncol=4))
@@ -44,19 +44,21 @@ scatterplots <- function() {
   plots[[10]] <- ggplot(data = speeds, aes(x = pressure, y = speed)) + geom_point(shape = 1) 
   plots[[11]] <- ggplot(data = speeds, aes(x = temperature, y = speed)) + geom_point(shape = 1) 
   plots[[12]] <- ggplot(data = speeds, aes(x = weather, y = speed)) + geom_boxplot()
-
+  
   do.call(grid.arrange, c(plots, list(ncol = 4)))
 }
 
-#histograms()
-#scatterplots()
+histograms()
+scatterplots()
 
-fit <- lm(data = speeds, speed ~ minutesDay + weekday + schoolfr + humidity + pressure + temperature + weather)
-print(summary(fit))
-coefplot(model, xlim=c(-10, 10))
-
-residualPlot <- ggplot(data = fit, aes(x=.fitted, y=.resid)) + geom_point() + geom_hline(yintercept = 0) + geom_smooth(se = FALSE) + labs(x="Fitted values", y="Residuals")
-print(residualPlot)
+# fit <- lm(data = speeds, speed ~ minutesDay + weekday + schoolfr + humidity + pressure + temperature + weather)
+# print(summary(fit))
+# coefplot(model, xlim=c(-10, 10))
+# 
+# library(broom)
+# fitf <- augment(fit)
+# residualPlot <- ggplot(data = fitf, aes(x=.fitted, y=.resid)) + geom_point()# + geom_hline(yintercept = 0) + geom_smooth(se = FALSE) + labs(x="Fitted values", y="Residuals")
+# print(residualPlot)
 
 # layout(matrix(c(1,2,3,4),2,2)) # optional 4 graphs/page
 # plot(model)
