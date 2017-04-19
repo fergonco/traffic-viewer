@@ -13,11 +13,16 @@ histograms <- function() {
   plots[[length(plots)+1]] <- ggplot(data=speeds, aes(x=speed, fill=weekday)) + geom_density()
   plots[[length(plots)+1]] <- ggplot(data=speeds, aes(x=speed, fill=weekday)) + geom_density() + facet_wrap(~weekday)
   plots[[length(plots)+1]] <- ggplot(data=speeds, aes(x=speed, fill=weather)) + geom_histogram(binwidth = 5)+ facet_wrap(~weather)
+  plots[[length(plots)+1]] <- ggplot(data=speeds, aes(x=speed, fill=morningrush)) + geom_histogram(binwidth = 3)
   
   # scatter plots speed~minutesDay coloured by a third variable
+  plots[[length(plots)+1]] <- ggplot(data=speeds, aes(x=morningfall, y=speed)) + geom_point()
+  plots[[length(plots)+1]] <- ggplot(data=speeds, aes(x=morningrise, y=speed)) + geom_point()
+  plots[[length(plots)+1]] <- ggplot(data=speeds, aes(x=remainingday, y=speed)) + geom_point()
   plots[[length(plots)+1]] <- ggplot(data=speeds, aes(x=minutesDay, y=speed)) + geom_point()
   plots[[length(plots)+1]] <- ggplot(data=speeds, aes(x=minutesDay, y=speed, color=schoolfr)) + geom_point()
   plots[[length(plots)+1]] <- ggplot(data=speeds, aes(x=minutesDay, y=speed, color=weekday)) + geom_point()
+  plots[[length(plots)+1]] <- ggplot(data=speeds, aes(x=distortedMinutes, y=speed)) + geom_point()
   
   # predictor histograms
   plots[[length(plots)+1]] <- ggplot(data=speeds, aes(x=weather)) + geom_histogram(stat = "count")
@@ -48,21 +53,57 @@ scatterplots <- function() {
   do.call(grid.arrange, c(plots, list(ncol = 4)))
 }
 
-residualPlots <- function() {
+calculateModel <- function(formula) {
+  fit <- lm(data = speeds, formula)
+  print(summary(fit))
+  arm::coefplot(fit, xlim=c(-10, 10))
+  return(fit)
+}
+
+residualPlots <- function(fit) {
   fittedVsResidualsPlot <- ggplot(data = fit, aes(y=.resid, x=.fitted)) + geom_point() + geom_hline(yintercept = 0) + geom_smooth(se = FALSE) + labs(x="Fitted values", y="Residuals")
   qqPlot <- ggplot(fit, aes(sample = .resid)) + geom_qq() + geom_abline(intercept = mean(fit$residuals), slope = sd(fit$residuals))
-  residualHistogram <- ggplot(fit, aes(x = .resid)) + geom_histogram(binwidth = 1)
+  residualHistogram <- ggplot(fit, aes(x = .resid)) + geom_density()
   grid.arrange(fittedVsResidualsPlot, qqPlot, residualHistogram, ncol = 2)
 }
 
-histograms()
-scatterplots()
+test <- FALSE
+edaHist <- FALSE
+edaScatter <- FALSE
+model <- FALSE
+fitAnalysis <- TRUE
+crossValidation <- TRUE
 
-fit <- lm(data = speeds, speed ~ minutesDay + weekday + schoolfr + humidity + pressure + temperature + weather)
-print(summary(fit))
-arm::coefplot(model, xlim=c(-10, 10))
+if (test) {
 
-residualPlots()
+}
+if (edaHist) {
+  histograms()
+}
+if (edaScatter) {
+  scatterplots()
+}
+if (model) {
+  fits <- list()
+  fits[[length(fits)+1]] <- calculateModel(speed ~ minutesDay + weekday + schoolfr + humidity + pressure + temperature + weather)
+  fits[[length(fits)+1]] <- calculateModel(speed ~ distortedMinutes + weekday + schoolfr + humidity + pressure + temperature + weather)
+  fits[[length(fits)+1]] <- calculateModel(speed ~ distortedMinutes * weekday + weather)
+  fits[[length(fits)+1]] <- calculateModel(speed ~ morningrush * weekday * weather)
+  fits[[length(fits)+1]] <- calculateModel(speed ~ morningrush * weekday + morningrush * weather + morningrush * schoolfr)
+  print(AIC(fits[[1]],fits[[2]],fits[[3]],fits[[4]],fits[[5]]))
+  print(BIC(fits[[1]],fits[[2]],fits[[3]],fits[[4]],fits[[5]]))
+  if (fitAnalysis) {
+    for (fit in fits) {
+      residualPlots(fit)
+    }
+  }
+}
+if (crossValidation) {
+  formula <- speed ~ morningrush * weekday * weather
+  fit <- glm(data = speeds, formula, family = gaussian(link="identity"))
+  fitlm <- lm(data = speeds, formula)
+  print(identical(coef(fit), coef(fitlm)))
+}
 
 
 # summary (speeds$speed)

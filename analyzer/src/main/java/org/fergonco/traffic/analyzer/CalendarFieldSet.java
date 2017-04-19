@@ -47,8 +47,8 @@ public class CalendarFieldSet implements OutputFieldSet {
 
 	@Override
 	public String[] getNames() {
-		return new String[] { "minutesHour", "minutesDay", "morningrush", "weekday", "holidayfr", "holidaych",
-				"schoolfr", "schoolch" };
+		return new String[] { "minutesHour", "minutesDay", "distortedMinutes", "morningrush", "morningfall",
+				"morningrise", "remainingday", "weekday", "holidayfr", "holidaych", "schoolfr", "schoolch" };
 	}
 
 	@Override
@@ -59,6 +59,7 @@ public class CalendarFieldSet implements OutputFieldSet {
 		calendar.setTimeZone(TimeZone.getTimeZone("Europe/Rome"));
 		int minutesInHour = calendar.get(Calendar.MINUTE);
 		int minutesSinceMidnight = calendar.get(Calendar.HOUR_OF_DAY) * 60 + calendar.get(Calendar.MINUTE);
+		double distortedMinutes = Math.sqrt(Math.abs(450 - minutesSinceMidnight));
 		String dayOfWeek;
 		if (minutesSinceMidnight < 120) {
 			// last services after midnight moved to previous day
@@ -68,14 +69,33 @@ public class CalendarFieldSet implements OutputFieldSet {
 			dayOfWeek = dayNames.get(calendar.get(Calendar.DAY_OF_WEEK));
 		}
 		boolean morningrush = minutesSinceMidnight > 400 && minutesSinceMidnight < 550;
+
+		// morning fall
+		String morningFall = "NA";
+		if (minutesSinceMidnight < 450) {
+			morningFall = Integer.toString(450 - minutesSinceMidnight);
+		}
+
+		// morning rise
+		String morningRise = "NA";
+		if (minutesSinceMidnight >= 450 && minutesSinceMidnight < 570) {
+			morningRise = Integer.toString(minutesSinceMidnight - 450);
+		}
+
+		// remainingDay
+		String remainingDay = "NA";
+		if (minutesSinceMidnight >= 570) {
+			remainingDay = Integer.toString(minutesSinceMidnight - 570);
+		}
+
 		boolean holidayFrance = schoolCalendar.isHoliday("france", timestamp);
 		boolean holidaySwitzerland = schoolCalendar.isHoliday("switzerland", timestamp);
 		boolean schoolFrance = schoolCalendar.isSchool("france", timestamp);
 		boolean schoolSwitzerland = schoolCalendar.isSchool("switzerland", timestamp);
 
-		return new Object[] { minutesInHour, minutesSinceMidnight, indicator(morningrush), dayOfWeek,
-				indicator(holidayFrance), indicator(holidaySwitzerland), indicator(schoolFrance),
-				indicator(schoolSwitzerland) };
+		return new Object[] { minutesInHour, minutesSinceMidnight, distortedMinutes, indicator(morningrush),
+				morningFall, morningRise, remainingDay, dayOfWeek, indicator(holidayFrance),
+				indicator(holidaySwitzerland), indicator(schoolFrance), indicator(schoolSwitzerland) };
 	}
 
 	private Object indicator(boolean booleanVariable) {
