@@ -1,20 +1,15 @@
 package org.fergonco.traffic.dataGatherer.osmrouting;
 
-import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 
 import javax.persistence.EntityManager;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
 
 import org.apache.commons.io.IOUtils;
 import org.fergonco.tpg.trafficViewer.DBUtils;
@@ -22,29 +17,20 @@ import org.fergonco.tpg.trafficViewer.jpa.TPGStop;
 import org.jgrapht.GraphPath;
 import org.jgrapht.alg.shortestpath.DijkstraShortestPath;
 import org.jgrapht.graph.DefaultDirectedGraph;
-import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
-import org.xml.sax.helpers.DefaultHandler;
 
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.io.WKTWriter;
 
 public class OSMRouting {
 
-	private HashMap<String, OSMNode> idNodes = new HashMap<>();
-	private HashMap<String, OSMWay> idWays = new HashMap<>();
-	public OSMRelation relation = null;
+	OSMRelation relation = null;
 	private DefaultDirectedGraph<OSMNode, OSMStep> graph;
+	private OSMParser osmParser;
 
 	public void init(File osmxml) throws ParserConfigurationException, SAXException, IOException {
-		SAXParserFactory factory = SAXParserFactory.newInstance();
-		SAXParser saxParser = factory.newSAXParser();
-		BufferedInputStream is = new BufferedInputStream(new FileInputStream(osmxml));
-		saxParser.parse(is, new SaxHandler());
-		is.close();
-		is = new BufferedInputStream(this.getClass().getResourceAsStream("osm_overrides.xml"));
-		saxParser.parse(is, new OverridingSaxHandler());
-		is.close();
+		osmParser = new OSMParser(osmxml, "Y");
+		relation = osmParser.getRelation("Y");
 
 		graph = new DefaultDirectedGraph<OSMNode, OSMStep>(OSMStep.class);
 		for (OSMWay osmWay : relation.getWays()) {
@@ -66,8 +52,8 @@ public class OSMRouting {
 	}
 
 	public OSMRoutingResult getPathFromNodeOutsideGraph(String startNodeId, String endNodeId) {
-		Coordinate startCoordinate = idNodes.get(startNodeId).getCoordinate();
-		Coordinate endCoordinate = idNodes.get(endNodeId).getCoordinate();
+		Coordinate startCoordinate = osmParser.getNode(startNodeId).getCoordinate();
+		Coordinate endCoordinate = osmParser.getNode(endNodeId).getCoordinate();
 		return getPathOSMStops(startCoordinate, endCoordinate);
 	}
 
@@ -84,8 +70,8 @@ public class OSMRouting {
 	}
 
 	private OSMRoutingResult getPath(String startNodeId, String endNodeId) {
-		OSMNode a = idNodes.get(startNodeId);
-		OSMNode b = idNodes.get(endNodeId);
+		OSMNode a = osmParser.getNode(startNodeId);
+		OSMNode b = osmParser.getNode(endNodeId);
 		GraphPath<OSMNode, OSMStep> result = DijkstraShortestPath.findPathBetween(graph, a, b);
 		if (result != null) {
 			return new OSMRoutingResult(result);
@@ -104,7 +90,6 @@ public class OSMRouting {
 
 	public static void main(String[] args) throws Exception {
 
-		DBUtils.setSchemaName("app");
 		EntityManager em = DBUtils.getEntityManager();
 
 		OSMRouting osmRouting = new OSMRouting();
@@ -187,102 +172,4 @@ public class OSMRouting {
 		output.close();
 	}
 
-	private class SaxHandler extends DefaultHandler {
-
-		private OSMWay currentWay = null;
-		private OSMRelation currentRelation = null;
-
-		@Override
-		public void startElement(String uri, String localName, String qName, Attributes attributes)
-				throws SAXException {
-			if (qName.equals("node")) {
-				Coordinate coordinate = new Coordinate(Double.parseDouble(attributes.getValue("lon")),
-						Double.parseDouble(attributes.getValue("lat")));
-				String nodeId = attributes.getValue("id");
-				OSMNode osmNode = new OSMNode(nodeId, coordinate);
-				idNodes.put(nodeId, osmNode);
-			} else if (qName.equals("way")) {
-				String wayId = attributes.getValue("id");
-				currentWay = new OSMWay(wayId);
-				idWays.put(wayId, currentWay);
-			} else if (qName.equals("nd")) {
-				String ref = attributes.getValue("ref");
-				OSMNode osmNode = idNodes.get(ref);
-				osmNode.addWay(currentWay);
-				currentWay.addNode(osmNode);
-			} else if (qName.equals("relation")) {
-				currentRelation = new OSMRelation();
-			} else if (qName.equals("member")) {
-				String ref = attributes.getValue("ref");
-				String type = attributes.getValue("type");
-				if (type.equals("way")) {
-					OSMWay way = idWays.get(ref);
-					if (way != null) {
-						currentRelation.addWay(way);
-					}
-				} else if (type.equals("node")) {
-					OSMNode node = idNodes.get(ref);
-					if (node != null) {
-						currentRelation.addNode(node);
-					}
-				}
-			} else if (currentWay != null && qName.equals("tag")) {
-				currentWay.setTag(attributes.getValue("k"), attributes.getValue("v"));
-			} else if (currentRelation != null && qName.equals("tag")) {
-				currentRelation.setTag(attributes.getValue("k"), attributes.getValue("v"));
-			}
-		}
-
-		@Override
-		public void endElement(String uri, String localName, String qName) throws SAXException {
-			if (qName.equals("way")) {
-				currentWay = null;
-			} else if (qName.equals("relation")) {
-				if ("Y".equals(currentRelation.getTag("ref"))) {
-					OSMRouting.this.relation = currentRelation;
-				}
-				currentRelation = null;
-			}
-		}
-	}
-
-	private class OverridingSaxHandler extends DefaultHandler {
-
-		private OSMWay currentWay = null;
-
-		@Override
-		public void startElement(String uri, String localName, String qName, Attributes attributes)
-				throws SAXException {
-			if (qName.equals("way")) {
-				String wayId = attributes.getValue("id");
-				currentWay = idWays.get(wayId);
-			} else if (currentWay != null && qName.equals("tag")) {
-				currentWay.setTag(attributes.getValue("k"), attributes.getValue("v"));
-			} else if (currentWay != null && qName.equals("nd")) {
-				String ref = attributes.getValue("ref");
-				OSMNode node = idNodes.get(ref);
-				currentWay.addNode(node);
-			} else if (qName.equals("delete-way")) {
-				String id = attributes.getValue("id");
-				OSMRouting.this.relation.removeWay(idWays.remove(id));
-			} else if (qName.equals("add-way")) {
-				String id = attributes.getValue("id");
-				OSMRouting.this.relation.addWay(idWays.get(id));
-			} else if (qName.equals("add-node")) {
-				String id = attributes.getValue("id");
-				OSMRouting.this.relation.addNode(idNodes.get(id));
-			} else if (qName.equals("create-way")) {
-				String id = attributes.getValue("id");
-				OSMWay newWay = new OSMWay(id);
-				idWays.put(id, newWay);
-			}
-		}
-
-		@Override
-		public void endElement(String uri, String localName, String qName) throws SAXException {
-			if (qName.equals("way")) {
-				currentWay = null;
-			}
-		}
-	}
 }

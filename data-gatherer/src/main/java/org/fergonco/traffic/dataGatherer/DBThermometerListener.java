@@ -15,7 +15,7 @@ import org.apache.logging.log4j.Logger;
 import org.fergonco.tpg.trafficViewer.DBUtils;
 import org.fergonco.tpg.trafficViewer.jpa.OSMShift;
 import org.fergonco.tpg.trafficViewer.jpa.Shift;
-import org.fergonco.tpg.trafficViewer.jpa.TPGStop;
+import org.fergonco.tpg.trafficViewer.jpa.TPGStop2;
 import org.fergonco.traffic.dataGatherer.osmrouting.OSMRouting;
 import org.fergonco.traffic.dataGatherer.osmrouting.OSMRoutingResult;
 import org.fergonco.traffic.dataGatherer.osmrouting.OSMStep;
@@ -60,17 +60,17 @@ public class DBThermometerListener implements ThermometerListener {
 	}
 
 	@Override
-	public void stepActualTimestampChanged(Step previousStep, Step currentStep, String destination) {
+	public void stepActualTimestampChanged(Step previousStep, Step currentStep, String line, String destination) {
 		EntityManager em = DBUtils.getEntityManager();
 		logger.info("Previous: " + previousStep);
 		logger.info("Current: " + currentStep);
 		if (previousStep != null) {
-			TPGStop start = em.find(TPGStop.class, previousStep.getStopCode());
-			TPGStop end = em.find(TPGStop.class, currentStep.getStopCode());
+			TPGStop2 start = getTPGSTop(em, previousStep.getStopCode(), line, destination);
+			TPGStop2 end = getTPGSTop(em, currentStep.getStopCode(), line, destination);
 
 			logger.info("Finding path from " + start.getCode() + " to " + end.getCode());
-			String startNodeId = start.getNodeId(destination);
-			String endNodeId = end.getNodeId(destination);
+			String startNodeId = start.getNodeId();
+			String endNodeId = end.getNodeId();
 			logger.info("startNodeId: " + startNodeId);
 			logger.info("endNodeId: " + endNodeId);
 			OSMRoutingResult result = osmRouting.getPathFromNodeOutsideGraph(startNodeId, endNodeId);
@@ -132,6 +132,16 @@ public class DBThermometerListener implements ThermometerListener {
 			}
 			em.getTransaction().commit();
 		}
+	}
+
+	private TPGStop2 getTPGSTop(EntityManager em, String tpgCode, String line, String destination) {
+		TypedQuery<TPGStop2> query = em.createQuery(
+				"SELECT s FROM TPGStop2 s WHERE s.tpgCode=:tpgCode AND s.line=:line AND s.destination=:destination",
+				TPGStop2.class);
+		query.setParameter("tpgCode", tpgCode);
+		query.setParameter("line", line);
+		query.setParameter("destination", destination);
+		return query.getSingleResult();
 	}
 
 	private String getDateId(Step currentStep) {

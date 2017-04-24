@@ -55,7 +55,7 @@ public class DBThermometerListenerTest {
 
 	@Test
 	public void insert() {
-		listener.stepActualTimestampChanged(previousStep, currentStep, "FERNEY-VOLTAIRE");
+		listener.stepActualTimestampChanged(previousStep, currentStep, "Y", "FERNEY-VOLTAIRE");
 
 		List<Shift> list = em.createQuery("SELECT s FROM Shift s", Shift.class).getResultList();
 		assertEquals(1, list.size());
@@ -68,7 +68,7 @@ public class DBThermometerListenerTest {
 
 		// Correct the current shift by indicating a later arrival
 		currentStep.setActualTimestamp(now + 30 * 1000);
-		listener.stepActualTimestampChanged(previousStep, currentStep, "FERNEY-VOLTAIRE");
+		listener.stepActualTimestampChanged(previousStep, currentStep, "Y", "FERNEY-VOLTAIRE");
 
 		// Same shift, therefore same record
 		List<Shift> list = em.createQuery("SELECT s FROM Shift s", Shift.class).getResultList();
@@ -93,7 +93,7 @@ public class DBThermometerListenerTest {
 		newCurrentStep.setDepartureCode("12348");
 		newCurrentStep.setTimestamp(now + 24 * 60 * 60 * 1000);
 		newCurrentStep.setActualTimestamp(now + 24 * 60 * 60 * 1000 + 5);
-		listener.stepActualTimestampChanged(newPreviousStep, newCurrentStep, "FERNEY-VOLTAIRE");
+		listener.stepActualTimestampChanged(newPreviousStep, newCurrentStep, "Y", "FERNEY-VOLTAIRE");
 
 		// Same shift, therefore same record
 		List<Shift> list = em.createQuery("SELECT s FROM Shift s", Shift.class).getResultList();
@@ -120,7 +120,7 @@ public class DBThermometerListenerTest {
 		newCurrentStep.setDepartureCode("12348");
 		newCurrentStep.setTimestamp(almostMidnight);
 		newCurrentStep.setActualTimestamp(almostMidnight);
-		listener.stepActualTimestampChanged(newPreviousStep, newCurrentStep, "FERNEY-VOLTAIRE");
+		listener.stepActualTimestampChanged(newPreviousStep, newCurrentStep, "Y", "FERNEY-VOLTAIRE");
 
 		// First shift
 		List<Shift> list = em.createQuery("SELECT s FROM Shift s", Shift.class).getResultList();
@@ -129,7 +129,7 @@ public class DBThermometerListenerTest {
 		// Correct the current shift by indicating a later arrival
 		long afterMidnight = almostMidnight + 3 * 1000;
 		newCurrentStep.setActualTimestamp(afterMidnight);
-		listener.stepActualTimestampChanged(newPreviousStep, newCurrentStep, "FERNEY-VOLTAIRE");
+		listener.stepActualTimestampChanged(newPreviousStep, newCurrentStep, "Y", "FERNEY-VOLTAIRE");
 
 		// First shift
 		list = em.createQuery("SELECT s FROM Shift s", Shift.class).getResultList();
@@ -150,7 +150,7 @@ public class DBThermometerListenerTest {
 		newCurrentStep.setDepartureCode("12348");
 		newCurrentStep.setTimestamp(now);
 		newCurrentStep.setActualTimestamp(now + 5);
-		listener.stepActualTimestampChanged(newPreviousStep, newCurrentStep, "FERNEY-VOLTAIRE");
+		listener.stepActualTimestampChanged(newPreviousStep, newCurrentStep, "Y", "FERNEY-VOLTAIRE");
 
 		// Same shift, therefore same record
 		List<Shift> list = em.createQuery("SELECT s FROM Shift s", Shift.class).getResultList();

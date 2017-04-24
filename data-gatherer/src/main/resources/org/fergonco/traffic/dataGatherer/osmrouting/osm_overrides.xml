@@ -4,14 +4,14 @@
 		changeset="31466724" uid="617875" user="MFlamm">
 		<tag k="oneway" v="no" />
 	</way>
-	<add-way id="131232782" />
+	<add-way relation="Y" id="131232782" />
 
 	<!-- CERN -->
-	<add-node id="1550672551" />
+	<add-node relation="Y" id="1550672551" />
 
 	<!-- Maisonex -->
-	<add-node id="1550672646" />
-	<add-node id="1266403290" />
+	<add-node relation="Y" id="1550672646" />
+	<add-node relation="Y" id="1266403290" />
 
 	<!-- Fuel station connection Y to tram line -->
 	<create-way id="-1" />
@@ -19,26 +19,26 @@
 		<nd ref="804743492" />
 		<nd ref="3473942054" />
 	</way>
-	<add-way id="-1" />
+	<add-way relation="Y" id="-1" />
 	<create-way id="-2" />
 	<way id="-2">
 		<nd ref="1853009692" />
 		<nd ref="3473942054" />
 	</way>
-	<add-way id="-2" />
+	<add-way relation="Y" id="-2" />
 
 	<!-- Blandonet-Renfile -->
-	<add-way id="222760044" />
-	<add-way id="222829393" />
-	<add-way id="222829392" />
-	<add-way id="222829394" />
+	<add-way relation="Y" id="222760044" />
+	<add-way relation="Y" id="222829393" />
+	<add-way relation="Y" id="222829392" />
+	<add-way relation="Y" id="222829394" />
 
 	<!-- Grand Hangar-Blandonet -->
-	<add-way id="222707331" />
-	<add-way id="275688289" />
+	<add-way relation="Y" id="222707331" />
+	<add-way relation="Y" id="275688289" />
 
 	<!-- aeroport -->
-	<delete-way id="61559459" />
-	<add-way id="80119629" />
+	<delete-way relation="Y" id="61559459" />
+	<add-way relation="Y" id="80119629" />
 
 </osm-relation-overrides>
