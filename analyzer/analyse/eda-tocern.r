@@ -14,6 +14,9 @@ histograms <- function() {
   plots[[length(plots)+1]] <- ggplot(data=speeds, aes(x=speed, fill=weekday)) + geom_density() + facet_wrap(~weekday)
   plots[[length(plots)+1]] <- ggplot(data=speeds, aes(x=speed, fill=weather)) + geom_histogram(binwidth = 5)+ facet_wrap(~weather)
   plots[[length(plots)+1]] <- ggplot(data=speeds, aes(x=speed, fill=morningrush)) + geom_histogram(binwidth = 3)
+
+  do.call(grid.arrange, c(plots, nrow=2))
+  plots <- list()
   
   # scatter plots speed~minutesDay coloured by a third variable
   plots[[length(plots)+1]] <- ggplot(data=speeds, aes(x=morningfall, y=speed)) + geom_point()
@@ -24,6 +27,9 @@ histograms <- function() {
   plots[[length(plots)+1]] <- ggplot(data=speeds, aes(x=minutesDay, y=speed, color=weekday)) + geom_point()
   plots[[length(plots)+1]] <- ggplot(data=speeds, aes(x=distortedMinutes, y=speed)) + geom_point()
   
+  do.call(grid.arrange, c(plots, nrow=3))
+  plots <- list()
+  
   # predictor histograms
   plots[[length(plots)+1]] <- ggplot(data=speeds, aes(x=weather)) + geom_histogram(stat = "count")
   plots[[length(plots)+1]] <- ggplot(data=speeds, aes(x=temperature)) + geom_histogram(binwidth = 2)
@@ -31,26 +37,29 @@ histograms <- function() {
   plots[[length(plots)+1]] <- ggplot(data=speeds, aes(x=pressure)) + geom_histogram(binwidth = 3)
   plots[[length(plots)+1]] <- ggplot(data=speeds, aes(x=weekday)) + geom_histogram(stat = "count")
   print(summary(speeds[,c("holidaych", "holidayfr", "schoolch", "schoolfr")]))
-  
-  do.call(grid.arrange, c(plots, ncol=4))
+  do.call(grid.arrange, c(plots, nrow=2))
+  plots <- list()
 }
 
 scatterplots <- function() {
   plots <- list()
-  plots[[1]] <- ggplot(data = speeds, aes(x = morningrush, y = speed)) + geom_boxplot()
-  plots[[2]] <- ggplot(data = speeds, aes(x = minutesDay, y = speed)) + geom_point(shape = 1) 
-  plots[[3]] <- ggplot(data = speeds, aes(x = minutesHour, y = speed)) + geom_point(shape = 1) 
-  plots[[4]] <- ggplot(data = speeds, aes(x = weekday, y = speed)) + geom_boxplot()
-  plots[[5]] <- ggplot(data = speeds, aes(x = holidayfr, y = speed)) + geom_boxplot()
-  plots[[6]] <- ggplot(data = speeds, aes(x = holidaych, y = speed)) + geom_boxplot()
-  plots[[7]] <- ggplot(data = speeds, aes(x = schoolfr, y = speed)) + geom_boxplot()
-  plots[[8]] <- ggplot(data = speeds, aes(x = schoolch, y = speed)) + geom_boxplot()
-  plots[[9]] <- ggplot(data = speeds, aes(x = humidity, y = speed)) + geom_point(shape = 1) 
-  plots[[10]] <- ggplot(data = speeds, aes(x = pressure, y = speed)) + geom_point(shape = 1) 
-  plots[[11]] <- ggplot(data = speeds, aes(x = temperature, y = speed)) + geom_point(shape = 1) 
-  plots[[12]] <- ggplot(data = speeds, aes(x = weather, y = speed)) + geom_boxplot()
-  
-  do.call(grid.arrange, c(plots, list(ncol = 4)))
+  plots[[length(plots)+1]] <- ggplot(data = speeds, aes(x = morningrush, y = speed)) + geom_boxplot()
+  plots[[length(plots)+1]] <- ggplot(data = speeds, aes(x = minutesDay, y = speed)) + geom_point(shape = 1) 
+  plots[[length(plots)+1]] <- ggplot(data = speeds, aes(x = minutesHour, y = speed)) + geom_point(shape = 1) 
+  plots[[length(plots)+1]] <- ggplot(data = speeds, aes(x = weekday, y = speed)) + geom_boxplot()
+  do.call(grid.arrange, c(plots, list(ncol = 2)))
+  plots <- list()
+  plots[[length(plots)+1]] <- ggplot(data = speeds, aes(x = holidayfr, y = speed)) + geom_boxplot()
+  plots[[length(plots)+1]] <- ggplot(data = speeds, aes(x = holidaych, y = speed)) + geom_boxplot()
+  plots[[length(plots)+1]] <- ggplot(data = speeds, aes(x = schoolfr, y = speed)) + geom_boxplot()
+  plots[[length(plots)+1]] <- ggplot(data = speeds, aes(x = schoolch, y = speed)) + geom_boxplot()
+  do.call(grid.arrange, c(plots, list(ncol = 2)))
+  plots <- list()
+  plots[[length(plots)+1]] <- ggplot(data = speeds, aes(x = humidity, y = speed)) + geom_point(shape = 1) 
+  plots[[length(plots)+1]] <- ggplot(data = speeds, aes(x = pressure, y = speed)) + geom_point(shape = 1) 
+  plots[[length(plots)+1]] <- ggplot(data = speeds, aes(x = temperature, y = speed)) + geom_point(shape = 1) 
+  plots[[length(plots)+1]] <- ggplot(data = speeds, aes(x = weather, y = speed)) + geom_boxplot()
+  do.call(grid.arrange, c(plots, list(ncol = 2)))
 }
 
 calculateModel <- function(formula) {
@@ -68,10 +77,11 @@ residualPlots <- function(fit) {
 }
 
 test <- FALSE
-edaHist <- FALSE
-edaScatter <- FALSE
+edaHist <- TRUE
+edaScatter <- TRUE
 model <- FALSE
-fitAnalysis <- TRUE
+fitAnalysis <- FALSE
+predict <- TRUE
 crossValidation <- TRUE
 
 if (test) {
@@ -98,11 +108,27 @@ if (model) {
     }
   }
 }
+if (predict) {
+  formula <- speed ~ morningrush * weekday * weather
+  fit <- lm(data = speeds, formula)
+  print(predict.lm(fit, newdata = data.frame(morningrush="true", weekday="tuesday", weather="clearorclouds"), interval = "prediction", level = 0.95))
+}
 if (crossValidation) {
   formula <- speed ~ morningrush * weekday * weather
-  fit <- glm(data = speeds, formula, family = gaussian(link="identity"))
-  fitlm <- lm(data = speeds, formula)
-  print(identical(coef(fit), coef(fitlm)))
+  n <- nrow(speeds)
+  k <- 5
+  folds <- data.frame(Fold=sample(rep(1:k, length.out=n)), Row=1:n)
+
+  for (fold in 1:max(folds$Fold)) {
+    testRows <- folds[folds$Fold==fold,]$Row
+    fit <- lm(data = speeds[-testRows,], formula)
+    prediction <- predict.lm(fit, newdata = speeds[testRows,], interval = "prediction", level = 0.95)
+    # How many observations inside the prediction interval
+    testResponse <- speeds[testRows, "speed"]
+    successRatio <- sum(testResponse > prediction[,"lwr"] & testResponse < prediction[,"upr"]) / length(testRows)
+    print(successRatio)
+  }  
+  
 }
 
 
