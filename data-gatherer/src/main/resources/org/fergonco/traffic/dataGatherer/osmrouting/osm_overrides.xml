@@ -40,5 +40,31 @@
 	<!-- aeroport -->
 	<delete-way relation="Y" id="61559459" />
 	<add-way relation="Y" id="80119629" />
+	
+	<!-- Line O -->
+	<!-- College le joran -->
+<!-- 	<add-node relation="O" id="1753939251" /> -->
+<!-- 	<add-node relation="O" id="1753939252" /> -->
+<!-- 	<delete-node relation="O" id="1170629760" /> -->
+<!-- 	<delete-node relation="O" id="1170629662" /> -->
+	
+	<!-- fema stops -->
+	<delete-node relation="O" id="1186331058" />
+	<delete-node relation="O" id="1186330877" />
+	
+	<!-- fema ways -->
+	<add-way relation="O" id="72215613"/>
+	<add-way relation="O" id="8067000"/>
+	<add-way relation="O" id="100610183"/>
+	<add-way relation="O" id="8067020"/>
+	<add-way relation="O" id="427968198"/>
+	<delete-way relation="O" id="68296791"/>
+	<delete-way relation="O" id="102716058"/>
+	<delete-way relation="O" id="4867951"/>
+	<delete-way relation="O" id="4867958"/>
+	<delete-way relation="O" id="4867959"/>
+	<delete-way relation="O" id="8470132"/>
 
+	<!-- prevesin mairie -->
+	<add-node relation="O" id="1163135167"/>
 </osm-relation-overrides>

@@ -16,14 +16,13 @@ public class BusLineExtractor {
 		OSMParser osmParser = new OSMParser(new File("ligne-y.osm.xml"), lines);
 		osmParser.parse();
 
-		HashSet<String> lineCodes = new HashSet<>();
 		HashSet<String> nodeCodes = new HashSet<>();
 		WKTWriter wktWriter = new WKTWriter();
 		StringBuilder builder = new StringBuilder();
 		builder.append("BEGIN;");
 		builder.append("DROP TABLE IF EXISTS osmlines;\n");
 		builder.append(
-				"CREATE TABLE osmlines (osm_id bigint primary key, linecode varchar, geom geometry('LINESTRING', 4326));\n");
+				"CREATE TABLE osmlines (id serial, osm_id bigint, linecode varchar, geom geometry('LINESTRING', 4326));\n");
 		builder.append("DROP TABLE IF EXISTS osmlinenodes;\n");
 		builder.append("CREATE TABLE osmlinenodes (osm_id bigint primary key, geom geometry('POINT', 4326));\n");
 		builder.append("DROP TABLE IF EXISTS osmstops;\n");
@@ -32,35 +31,29 @@ public class BusLineExtractor {
 		for (String line : lines) {
 			Iterable<OSMWay> ways = osmParser.getRelation(line).getWays();
 			for (OSMWay osmWay : ways) {
-				if (!lineCodes.contains(osmWay.getId())) {
-					builder.append("INSERT INTO osmlines VALUES(" + osmWay.getId() + ",'").append(line)
-							.append("',ST_GeomFromText('").append(wktWriter.write(osmWay.getLineString()))
-							.append("', 4326));\n");
-					lineCodes.add(osmWay.getId());
-					// Adds all the nodes from the lines
-					OSMNode[] lineNodes = osmWay.getNodes();
-					for (OSMNode osmNode : lineNodes) {
-						if (!nodeCodes.contains(osmNode.getId())) {
-							String sql = "INSERT INTO osmlinenodes VALUES ($osmid, ST_GeomFromText('POINT($lon $lat)', 4326));\n";
-							sql = sql.replace("$osmid", osmNode.getId())
-									.replace("$lon", Double.toString(osmNode.getCoordinate().x))
-									.replace("$lat", Double.toString(osmNode.getCoordinate().y));
-							builder.append(sql);
-							nodeCodes.add(osmNode.getId());
-						}
+				builder.append("INSERT INTO osmlines (osm_id, linecode, geom) VALUES(" + osmWay.getId() + ",'")
+						.append(line).append("',ST_GeomFromText('").append(wktWriter.write(osmWay.getLineString()))
+						.append("', 4326));\n");
+				// Adds all the nodes from the lines
+				OSMNode[] lineNodes = osmWay.getNodes();
+				for (OSMNode osmNode : lineNodes) {
+					if (!nodeCodes.contains(osmNode.getId())) {
+						String sql = "INSERT INTO osmlinenodes VALUES ($osmid, ST_GeomFromText('POINT($lon $lat)', 4326));\n";
+						sql = sql.replace("$osmid", osmNode.getId())
+								.replace("$lon", Double.toString(osmNode.getCoordinate().x))
+								.replace("$lat", Double.toString(osmNode.getCoordinate().y));
+						builder.append(sql);
+						nodeCodes.add(osmNode.getId());
 					}
 				}
 			}
 			Iterable<OSMNode> nodes = osmParser.getRelation(line).getNodes();
 			for (OSMNode osmNode : nodes) {
-				if (!nodeCodes.contains(osmNode.getId())) {
-					String sql = "INSERT INTO osmstops (osm_id, linecode, geom) VALUES ($osmid, '$line', ST_GeomFromText('POINT($lon $lat)', 4326));\n";
-					sql = sql.replace("$osmid", osmNode.getId()).replace("$line", line)
-							.replace("$lon", Double.toString(osmNode.getCoordinate().x))
-							.replace("$lat", Double.toString(osmNode.getCoordinate().y));
-					builder.append(sql);
-					nodeCodes.add(osmNode.getId());
-				}
+				String sql = "INSERT INTO osmstops (osm_id, linecode, geom) VALUES ($osmid, '$line', ST_GeomFromText('POINT($lon $lat)', 4326));\n";
+				sql = sql.replace("$osmid", osmNode.getId()).replace("$line", line)
+						.replace("$lon", Double.toString(osmNode.getCoordinate().x))
+						.replace("$lat", Double.toString(osmNode.getCoordinate().y));
+				builder.append(sql);
 			}
 		}
 		builder.append("COMMIT;");

@@ -4,10 +4,10 @@
     <mapcanvas>
         <units>degrees</units>
         <extent>
-            <xmin>6.10794883180323023</xmin>
-            <ymin>46.25553254821409865</ymin>
-            <xmax>6.10929508438139468</xmax>
-            <ymax>46.25663266774514426</ymax>
+            <xmin>6.10118017300809967</xmin>
+            <ymin>46.25204283035680675</ymin>
+            <xmax>6.11195019363411163</xmax>
+            <ymax>46.26084378660574004</ymax>
         </extent>
         <projections>0</projections>
         <destinationsrs>
@@ -23,7 +23,7 @@
             </spatialrefsys>
         </destinationsrs>
     </mapcanvas>
-    <legend updateDrawingOrder="true" activeLayer="osmstops20170425110156687">
+    <legend updateDrawingOrder="true" activeLayer="osmlines20170425110156681">
         <legendlayer drawingOrder="-1" open="true" checked="Qt::Checked" name="osmstops" showFeatureCount="0">
             <filegroup open="true" hidden="false">
                 <legendlayerfile isInOverview="0" layerid="osmstops20170425110156687" visible="1"/>
@@ -385,7 +385,7 @@
         </maplayer>
         <maplayer minimumScale="0" maximumScale="1e+08" minLabelScale="0" maxLabelScale="1e+08" geometry="Point" type="vector" hasScaleBasedVisibilityFlag="0" scaleBasedLabelVisibilityFlag="0">
             <id>osmstops20170425110156687</id>
-            <datasource>dbname='tpg' host=localhost port=54322 user='tpg' password='tpg' sslmode=disable key='osm_id' srid=4326 type=POINT table="public"."osmstops" (geom) sql=</datasource>
+            <datasource>dbname='tpg' host=localhost port=54322 user='tpg' password='tpg' sslmode=disable key='tid' srid=4326 type=POINT table="public"."osmstops" (geom) sql=</datasource>
             <title></title>
             <abstract></abstract>
             <keywordList>
@@ -630,6 +630,7 @@
                 <selectedonly on=""/>
             </labelattributes>
             <edittypes>
+                <edittype labelontop="0" editable="1" type="0" name="id"/>
                 <edittype labelontop="0" editable="1" type="0" name="linecode"/>
                 <edittype labelontop="0" editable="1" type="0" name="osm_id"/>
             </edittypes>

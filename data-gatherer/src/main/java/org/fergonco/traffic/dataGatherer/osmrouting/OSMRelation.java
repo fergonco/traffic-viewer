@@ -50,6 +50,10 @@ public class OSMRelation {
 		return argMin;
 	}
 
+	public void removeNode(OSMNode toRemove) {
+		nodes.remove(toRemove);
+	}
+
 	public void removeWay(OSMWay toRemove) {
 		ways.remove(toRemove);
 	}
