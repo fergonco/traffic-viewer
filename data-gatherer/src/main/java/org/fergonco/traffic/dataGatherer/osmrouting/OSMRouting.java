@@ -28,8 +28,9 @@ public class OSMRouting {
 	private DefaultDirectedGraph<OSMNode, OSMStep> graph;
 	private OSMParser osmParser;
 
-	public void init(File osmxml) throws ParserConfigurationException, SAXException, IOException {
-		osmParser = new OSMParser(osmxml, "Y");
+	public void init(File osmxml, String... lines) throws ParserConfigurationException, SAXException, IOException {
+		osmParser = new OSMParser(osmxml, lines);
+		osmParser.parse();
 		relation = osmParser.getRelation("Y");
 
 		graph = new DefaultDirectedGraph<OSMNode, OSMStep>(OSMStep.class);
