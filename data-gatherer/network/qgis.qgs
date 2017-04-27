@@ -4,10 +4,10 @@
     <mapcanvas>
         <units>degrees</units>
         <extent>
-            <xmin>6.06363670200117078</xmin>
-            <ymin>46.19719366406013705</ymin>
-            <xmax>6.13984354950149047</xmax>
-            <ymax>46.24260631411965505</ymax>
+            <xmin>6.09297721740619203</xmin>
+            <ymin>46.2289431158412043</ymin>
+            <xmax>6.13108064115669116</xmax>
+            <ymax>46.25164944087116226</ymax>
         </extent>
         <projections>0</projections>
         <destinationsrs>
@@ -23,20 +23,20 @@
             </spatialrefsys>
         </destinationsrs>
     </mapcanvas>
-    <legend updateDrawingOrder="true" activeLayer="osmlineroutes20170426224156921">
-        <legendlayer drawingOrder="-1" open="true" checked="Qt::Checked" name="osmstops" showFeatureCount="0">
+    <legend updateDrawingOrder="true" activeLayer="osmlines20170425110156681">
+        <legendlayer drawingOrder="-1" open="true" checked="Qt::Unchecked" name="osmstops" showFeatureCount="0">
             <filegroup open="true" hidden="false">
-                <legendlayerfile isInOverview="0" layerid="osmstops20170425110156687" visible="1"/>
-            </filegroup>
-        </legendlayer>
-        <legendlayer drawingOrder="-1" open="true" checked="Qt::Unchecked" name="osmlines" showFeatureCount="0">
-            <filegroup open="true" hidden="false">
-                <legendlayerfile isInOverview="0" layerid="osmlines20170425110156681" visible="0"/>
+                <legendlayerfile isInOverview="0" layerid="osmstops20170425110156687" visible="0"/>
             </filegroup>
         </legendlayer>
         <legendlayer drawingOrder="-1" open="true" checked="Qt::Checked" name="osmlineroutes" showFeatureCount="0">
             <filegroup open="true" hidden="false">
                 <legendlayerfile isInOverview="0" layerid="osmlineroutes20170426224156921" visible="1"/>
+            </filegroup>
+        </legendlayer>
+        <legendlayer drawingOrder="-1" open="true" checked="Qt::Unchecked" name="osmlines" showFeatureCount="0">
+            <filegroup open="true" hidden="false">
+                <legendlayerfile isInOverview="0" layerid="osmlines20170425110156681" visible="0"/>
             </filegroup>
         </legendlayer>
         <legendlayer drawingOrder="-1" open="true" checked="Qt::Unchecked" name="tpgstops" showFeatureCount="0">
