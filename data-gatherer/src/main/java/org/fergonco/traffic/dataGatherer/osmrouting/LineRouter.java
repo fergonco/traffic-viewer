@@ -42,20 +42,17 @@ public class LineRouter {
 						"ZIMG", "PRGM", "SIGN", "RENF", "BLDO", "GDHA", "ICC0", "TOCO", "WTC0", "AERO", "AREN", "PXPH",
 						"FRET", "TRTI", "GSDN", "FVDO", "BRUN", "JAGI", "AJUR", "FEMA"//
 				}));
-		// lines.add(new Line("O", null, null, new String[] { "GRVI", "MATG",
-		// "CAND", "PAAN", "ADOU", "BRET", "AGLA",
-		// "CLJO", "PREV", "HAMA", "CHTE", "PBRU", "FEMA", "AJUR", "COLX",
-		// "LYIN" }));
+		lines.add(new Line("O", "L. INTERNATIONAL", "MEYRIN-GRAVIERE", new String[] { "GRVI", "MATG", "CAND", "PAAN",
+				"ADOU", "BRET", "AGLA", "CLJO", "PREV", "HAMA", "CHTE", "PBRU", "FEMA", "AJUR", "COLX", "LYIN" }));
 
-		OSMRouting osmRouting = new OSMRouting();
-		osmRouting.init(new File("ligne-y.osm.xml"), "Y", "O");
+		OSMRouter osmRouter = new OSMRouter(new File("ligne-y.osm.xml"), "Y", "O");
 		EntityManager em = DBUtils.getEntityManager();
 		WKTWriter wktWriter = new WKTWriter();
 		StringBuilder builder = new StringBuilder();
 		builder.append("BEGIN;\n");
 		builder.append("DROP TABLE IF EXISTS osmlineroutes;\n");
 		builder.append(
-				"CREATE TABLE osmlineroutes (id SERIAL, direction varchar, geom geometry('LINESTRING', 4326));\n");
+				"CREATE TABLE osmlineroutes (id SERIAL, direction varchar, line varchar, geom geometry('LINESTRING', 4326));\n");
 		for (Line line : lines) {
 			String[] stopSequence = line.stopSequence;
 			for (int i = 0; i < stopSequence.length - 1; i++) {
@@ -63,21 +60,22 @@ public class LineRouter {
 				TPGStop2 end = getTPGStop(em, stopSequence[i + 1], line.lineName, line.forwardDestination);
 				String startNodeId = start.getNodeId();
 				String endNodeId = end.getNodeId();
-				OSMRoutingResult result = osmRouting.getPathFromNodeOutsideGraph(startNodeId, endNodeId);
+				OSMRoutingResult result = osmRouter.getPathFromNodeOutsideGraph(line.lineName, startNodeId, endNodeId);
 				if (result != null) {
 					String linestringWKT = wktWriter.write(result.getLineString());
-					String sql = "INSERT INTO osmlineroutes (direction, geom) VALUES('$direction', ST_GeomFromText('$wkt', 4326));";
+					String sql = "INSERT INTO osmlineroutes (direction, line, geom) VALUES('$direction', '$line', ST_GeomFromText('$wkt', 4326));";
 					sql = sql.replace("$wkt", linestringWKT);
 					sql = sql.replace("$direction", "forward");
+					sql = sql.replace("$line", line.lineName);
 					builder.append(sql);
 				} else {
-					throw new RuntimeException(stopSequence[i] + " forward");
+					throw new RuntimeException(stopSequence[i] + " - " + stopSequence[i + 1] + " forward");
 				}
 				start = getTPGStop(em, stopSequence[i + 1], line.lineName, line.backwardDestination);
 				end = getTPGStop(em, stopSequence[i], line.lineName, line.backwardDestination);
 				startNodeId = start.getNodeId();
 				endNodeId = end.getNodeId();
-				result = osmRouting.getPathFromNodeOutsideGraph(startNodeId, endNodeId);
+				result = osmRouter.getPathFromNodeOutsideGraph(line.lineName, startNodeId, endNodeId);
 				if (result != null) {
 					String linestringWKT = wktWriter.write(result.getLineString());
 					String sql = "INSERT INTO osmlineroutes (direction, geom) VALUES('$direction', ST_GeomFromText('$wkt', 4326));";
@@ -85,7 +83,7 @@ public class LineRouter {
 					sql = sql.replace("$direction", "backward");
 					builder.append(sql);
 				} else {
-					throw new RuntimeException(stopSequence[i] + " backward");
+					throw new RuntimeException(stopSequence[i] + " - " + stopSequence[i + 1] + " backward");
 				}
 			}
 		}
@@ -93,6 +91,8 @@ public class LineRouter {
 		FileOutputStream output = new FileOutputStream("/tmp/osmlineroutes.sql");
 		IOUtils.write(builder.toString(), output, Charset.forName("utf-8"));
 		output.close();
+
+		System.out.println("Results in /tmp/osmlineroutes.sql");
 	}
 
 	private static TPGStop2 getTPGStop(EntityManager em, String tpgCode, String line, String destination) {

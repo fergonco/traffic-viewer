@@ -16,7 +16,7 @@ import org.fergonco.tpg.trafficViewer.DBUtils;
 import org.fergonco.tpg.trafficViewer.jpa.OSMShift;
 import org.fergonco.tpg.trafficViewer.jpa.Shift;
 import org.fergonco.tpg.trafficViewer.jpa.TPGStop2;
-import org.fergonco.traffic.dataGatherer.osmrouting.OSMRouting;
+import org.fergonco.traffic.dataGatherer.osmrouting.OSMRouter;
 import org.fergonco.traffic.dataGatherer.osmrouting.OSMRoutingResult;
 import org.fergonco.traffic.dataGatherer.osmrouting.OSMStep;
 import org.fergonco.traffic.dataGatherer.osmrouting.OSMUtils;
@@ -41,11 +41,10 @@ public class DBThermometerListener implements ThermometerListener {
 	private static Logger logger = LogManager.getLogger(DBThermometerListener.class);
 
 	private static final String TRAFFIC_VIEWER_OSM_NETWORK = "TRAFFIC_VIEWER_OSM_NETWORK";
-	private OSMRouting osmRouting = new OSMRouting();
+	private OSMRouter osmRouter;
 
 	public DBThermometerListener(File osmxml) throws ParserConfigurationException, SAXException, IOException {
-		osmRouting.init(osmxml);
-		logger.info("initialized");
+		init(osmxml);
 	}
 
 	public DBThermometerListener() throws ParserConfigurationException, SAXException, IOException {
@@ -54,8 +53,13 @@ public class DBThermometerListener implements ThermometerListener {
 			throw new IllegalStateException(
 					TRAFFIC_VIEWER_OSM_NETWORK + " must be defined when using empty parameters constructor");
 		}
-		osmRouting.init(new File(osmNetworkPath));
+		init(new File(osmNetworkPath));
 
+	}
+
+	private void init(File file) throws SAXException, IOException, ParserConfigurationException {
+		String[] lineNames = new String[] { "Y", "O", "F" };
+		osmRouter = new OSMRouter(file, lineNames);
 		logger.info("initialized");
 	}
 
@@ -73,7 +77,7 @@ public class DBThermometerListener implements ThermometerListener {
 			String endNodeId = end.getNodeId();
 			logger.info("startNodeId: " + startNodeId);
 			logger.info("endNodeId: " + endNodeId);
-			OSMRoutingResult result = osmRouting.getPathFromNodeOutsideGraph(startNodeId, endNodeId);
+			OSMRoutingResult result = osmRouter.getPathFromNodeOutsideGraph(line, startNodeId, endNodeId);
 			LineString path = result.getLineString();
 			Coordinate startCoordinate = path.getCoordinateN(0);
 			Coordinate endCoordinate = path.getCoordinateN(path.getNumPoints() - 1);

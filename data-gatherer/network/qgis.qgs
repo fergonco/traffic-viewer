@@ -4,10 +4,10 @@
     <mapcanvas>
         <units>degrees</units>
         <extent>
-            <xmin>6.09297721740619203</xmin>
-            <ymin>46.2289431158412043</ymin>
-            <xmax>6.13108064115669116</xmax>
-            <ymax>46.25164944087116226</ymax>
+            <xmin>6.08012199328691416</xmin>
+            <ymin>46.23185715581924171</ymin>
+            <xmax>6.09659712721403757</xmax>
+            <ymax>46.24181412766901644</ymax>
         </extent>
         <projections>0</projections>
         <destinationsrs>
@@ -23,10 +23,10 @@
             </spatialrefsys>
         </destinationsrs>
     </mapcanvas>
-    <legend updateDrawingOrder="true" activeLayer="osmlines20170425110156681">
-        <legendlayer drawingOrder="-1" open="true" checked="Qt::Unchecked" name="osmstops" showFeatureCount="0">
+    <legend updateDrawingOrder="true" activeLayer="osmlineroutes20170426224156921">
+        <legendlayer drawingOrder="-1" open="true" checked="Qt::Checked" name="osmstops" showFeatureCount="0">
             <filegroup open="true" hidden="false">
-                <legendlayerfile isInOverview="0" layerid="osmstops20170425110156687" visible="0"/>
+                <legendlayerfile isInOverview="0" layerid="osmstops20170425110156687" visible="1"/>
             </filegroup>
         </legendlayer>
         <legendlayer drawingOrder="-1" open="true" checked="Qt::Checked" name="osmlineroutes" showFeatureCount="0">
@@ -34,14 +34,14 @@
                 <legendlayerfile isInOverview="0" layerid="osmlineroutes20170426224156921" visible="1"/>
             </filegroup>
         </legendlayer>
-        <legendlayer drawingOrder="-1" open="true" checked="Qt::Unchecked" name="osmlines" showFeatureCount="0">
+        <legendlayer drawingOrder="-1" open="true" checked="Qt::Checked" name="osmlines" showFeatureCount="0">
             <filegroup open="true" hidden="false">
-                <legendlayerfile isInOverview="0" layerid="osmlines20170425110156681" visible="0"/>
+                <legendlayerfile isInOverview="0" layerid="osmlines20170425110156681" visible="1"/>
             </filegroup>
         </legendlayer>
-        <legendlayer drawingOrder="-1" open="true" checked="Qt::Unchecked" name="tpgstops" showFeatureCount="0">
+        <legendlayer drawingOrder="-1" open="true" checked="Qt::Checked" name="tpgstops" showFeatureCount="0">
             <filegroup open="true" hidden="false">
-                <legendlayerfile isInOverview="0" layerid="tpgstops20170425110156676" visible="0"/>
+                <legendlayerfile isInOverview="0" layerid="tpgstops20170425110156676" visible="1"/>
             </filegroup>
         </legendlayer>
         <legendlayer drawingOrder="-1" open="true" checked="Qt::Unchecked" name="osmlinenodes" showFeatureCount="0">
@@ -167,7 +167,7 @@
                             <prop k="customdash" v="5;2"/>
                             <prop k="customdash_unit" v="MM"/>
                             <prop k="joinstyle" v="bevel"/>
-                            <prop k="offset" v="3"/>
+                            <prop k="offset" v="1"/>
                             <prop k="offset_unit" v="MM"/>
                             <prop k="penstyle" v="solid"/>
                             <prop k="use_custom_dash" v="0"/>
@@ -178,11 +178,11 @@
                     <symbol alpha="1" type="line" name="1">
                         <layer pass="0" class="SimpleLine" locked="0">
                             <prop k="capstyle" v="square"/>
-                            <prop k="color" v="0,0,0,255"/>
+                            <prop k="color" v="0,255,0,255"/>
                             <prop k="customdash" v="5;2"/>
                             <prop k="customdash_unit" v="MM"/>
                             <prop k="joinstyle" v="bevel"/>
-                            <prop k="offset" v="3"/>
+                            <prop k="offset" v="1"/>
                             <prop k="offset_unit" v="MM"/>
                             <prop k="penstyle" v="solid"/>
                             <prop k="use_custom_dash" v="0"/>
@@ -339,9 +339,9 @@
                 <edittype labelontop="0" editable="1" type="0" name="direction"/>
                 <edittype labelontop="0" editable="1" type="0" name="id"/>
             </edittypes>
-            <editform></editform>
+            <editform>.</editform>
             <editforminit></editforminit>
-            <annotationform></annotationform>
+            <annotationform>.</annotationform>
             <editorlayout>generatedlayout</editorlayout>
             <excludeAttributesWMS/>
             <excludeAttributesWFS/>
@@ -605,7 +605,7 @@
             <excludeAttributesWFS/>
             <attributeactions/>
         </maplayer>
-        <maplayer minimumScale="0" maximumScale="1e+08" minLabelScale="0" maxLabelScale="1e+08" geometry="Point" type="vector" hasScaleBasedVisibilityFlag="0" scaleBasedLabelVisibilityFlag="0">
+        <maplayer minimumScale="-4.65661e-10" maximumScale="1e+08" minLabelScale="0" maxLabelScale="1e+08" geometry="Point" type="vector" hasScaleBasedVisibilityFlag="0" scaleBasedLabelVisibilityFlag="0">
             <id>osmstops20170425110156687</id>
             <datasource>dbname='tpg' host=localhost port=54322 user='tpg' password='tpg' sslmode=disable key='tid' srid=4326 type=POINT table="public"."osmstops" (geom) sql=</datasource>
             <title></title>
@@ -718,10 +718,10 @@
                 <property key="labeling/bufferColorB" value="255"/>
                 <property key="labeling/bufferColorG" value="255"/>
                 <property key="labeling/bufferColorR" value="255"/>
-                <property key="labeling/bufferDraw" value="false"/>
+                <property key="labeling/bufferDraw" value="true"/>
                 <property key="labeling/bufferJoinStyle" value="64"/>
                 <property key="labeling/bufferNoFill" value="false"/>
-                <property key="labeling/bufferSize" value="1"/>
+                <property key="labeling/bufferSize" value="2"/>
                 <property key="labeling/bufferSizeInMapUnits" value="false"/>
                 <property key="labeling/bufferTransp" value="0"/>
                 <property key="labeling/centroidWhole" value="false"/>

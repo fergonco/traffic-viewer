@@ -62,5 +62,6 @@ public class BusLineExtractor {
 		IOUtils.write(builder.toString(), output, Charset.forName("utf-8"));
 		output.close();
 
+		System.out.println("Results in /tmp/result.sql");
 	}
 }
