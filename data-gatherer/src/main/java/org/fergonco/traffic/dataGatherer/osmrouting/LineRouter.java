@@ -6,44 +6,20 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 
 import javax.persistence.EntityManager;
-import javax.persistence.TypedQuery;
 
 import org.apache.commons.io.IOUtils;
 import org.fergonco.tpg.trafficViewer.DBUtils;
 import org.fergonco.tpg.trafficViewer.jpa.TPGStop2;
+import org.fergonco.traffic.dataGatherer.Utils;
 
 import com.vividsolutions.jts.io.WKTWriter;
 
 public class LineRouter {
 
-	public static class Line {
-		private String lineName;
-		private String forwardDestination;
-		private String backwardDestination;
-		private String[] stopSequence;
-
-		public Line(String lineName, String forwardDestinations, String backwardDestinations, String[] stopSequence) {
-			super();
-			this.lineName = lineName;
-			this.forwardDestination = forwardDestinations;
-			this.backwardDestination = backwardDestinations;
-			this.stopSequence = stopSequence;
-		}
-
-	}
-
 	public static void main(String[] args) throws Exception {
 		ArrayList<Line> lines = new ArrayList<>();
-		lines.add(new Line("Y", "FERNEY-VOLTAIRE", "VAL-THOIRY",
-				new String[] { //
-						"VATH", "THGA", "THMA", "PAGN", "POLT", "SGBO", //
-						"SGGA", "JMON", //
-						"CFUS", "HTAI", "PLIO", "MLVT", "SHUM", "CERN", "MAIX", "HTOU", "MAIL", "VROT", "PFON", "LMLD",
-						"ZIMG", "PRGM", "SIGN", "RENF", "BLDO", "GDHA", "ICC0", "TOCO", "WTC0", "AERO", "AREN", "PXPH",
-						"FRET", "TRTI", "GSDN", "FVDO", "BRUN", "JAGI", "AJUR", "FEMA"//
-				}));
-		lines.add(new Line("O", "L. INTERNATIONAL", "MEYRIN-GRAVIERE", new String[] { "GRVI", "MATG", "CAND", "PAAN",
-				"ADOU", "BRET", "AGLA", "CLJO", "PREV", "HAMA", "CHTE", "PBRU", "FEMA", "AJUR", "COLX", "LYIN" }));
+		lines.add(Line.read("line-y.txt"));
+		lines.add(Line.read("line-o.txt"));
 
 		OSMRouter osmRouter = new OSMRouter(new File("ligne-y.osm.xml"), "Y", "O");
 		EntityManager em = DBUtils.getEntityManager();
@@ -56,8 +32,9 @@ public class LineRouter {
 		for (Line line : lines) {
 			String[] stopSequence = line.stopSequence;
 			for (int i = 0; i < stopSequence.length - 1; i++) {
-				TPGStop2 start = getTPGStop(em, stopSequence[i], line.lineName, line.forwardDestination);
-				TPGStop2 end = getTPGStop(em, stopSequence[i + 1], line.lineName, line.forwardDestination);
+				// forward route
+				TPGStop2 start = Utils.getTPGStop(em, stopSequence[i], line.lineName, line.forwardDestination);
+				TPGStop2 end = Utils.getTPGStop(em, stopSequence[i + 1], line.lineName, line.forwardDestination);
 				String startNodeId = start.getNodeId();
 				String endNodeId = end.getNodeId();
 				OSMRoutingResult result = osmRouter.getPathFromNodeOutsideGraph(line.lineName, startNodeId, endNodeId);
@@ -71,8 +48,10 @@ public class LineRouter {
 				} else {
 					throw new RuntimeException(stopSequence[i] + " - " + stopSequence[i + 1] + " forward");
 				}
-				start = getTPGStop(em, stopSequence[i + 1], line.lineName, line.backwardDestination);
-				end = getTPGStop(em, stopSequence[i], line.lineName, line.backwardDestination);
+
+				// backward
+				start = Utils.getTPGStop(em, stopSequence[i + 1], line.lineName, line.backwardDestination);
+				end = Utils.getTPGStop(em, stopSequence[i], line.lineName, line.backwardDestination);
 				startNodeId = start.getNodeId();
 				endNodeId = end.getNodeId();
 				result = osmRouter.getPathFromNodeOutsideGraph(line.lineName, startNodeId, endNodeId);
@@ -95,13 +74,4 @@ public class LineRouter {
 		System.out.println("Results in /tmp/osmlineroutes.sql");
 	}
 
-	private static TPGStop2 getTPGStop(EntityManager em, String tpgCode, String line, String destination) {
-		TypedQuery<TPGStop2> query = em.createQuery(
-				"SELECT s FROM TPGStop2 s WHERE s.tpgCode=:tpgCode AND s.line=:line AND s.destination=:destination",
-				TPGStop2.class);
-		query.setParameter("tpgCode", tpgCode);
-		query.setParameter("line", line);
-		query.setParameter("destination", destination);
-		return query.getSingleResult();
-	}
 }

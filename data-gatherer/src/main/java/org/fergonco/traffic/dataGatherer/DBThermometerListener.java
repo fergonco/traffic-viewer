@@ -69,8 +69,8 @@ public class DBThermometerListener implements ThermometerListener {
 		logger.info("Previous: " + previousStep);
 		logger.info("Current: " + currentStep);
 		if (previousStep != null) {
-			TPGStop2 start = getTPGSTop(em, previousStep.getStopCode(), line, destination);
-			TPGStop2 end = getTPGSTop(em, currentStep.getStopCode(), line, destination);
+			TPGStop2 start = Utils.getTPGStop(em, previousStep.getStopCode(), line, destination);
+			TPGStop2 end = Utils.getTPGStop(em, currentStep.getStopCode(), line, destination);
 
 			logger.info("Finding path from " + start.getCode() + " to " + end.getCode());
 			String startNodeId = start.getNodeId();
@@ -136,16 +136,6 @@ public class DBThermometerListener implements ThermometerListener {
 			}
 			em.getTransaction().commit();
 		}
-	}
-
-	private TPGStop2 getTPGSTop(EntityManager em, String tpgCode, String line, String destination) {
-		TypedQuery<TPGStop2> query = em.createQuery(
-				"SELECT s FROM TPGStop2 s WHERE s.tpgCode=:tpgCode AND s.line=:line AND s.destination=:destination",
-				TPGStop2.class);
-		query.setParameter("tpgCode", tpgCode);
-		query.setParameter("line", line);
-		query.setParameter("destination", destination);
-		return query.getSingleResult();
 	}
 
 	private String getDateId(Step currentStep) {
