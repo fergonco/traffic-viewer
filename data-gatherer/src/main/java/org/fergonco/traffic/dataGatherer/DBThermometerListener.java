@@ -1,14 +1,12 @@
 package org.fergonco.traffic.dataGatherer;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
+import java.util.List;
 
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.TypedQuery;
-import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -16,22 +14,10 @@ import org.fergonco.tpg.trafficViewer.DBUtils;
 import org.fergonco.tpg.trafficViewer.jpa.OSMShift;
 import org.fergonco.tpg.trafficViewer.jpa.Shift;
 import org.fergonco.tpg.trafficViewer.jpa.TPGStop2;
-import org.fergonco.traffic.dataGatherer.osmrouting.OSMRouter;
-import org.fergonco.traffic.dataGatherer.osmrouting.OSMRoutingResult;
-import org.fergonco.traffic.dataGatherer.osmrouting.OSMStep;
-import org.fergonco.traffic.dataGatherer.osmrouting.OSMUtils;
-import org.geotools.geometry.jts.JTS;
-import org.geotools.referencing.CRS;
-import org.opengis.geometry.MismatchedDimensionException;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.referencing.operation.TransformException;
-import org.xml.sax.SAXException;
+import org.fergonco.tpg.trafficViewer.jpa.TPGStopRoute;
+import org.fergonco.tpg.trafficViewer.jpa.TPGStopRouteSegment;
 
-import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.LineString;
 
 import co.geomati.tpg.Step;
 import co.geomati.tpg.ThermometerListener;
@@ -39,29 +25,6 @@ import co.geomati.tpg.ThermometerListener;
 public class DBThermometerListener implements ThermometerListener {
 
 	private static Logger logger = LogManager.getLogger(DBThermometerListener.class);
-
-	private static final String TRAFFIC_VIEWER_OSM_NETWORK = "TRAFFIC_VIEWER_OSM_NETWORK";
-	private OSMRouter osmRouter;
-
-	public DBThermometerListener(File osmxml) throws ParserConfigurationException, SAXException, IOException {
-		init(osmxml);
-	}
-
-	public DBThermometerListener() throws ParserConfigurationException, SAXException, IOException {
-		String osmNetworkPath = System.getenv(TRAFFIC_VIEWER_OSM_NETWORK);
-		if (osmNetworkPath == null) {
-			throw new IllegalStateException(
-					TRAFFIC_VIEWER_OSM_NETWORK + " must be defined when using empty parameters constructor");
-		}
-		init(new File(osmNetworkPath));
-
-	}
-
-	private void init(File file) throws SAXException, IOException, ParserConfigurationException {
-		String[] lineNames = new String[] { "Y", "O", "F" };
-		osmRouter = new OSMRouter(file, lineNames);
-		logger.info("initialized");
-	}
 
 	@Override
 	public void stepActualTimestampChanged(Step previousStep, Step currentStep, String line, String destination) {
@@ -72,15 +35,13 @@ public class DBThermometerListener implements ThermometerListener {
 			TPGStop2 start = Utils.getTPGStop(em, previousStep.getStopCode(), line, destination);
 			TPGStop2 end = Utils.getTPGStop(em, currentStep.getStopCode(), line, destination);
 
-			logger.info("Finding path from " + start.getCode() + " to " + end.getCode());
-			String startNodeId = start.getNodeId();
-			String endNodeId = end.getNodeId();
-			logger.info("startNodeId: " + startNodeId);
-			logger.info("endNodeId: " + endNodeId);
-			OSMRoutingResult result = osmRouter.getPathFromNodeOutsideGraph(line, startNodeId, endNodeId);
-			LineString path = result.getLineString();
-			Coordinate startCoordinate = path.getCoordinateN(0);
-			Coordinate endCoordinate = path.getCoordinateN(path.getNumPoints() - 1);
+			TypedQuery<TPGStopRoute> distanceQuery = em.createQuery("SELECT d " + "FROM TPGStopDistance d "
+					+ "WHERE d.starttpgcode=:starttpgcode " + "AND d.endtpgcode=:endtpgcode " + "AND d.line=:line",
+					TPGStopRoute.class);
+			distanceQuery.setParameter("starttpgcode", start.getCode());
+			distanceQuery.setParameter("endtpgcode", end.getCode());
+			distanceQuery.setParameter("line", line);
+			TPGStopRoute distance = distanceQuery.getSingleResult();
 
 			// Remove existing shift
 			em.getTransaction().begin();
@@ -103,35 +64,27 @@ public class DBThermometerListener implements ThermometerListener {
 			shift.setSourceStartPoint(previousStep.getStopCode());
 			shift.setSourceEndPoint(currentStep.getStopCode());
 			shift.setSourceType("TPG");
-			shift.setEndPoint(OSMUtils.buildPoint(endCoordinate, 4326));
-			shift.setStartPoint(OSMUtils.buildPoint(startCoordinate, 4326));
-			Geometry flatLineString = null;
-			try {
-				CoordinateReferenceSystem crs4326 = CRS.decode("EPSG:4326");
-				CoordinateReferenceSystem crs3857 = CRS.decode("EPSG:3857");
-				MathTransform transform = CRS.findMathTransform(crs4326, crs3857);
-				flatLineString = JTS.transform(path, transform);
-			} catch (FactoryException | MismatchedDimensionException | TransformException e) {
-				logger.error("Should never happen", e);
-			}
-			double km = flatLineString.getLength() / 1000;
+			shift.setEndPoint(null);
+			shift.setStartPoint(null);
+			double km = distance.getDistance();
 			double h = (currentStep.getActualTimestamp() - previousStep.getActualTimestamp()) / (1000.0 * 60 * 60);
 			shift.setSpeed((int) Math.round(km / h));
 			shift.setVehicleId(currentStep.getDepartureCode());
 			shift.setTimestamp(currentStep.getActualTimestamp());
 			logger.debug("New Shift to be inserted from " + previousStep.getStopCode() + "("
 					+ previousStep.getActualTimestamp() + ") to " + currentStep.getStopCode() + "("
-					+ currentStep.getActualTimestamp() + "). Path length: " + flatLineString.getLength() + ". Speed:"
-					+ shift.getSpeed());
+					+ currentStep.getActualTimestamp() + "). Path length: " + km + ". Speed:" + shift.getSpeed());
 			em.persist(shift);
 
-			OSMStep[] wayIdsAndSenses = result.getWayIdsAndSenses();
-			for (OSMStep osmStep : wayIdsAndSenses) {
+			List<TPGStopRouteSegment> segments = distance.getSegments();
+			for (TPGStopRouteSegment segment : segments) {
 				OSMShift osmShift = new OSMShift();
 				osmShift.setShift(shift);
-				osmShift.setStartNode(Long.parseLong(osmStep.getStartNode().getId()));
-				osmShift.setEndNode(Long.parseLong(osmStep.getEndNode().getId()));
-				osmShift.setGeom(OSMUtils.buildLineString(osmStep.getStartNode(), osmStep.getEndNode(), 4326));
+				osmShift.setStartNode(segment.getStartNode());
+				osmShift.setEndNode(segment.getEndNode());
+				Geometry segmentGeometry = segment.getGeometry();
+				segmentGeometry.setSRID(4326);
+				osmShift.setGeom(segmentGeometry);
 				em.persist(osmShift);
 			}
 			em.getTransaction().commit();

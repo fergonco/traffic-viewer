@@ -127,6 +127,8 @@ public class OSMParser {
 				String ref = attributes.getValue("ref");
 				OSMNode node = idNodes.get(ref);
 				currentWay.addNode(node);
+			} else if (currentWay != null && qName.equals("noroute")) {
+				currentWay.setNoRoute(attributes.getValue("direction"));
 			} else if (qName.equals("delete-node")) {
 				String id = attributes.getValue("id");
 				String relation = attributes.getValue("relation");

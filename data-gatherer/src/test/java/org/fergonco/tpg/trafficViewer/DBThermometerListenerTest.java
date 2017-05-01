@@ -3,7 +3,6 @@ package org.fergonco.tpg.trafficViewer;
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertTrue;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Calendar;
 import java.util.Date;
@@ -50,7 +49,7 @@ public class DBThermometerListenerTest {
 		currentStep.setDepartureCode("12346");
 		currentStep.setTimestamp(now);
 		currentStep.setActualTimestamp(now + 5);
-		listener = new DBThermometerListener(new File("ligne-y.osm.xml"));
+		listener = new DBThermometerListener();
 	}
 
 	@Test

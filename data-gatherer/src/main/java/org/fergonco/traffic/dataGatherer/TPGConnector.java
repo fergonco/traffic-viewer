@@ -6,9 +6,6 @@ import java.util.List;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 import javax.servlet.annotation.WebListener;
-import javax.xml.parsers.ParserConfigurationException;
-
-import org.xml.sax.SAXException;
 
 import co.geomati.tpg.DayFrame;
 import co.geomati.tpg.HumanReadableLog;
@@ -34,12 +31,7 @@ public class TPGConnector implements ServletContextListener {
 
 		TPGCachedParser tpg = new TPGCachedParser(new TPG(), 10);
 
-		DBThermometerListener listener;
-		try {
-			listener = new DBThermometerListener();
-		} catch (ParserConfigurationException | SAXException | IOException e) {
-			throw new RuntimeException("Cannot initialize OSMRouting", e);
-		}
+		DBThermometerListener listener = new DBThermometerListener();
 
 		ThermometerComparator[] comparators = new ThermometerComparator[] { //
 				new ThermometerComparator(dayFrame, tpg, listener, new NullThermometerArchiver(), "Y", "VATH",

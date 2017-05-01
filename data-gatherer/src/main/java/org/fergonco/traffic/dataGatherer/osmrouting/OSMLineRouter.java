@@ -7,6 +7,8 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.jgrapht.GraphPath;
 import org.jgrapht.alg.shortestpath.DijkstraShortestPath;
 import org.jgrapht.graph.DefaultDirectedGraph;
+import org.jgrapht.graph.DefaultDirectedWeightedGraph;
+import org.jgrapht.graph.DefaultWeightedEdge;
 import org.xml.sax.SAXException;
 
 import com.vividsolutions.jts.geom.Coordinate;
@@ -14,7 +16,7 @@ import com.vividsolutions.jts.geom.Coordinate;
 public class OSMLineRouter {
 
 	OSMRelation relation = null;
-	private DefaultDirectedGraph<OSMNode, OSMStep> graph;
+	private DefaultDirectedGraph<OSMNode, DefaultWeightedEdge> graph;
 	private OSMParser osmParser;
 
 	public OSMLineRouter(OSMParser osmParser, String lineName)
@@ -22,7 +24,7 @@ public class OSMLineRouter {
 		this.osmParser = osmParser;
 		relation = osmParser.getRelation(lineName);
 
-		graph = new DefaultDirectedGraph<OSMNode, OSMStep>(OSMStep.class);
+		graph = new DefaultDirectedWeightedGraph<OSMNode, DefaultWeightedEdge>(DefaultWeightedEdge.class);
 		for (OSMWay osmWay : relation.getWays()) {
 			OSMNode[] wayNodes = osmWay.getNodes();
 			for (int i = 0; i < wayNodes.length - 1; i++) {
@@ -30,15 +32,26 @@ public class OSMLineRouter {
 				OSMNode nextNode = wayNodes[i + 1];
 				graph.addVertex(currentNode);
 				graph.addVertex(nextNode);
-				graph.addEdge(currentNode, nextNode, new OSMStep(currentNode, nextNode, osmWay));
+				addEdge(currentNode, nextNode, osmWay.isNoRouteForwards());
 				boolean twoWay = !"yes".equals(osmWay.getTag("oneway"))
 						&& !"roundabout".equals(osmWay.getTag("junction"));
 				if (twoWay) {
-					graph.addEdge(nextNode, currentNode, new OSMStep(nextNode, currentNode, osmWay));
+					addEdge(nextNode, currentNode, osmWay.isNoRouteBackwards());
 				}
 			}
 		}
 
+	}
+
+	private void addEdge(OSMNode startNode, OSMNode endNode, boolean noRoute) {
+		DefaultWeightedEdge edge = graph.getEdge(startNode, endNode);
+		if (edge == null) { // Not yet added
+			edge = graph.addEdge(startNode, endNode);
+			graph.setEdgeWeight(edge, 1);
+		}
+		if (noRoute) {
+			graph.setEdgeWeight(edge, 1000);
+		}
 	}
 
 	public OSMRoutingResult getPathFromNodeOutsideGraph(String startNodeId, String endNodeId) {
@@ -62,7 +75,7 @@ public class OSMLineRouter {
 	private OSMRoutingResult getPath(String startNodeId, String endNodeId) {
 		OSMNode a = osmParser.getNode(startNodeId);
 		OSMNode b = osmParser.getNode(endNodeId);
-		GraphPath<OSMNode, OSMStep> result = DijkstraShortestPath.findPathBetween(graph, a, b);
+		GraphPath<OSMNode, DefaultWeightedEdge> result = DijkstraShortestPath.findPathBetween(graph, a, b);
 		if (result != null) {
 			return new OSMRoutingResult(result);
 		} else {

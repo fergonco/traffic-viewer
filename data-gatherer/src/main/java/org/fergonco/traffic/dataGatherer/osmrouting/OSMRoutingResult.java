@@ -3,14 +3,15 @@ package org.fergonco.traffic.dataGatherer.osmrouting;
 import java.util.List;
 
 import org.jgrapht.GraphPath;
+import org.jgrapht.graph.DefaultWeightedEdge;
 
 import com.vividsolutions.jts.geom.LineString;
 
 public class OSMRoutingResult {
 
-	private GraphPath<OSMNode, OSMStep> result;
+	private GraphPath<OSMNode, DefaultWeightedEdge> result;
 
-	public OSMRoutingResult(GraphPath<OSMNode, OSMStep> result) {
+	public OSMRoutingResult(GraphPath<OSMNode, DefaultWeightedEdge> result) {
 		if (result == null) {
 			throw new NullPointerException();
 		}
@@ -22,8 +23,8 @@ public class OSMRoutingResult {
 		return OSMUtils.buildLineString(path);
 	}
 
-	public OSMStep[] getWayIdsAndSenses() {
-		return result.getEdgeList().toArray(new OSMStep[0]);
+	public OSMNode[] getNodes() {
+		return result.getVertexList().toArray(new OSMNode[0]);
 	}
 
 }

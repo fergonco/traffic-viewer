@@ -12,6 +12,7 @@ public class OSMWay {
 	private ArrayList<OSMNode> nodes = new ArrayList<>();
 	private HashMap<String, String> tags = new HashMap<>();
 	private LineString lineString = null;
+	private String noRoute = null;
 
 	public OSMWay(String id) {
 		super();
@@ -75,6 +76,18 @@ public class OSMWay {
 		}
 
 		throw new IllegalArgumentException("Start node does not belong to the way: " + startNode);
+	}
+
+	public void setNoRoute(String routeDirection) {
+		this.noRoute = routeDirection;
+	}
+
+	public boolean isNoRouteForwards() {
+		return "forwards".equals(noRoute);
+	}
+
+	public boolean isNoRouteBackwards() {
+		return "backwards".equals(noRoute);
 	}
 
 }

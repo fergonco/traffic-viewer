@@ -61,4 +61,9 @@
 
 	<!-- prevesin mairie -->
 	<add-node relation="O" id="1163135167"/>
+	
+	<!-- GRVI - MATG routing -->
+	<way id="353259506">
+		<noroute direction="backwards"/>
+	</way>
 </osm-relation-overrides>

@@ -53,6 +53,13 @@ public class Shift {
 		return startPoint;
 	}
 
+	/**
+	 * Must be kept because it's the only data we have about the stops of the
+	 * shifts for the data that was gathered at the beginning
+	 * 
+	 * @param startPoint
+	 */
+	@Deprecated
 	public void setStartPoint(Geometry startPoint) {
 		this.startPoint = startPoint;
 	}
@@ -61,6 +68,13 @@ public class Shift {
 		return endPoint;
 	}
 
+	/**
+	 * Must be kept because it's the only data we have about the stops of the
+	 * shifts for the data that was gathered at the beginning
+	 * 
+	 * @param startPoint
+	 */
+	@Deprecated
 	public void setEndPoint(Geometry endPoint) {
 		this.endPoint = endPoint;
 	}
