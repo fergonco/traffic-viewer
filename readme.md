@@ -141,6 +141,13 @@ create or replace view osmtransport as select * from osm_line where operator in 
 		from
 			app.osmshift osms, app.shift s
 		where
+			timestamp > (
+				extract ( 
+					epoch from localtimestamp
+				)*1000 
+				-
+				24*60*60*1000
+			) and 
 			s.id=osms.shift_id;
 	create index ON app.osmshiftinfo (timestamp);  
 
@@ -160,29 +167,13 @@ create or replace view osmtransport as select * from osm_line where operator in 
 			) as millis
 		from app.shift;
 
-	create materialized view app.recent_osmshiftinfo as
-		select
-			*
-		from
-			app.osmshiftinfo
-		where
-			timestamp > (
-				extract ( 
-					epoch from localtimestamp
-				)*1000 
-				-
-				24*60*60*1000
-			);
-	create index ON app.recent_osmshiftinfo (timestamp);  
-	
-
 	-- Create a table adding to the osmshiftinfo a timestamp for drawing
 	create materialized view app.timestamped_osmshiftinfo as
 		select 
 			to_timestamp(timestamps.millis/1000) as draw_timestamp, osmshift.*
 		from 
 			app.timestamps timestamps,
-			app.recent_osmshiftinfo osmshift
+			app.osmshiftinfo osmshift
 		where
 			timestamps.millis >= osmshift.timestamp
 			and
@@ -190,7 +181,7 @@ create or replace view osmtransport as select * from osm_line where operator in 
 				select
 					1
 				from
-					app.recent_osmshiftinfo osmshift2 
+					app.osmshiftinfo osmshift2 
 				where 
 					osmshift.startnode = osmshift2.startnode
 					and
@@ -347,6 +338,4 @@ The service can be monitored in the /dbstatus/ url:
 	        port 80 protocol http
 	        request "/dbstatus/" with content = "weather: success\ntransport: success"
 	    then alert
-
-
 	

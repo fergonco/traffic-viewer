@@ -24,7 +24,6 @@ public class MaterializedViewsUpdater implements ServletContextListener {
 			public void run() {
 				refresh("app.osmshiftinfo");
 				refresh("app.timestamps");
-				refresh("app.recent_osmshiftinfo");
 				refresh("app.timestamped_osmshiftinfo");
 			}
 		}, _15minutes, _15minutes);
