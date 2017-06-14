@@ -26,11 +26,16 @@ public class JTSConverter implements AttributeConverter<Geometry, Object> {
 
 	@Override
 	public Object convertToDatabaseColumn(Geometry attribute) {
-		byte[] bytes = writer.write(attribute);
 		PGobject ret = new PGobject();
 		ret.setType("geometry");
+
 		try {
-			ret.setValue(WKBWriter.toHex(bytes));
+			if (attribute == null) {
+				ret.setValue(null);
+			} else {
+				byte[] bytes = writer.write(attribute);
+				ret.setValue(WKBWriter.toHex(bytes));
+			}
 		} catch (SQLException e) {
 			throw new PersistenceException("Cannot encode geometry", e);
 		}
@@ -40,10 +45,14 @@ public class JTSConverter implements AttributeConverter<Geometry, Object> {
 	@Override
 	public Geometry convertToEntityAttribute(Object dbData) {
 		PGobject pgObject = (PGobject) dbData;
-		try {
-			return reader.read(WKBReader.hexToBytes(pgObject.getValue()));
-		} catch (ParseException e) {
-			throw new PersistenceException("Could not convert byte[] from database to JTS geometry", e);
+		if (pgObject == null) {
+			return null;
+		} else {
+			try {
+				return reader.read(WKBReader.hexToBytes(pgObject.getValue()));
+			} catch (ParseException e) {
+				throw new PersistenceException("Could not convert byte[] from database to JTS geometry", e);
+			}
 		}
 	}
 
