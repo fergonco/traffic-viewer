@@ -76,17 +76,13 @@ residualPlots <- function(fit) {
   grid.arrange(fittedVsResidualsPlot, qqPlot, residualHistogram, ncol = 2)
 }
 
-test <- FALSE
-edaHist <- TRUE
-edaScatter <- TRUE
+edaHist <- FALSE
+edaScatter <- FALSE
 model <- FALSE
 fitAnalysis <- FALSE
 predict <- TRUE
 crossValidation <- TRUE
 
-if (test) {
-
-}
 if (edaHist) {
   histograms()
 }
@@ -111,7 +107,10 @@ if (model) {
 if (predict) {
   formula <- speed ~ morningrush * weekday * weather
   fit <- lm(data = speeds, formula)
+  print("morningrush = TRUE, Tuesday, clearorclouds")
   print(predict.lm(fit, newdata = data.frame(morningrush="true", weekday="tuesday", weather="clearorclouds"), interval = "prediction", level = 0.95))
+  print("morningrush = TRUE, Tuesday, fog")
+  print(predict.lm(fit, newdata = data.frame(morningrush="true", weekday="tuesday", weather="fog"), interval = "prediction", level = 0.95))
 }
 if (crossValidation) {
   formula <- speed ~ morningrush * weekday * weather
