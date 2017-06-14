@@ -16,6 +16,7 @@ public class OSMRouter {
 		OSMParser osmParser = new OSMParser(osmxml, lineNames);
 		osmParser.parse();
 		lineRouter = new HashMap<>();
+		lineRouter.put("F", new OSMLineRouter(osmParser, "F"));
 		lineRouter.put("Y", new OSMLineRouter(osmParser, "Y"));
 		lineRouter.put("O", new OSMLineRouter(osmParser, "O"));
 	}

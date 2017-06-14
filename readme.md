@@ -20,6 +20,29 @@ and replace 172.17.0.1 with the IP of the host in the docker network. Then inclu
         proxy_pass http://host:8080/traffic-viewer/;
     }
 
+# Data preparation
+
+* Generate reference table tpgstops with TPGStopExtractor, getting coordinates from TPG API
+* Visualize generated stops with QGIS project in data-gatherer/network/qgis.qgs
+* Download OSM data. E.g.: http://overpass-api.de/api/map?bbox=5.9697,46.2026,6.1551,46.3405
+* Execute BusLineExtractor to generate tables: osmlines, osmlinenodes and osmstops
+* Check these tables contains osm nodes for stops in both directions and the line network
+
+    * It is possible to check in OSM: Select "transport map -> map data" to obtain nodes osm_ids
+    * reference table tpgstops
+    * in tph.ch it is possible to get the position of the stop in thermometer: "Afficher la position de l'arrêt sur une carte"
+
+* Add manually the stops to app.tpgstop2
+* LineRouter use in order to calculate the routes between the stops. A txt file has to be generated with this format:
+
+        name:F # matches line in app.tpgstop2
+        forward:GEX # matches destination in app.tpgstop2
+        backward:GARE CORNAVIN # matches destination in app.tpgstop2
+        TPG stop codes in forward order
+
+  * If a step is not calculated it is most probably due to one-way=yes. Modify it in osm-overrides.xml
+* Ejecutar DistanceCalculator para generar las tablas TPGStopRoute y TPGStopRouteSegments
+
 # Deploy
 
 Prerequisites:
@@ -82,6 +105,75 @@ Prerequisites:
 	create index on osm.osm_roads (osm_id);
 
 ## Stops info
+
+insert into app.tpgstop2 (destination, line, osmid, tpgcode) values('GARE CORNAVIN', 'F', 792507552, 'GXAI');
+insert into app.tpgstop2 (destination, line, osmid, tpgcode) values('GARE CORNAVIN', 'F', 983750310, 'GXGC');
+insert into app.tpgstop2 (destination, line, osmid, tpgcode) values('GARE CORNAVIN', 'F', 792507541, 'GXPO');
+insert into app.tpgstop2 (destination, line, osmid, tpgcode) values('GARE CORNAVIN', 'F', 792508180, 'VRTC');
+insert into app.tpgstop2 (destination, line, osmid, tpgcode) values('GARE CORNAVIN', 'F', 1006118091, 'TGIN');
+insert into app.tpgstop2 (destination, line, osmid, tpgcode) values('GARE CORNAVIN', 'F', 1006118131, 'LHCY');
+insert into app.tpgstop2 (destination, line, osmid, tpgcode) values('GARE CORNAVIN', 'F', 983749484, 'CYNT');
+insert into app.tpgstop2 (destination, line, osmid, tpgcode) values('GARE CORNAVIN', 'F', 1006118105, 'SGNY');
+insert into app.tpgstop2 (destination, line, osmid, tpgcode) values('GARE CORNAVIN', 'F', 1006118157, 'MCON');
+insert into app.tpgstop2 (destination, line, osmid, tpgcode) values('GARE CORNAVIN', 'F', 1006118146, 'OXFR');
+insert into app.tpgstop2 (destination, line, osmid, tpgcode) values('GARE CORNAVIN', 'F', 1114944131, 'PPLA');
+insert into app.tpgstop2 (destination, line, osmid, tpgcode) values('GARE CORNAVIN', 'F', -3, 'ORRO');
+insert into app.tpgstop2 (destination, line, osmid, tpgcode) values('GARE CORNAVIN', 'F', 1006118191, 'CHVO');
+insert into app.tpgstop2 (destination, line, osmid, tpgcode) values('GARE CORNAVIN', 'F', 856482153, 'FEMA');
+insert into app.tpgstop2 (destination, line, osmid, tpgcode) values('GARE CORNAVIN', 'F', 856482206, 'AJUR');
+insert into app.tpgstop2 (destination, line, osmid, tpgcode) values('GARE CORNAVIN', 'F', 856482201, 'JAGI');
+insert into app.tpgstop2 (destination, line, osmid, tpgcode) values('GARE CORNAVIN', 'F', 856482240, 'BRUN');
+insert into app.tpgstop2 (destination, line, osmid, tpgcode) values('GARE CORNAVIN', 'F', 856482246, 'FVDO');
+insert into app.tpgstop2 (destination, line, osmid, tpgcode) values('GARE CORNAVIN', 'F', 856482284, 'GSDN');
+insert into app.tpgstop2 (destination, line, osmid, tpgcode) values('GARE CORNAVIN', 'F', 858297354, 'TRTI');
+insert into app.tpgstop2 (destination, line, osmid, tpgcode) values('GARE CORNAVIN', 'F', 864555974, 'PR47');
+insert into app.tpgstop2 (destination, line, osmid, tpgcode) values('GARE CORNAVIN', 'F', 864555979, 'SUSE');
+insert into app.tpgstop2 (destination, line, osmid, tpgcode) values('GARE CORNAVIN', 'F', 528517474, 'GSAC');
+insert into app.tpgstop2 (destination, line, osmid, tpgcode) values('GARE CORNAVIN', 'F', 856482141, 'POMI');
+insert into app.tpgstop2 (destination, line, osmid, tpgcode) values('GARE CORNAVIN', 'F', 768498714, 'MORL');
+insert into app.tpgstop2 (destination, line, osmid, tpgcode) values('GARE CORNAVIN', 'F', 936369115, 'OMS0');
+insert into app.tpgstop2 (destination, line, osmid, tpgcode) values('GARE CORNAVIN', 'F', 768498709, 'BIT0');
+insert into app.tpgstop2 (destination, line, osmid, tpgcode) values('GARE CORNAVIN', 'F', 856482086, 'APIA');
+insert into app.tpgstop2 (destination, line, osmid, tpgcode) values('GARE CORNAVIN', 'F', 768498773, 'NATI');
+insert into app.tpgstop2 (destination, line, osmid, tpgcode) values('GARE CORNAVIN', 'F', 768498766, 'VRBE');
+insert into app.tpgstop2 (destination, line, osmid, tpgcode) values('GARE CORNAVIN', 'F', 768498760, 'VLAI');
+insert into app.tpgstop2 (destination, line, osmid, tpgcode) values('GARE CORNAVIN', 'F', 768498763, 'POST');
+insert into app.tpgstop2 (destination, line, osmid, tpgcode) values('GARE CORNAVIN', 'F', 768498764, 'CVIN');
+
+insert into app.tpgstop2 (destination, line, osmid, tpgcode) values('GEX', 'F', 2976733717, 'CVIN');
+insert into app.tpgstop2 (destination, line, osmid, tpgcode) values('GEX', 'F', 768498761, 'POST');
+insert into app.tpgstop2 (destination, line, osmid, tpgcode) values('GEX', 'F', 844755267, 'VLAI');
+insert into app.tpgstop2 (destination, line, osmid, tpgcode) values('GEX', 'F', 768498769, 'VRBE');
+insert into app.tpgstop2 (destination, line, osmid, tpgcode) values('GEX', 'F', 768498772, 'NATI');
+insert into app.tpgstop2 (destination, line, osmid, tpgcode) values('GEX', 'F', 768498728, 'APIA');
+insert into app.tpgstop2 (destination, line, osmid, tpgcode) values('GEX', 'F', 923961689, 'BIT0');
+insert into app.tpgstop2 (destination, line, osmid, tpgcode) values('GEX', 'F', 448298236, 'OMS0');
+insert into app.tpgstop2 (destination, line, osmid, tpgcode) values('GEX', 'F', 768498717, 'MORL');
+insert into app.tpgstop2 (destination, line, osmid, tpgcode) values('GEX', 'F', 528517472, 'POMI');
+insert into app.tpgstop2 (destination, line, osmid, tpgcode) values('GEX', 'F', 856482169, 'GSAC');
+insert into app.tpgstop2 (destination, line, osmid, tpgcode) values('GEX', 'F', 768498690, 'SUSE');
+insert into app.tpgstop2 (destination, line, osmid, tpgcode) values('GEX', 'F', 768498691, 'PR47');
+insert into app.tpgstop2 (destination, line, osmid, tpgcode) values('GEX', 'F', 768498663, 'TRTI');
+insert into app.tpgstop2 (destination, line, osmid, tpgcode) values('GEX', 'F', 768498669, 'GSDN');
+insert into app.tpgstop2 (destination, line, osmid, tpgcode) values('GEX', 'F', 856482250, 'FVDO');
+insert into app.tpgstop2 (destination, line, osmid, tpgcode) values('GEX', 'F', 856482238, 'BRUN');
+insert into app.tpgstop2 (destination, line, osmid, tpgcode) values('GEX', 'F', 856482185, 'JAGI');
+insert into app.tpgstop2 (destination, line, osmid, tpgcode) values('GEX', 'F', 856482209, 'AJUR');
+insert into app.tpgstop2 (destination, line, osmid, tpgcode) values('GEX', 'F', 856482153, 'FEMA');
+insert into app.tpgstop2 (destination, line, osmid, tpgcode) values('GEX', 'F', 983750445, 'CHVO');
+insert into app.tpgstop2 (destination, line, osmid, tpgcode) values('GEX', 'F', -2, 'ORRO');
+insert into app.tpgstop2 (destination, line, osmid, tpgcode) values('GEX', 'F', 1006118198, 'PPLA');
+insert into app.tpgstop2 (destination, line, osmid, tpgcode) values('GEX', 'F', 289982136, 'OXFR');
+insert into app.tpgstop2 (destination, line, osmid, tpgcode) values('GEX', 'F', 983750372, 'MCON');
+insert into app.tpgstop2 (destination, line, osmid, tpgcode) values('GEX', 'F', 983749436, 'SGNY');
+insert into app.tpgstop2 (destination, line, osmid, tpgcode) values('GEX', 'F', 1006118124, 'CYNT');
+insert into app.tpgstop2 (destination, line, osmid, tpgcode) values('GEX', 'F', 983750406, 'LHCY');
+insert into app.tpgstop2 (destination, line, osmid, tpgcode) values('GEX', 'F', 1006118085, 'TGIN');
+insert into app.tpgstop2 (destination, line, osmid, tpgcode) values('GEX', 'F', 792508187, 'VRTC');
+insert into app.tpgstop2 (destination, line, osmid, tpgcode) values('GEX', 'F', 792507546, 'GXPO');
+insert into app.tpgstop2 (destination, line, osmid, tpgcode) values('GEX', 'F', 1006118064, 'GXGC');
+insert into app.tpgstop2 (destination, line, osmid, tpgcode) values('GEX', 'F', 2080973355, 'GXAI');
+
 
 	begin;
 	create table app.tpgstop (code varchar primary key, osmid1 bigint, destination1 varchar, osmid2 bigint, destination2 varchar);

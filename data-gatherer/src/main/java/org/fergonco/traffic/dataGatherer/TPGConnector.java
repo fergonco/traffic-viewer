@@ -34,14 +34,17 @@ public class TPGConnector implements ServletContextListener {
 		DBThermometerListener listener = new DBThermometerListener();
 
 		ThermometerComparator[] comparators = new ThermometerComparator[] { //
+				new ThermometerComparator(dayFrame, tpg, listener, new NullThermometerArchiver(), "O", "CVIN", "GEX"),
+				new ThermometerComparator(dayFrame, tpg, listener, new NullThermometerArchiver(), "O", "GXAI",
+						"GARE CORNAVIN"),
+				new ThermometerComparator(dayFrame, tpg, listener, new NullThermometerArchiver(), "O", "GRVI",
+						"L.%20INTERNATIONAL"),
+				new ThermometerComparator(dayFrame, tpg, listener, new NullThermometerArchiver(), "O", "LYIN",
+						"MEYRIN-GRAVIERE"),
 				new ThermometerComparator(dayFrame, tpg, listener, new NullThermometerArchiver(), "Y", "VATH",
 						"FERNEY-VOLTAIRE"),
 				new ThermometerComparator(dayFrame, tpg, listener, new NullThermometerArchiver(), "Y", "FEMA",
-						"VAL-THOIRY"),
-				// new ThermometerComparator(dayFrame, tpg, listener, new
-				// NullThermometerArchiver(), "18", "BLAN", "CERN")
-
-		};
+						"VAL-THOIRY"), };
 		monitor = new ThermometerMonitor(dayFrame, comparators, new NullWeatherArchiver(),
 				new StdoutHumanReadableLog());
 
