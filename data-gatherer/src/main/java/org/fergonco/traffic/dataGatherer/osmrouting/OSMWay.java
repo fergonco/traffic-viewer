@@ -90,4 +90,13 @@ public class OSMWay {
 		return "backwards".equals(noRoute);
 	}
 
+	public void removeNode(String id) {
+		for (OSMNode node : nodes) {
+			if (node.getId().equals(id)) {
+				nodes.remove(node);
+				break;
+			}
+		}
+	}
+
 }

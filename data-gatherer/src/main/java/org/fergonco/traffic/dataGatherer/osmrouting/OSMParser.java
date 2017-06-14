@@ -103,7 +103,16 @@ public class OSMParser {
 			} else if (qName.equals("relation")) {
 				String ref = currentRelation.getTag("ref");
 				if (interestingRelations.containsKey(ref)) {
-					interestingRelations.put(ref, currentRelation);
+					OSMRelation existingRelation = interestingRelations.get(ref);
+					if (existingRelation != null) {
+						/*
+						 * Line F is defined in two relations, one for each
+						 * sense
+						 */
+						existingRelation.merge(currentRelation);
+					} else {
+						interestingRelations.put(ref, currentRelation);
+					}
 				}
 				currentRelation = null;
 			}
@@ -118,7 +127,13 @@ public class OSMParser {
 		@Override
 		public void startElement(String uri, String localName, String qName, Attributes attributes)
 				throws SAXException {
-			if (qName.equals("way")) {
+			if (qName.equals("node")) {
+				Coordinate coordinate = new Coordinate(Double.parseDouble(attributes.getValue("lon")),
+						Double.parseDouble(attributes.getValue("lat")));
+				String nodeId = attributes.getValue("id");
+				OSMNode osmNode = new OSMNode(nodeId, coordinate);
+				idNodes.put(nodeId, osmNode);
+			} else if (qName.equals("way")) {
 				String wayId = attributes.getValue("id");
 				currentWay = idWays.get(wayId);
 			} else if (currentWay != null && qName.equals("tag")) {
@@ -132,7 +147,15 @@ public class OSMParser {
 			} else if (qName.equals("delete-node")) {
 				String id = attributes.getValue("id");
 				String relation = attributes.getValue("relation");
-				interestingRelations.get(relation).removeNode(idNodes.remove(id));
+				if (relation != null) {
+					interestingRelations.get(relation).removeNode(idNodes.remove(id));
+				} else {
+					String way = attributes.getValue("way");
+					if (way != null) {
+						idWays.get(way).removeNode(id);
+					}
+				}
+
 			} else if (qName.equals("delete-way")) {
 				String id = attributes.getValue("id");
 				String relation = attributes.getValue("relation");

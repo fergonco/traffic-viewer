@@ -80,4 +80,14 @@ public class OSMRelation {
 		return ret.toArray(new OSMNode[n]);
 	}
 
+	public boolean hasNodes() {
+		return nodes.size() > 0;
+	}
+
+	public void merge(OSMRelation currentRelation) {
+		this.ways.addAll(currentRelation.ways);
+		this.nodes.addAll(currentRelation.nodes);
+		this.tags.putAll(currentRelation.tags);
+	}
+
 }
