@@ -13,7 +13,6 @@ import org.apache.logging.log4j.Logger;
 import org.fergonco.tpg.trafficViewer.DBUtils;
 import org.fergonco.tpg.trafficViewer.jpa.OSMShift;
 import org.fergonco.tpg.trafficViewer.jpa.Shift;
-import org.fergonco.tpg.trafficViewer.jpa.TPGStop2;
 import org.fergonco.tpg.trafficViewer.jpa.TPGStopRoute;
 import org.fergonco.tpg.trafficViewer.jpa.TPGStopRouteSegment;
 
@@ -32,14 +31,11 @@ public class DBThermometerListener implements ThermometerListener {
 		logger.info("Previous: " + previousStep);
 		logger.info("Current: " + currentStep);
 		if (previousStep != null) {
-			TPGStop2 start = Utils.getTPGStop(em, previousStep.getStopCode(), line, destination);
-			TPGStop2 end = Utils.getTPGStop(em, currentStep.getStopCode(), line, destination);
-
-			TypedQuery<TPGStopRoute> distanceQuery = em.createQuery("SELECT d " + "FROM TPGStopDistance d "
-					+ "WHERE d.starttpgcode=:starttpgcode " + "AND d.endtpgcode=:endtpgcode " + "AND d.line=:line",
+			TypedQuery<TPGStopRoute> distanceQuery = em.createQuery("SELECT d " + "FROM TPGStopRoute d "
+					+ "WHERE d.startTPGCode=:starttpgcode " + "AND d.endTPGCode=:endtpgcode " + "AND d.line=:line",
 					TPGStopRoute.class);
-			distanceQuery.setParameter("starttpgcode", start.getCode());
-			distanceQuery.setParameter("endtpgcode", end.getCode());
+			distanceQuery.setParameter("starttpgcode", previousStep.getStopCode());
+			distanceQuery.setParameter("endtpgcode", currentStep.getStopCode());
 			distanceQuery.setParameter("line", line);
 			TPGStopRoute distance = distanceQuery.getSingleResult();
 
