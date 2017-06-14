@@ -32,7 +32,10 @@ public class DBThermometerListenerTest {
 	@Before
 	public void clean() throws ParserConfigurationException, SAXException, IOException {
 		DBUtils.setPersistenceUnit("test");
+		DBUtils.setSchemaName(null);
 		em = DBUtils.getEntityManager();
+		// Force creation of data
+		em.createQuery("SELECT s FROM Shift s", Shift.class).getResultList();
 		em.getTransaction().begin();
 		em.createQuery("DELETE FROM OSMShift").executeUpdate();
 		em.createQuery("DELETE FROM Shift").executeUpdate();
