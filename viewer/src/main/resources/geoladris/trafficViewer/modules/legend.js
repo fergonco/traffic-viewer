@@ -1,6 +1,4 @@
-define(
-   [ "message-bus", "ui/ui", "module" ],
-   function(bus, ui) {
+define( [ "message-bus", "module" ], function(bus) {
 
       var template = "\
          <div id='LegendPanel' class='HiddenLegendContent'>\
