@@ -27,6 +27,7 @@ public class DistanceCalculator {
 
 	public static void main(String[] args) throws Exception {
 		ArrayList<Line> lines = new ArrayList<>();
+		lines.add(Line.read("line-f.txt"));
 		lines.add(Line.read("line-y.txt"));
 		lines.add(Line.read("line-o.txt"));
 		ArrayList<String> lineNames = new ArrayList<>();

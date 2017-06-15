@@ -18,10 +18,11 @@ public class LineRouter {
 
 	public static void main(String[] args) throws Exception {
 		ArrayList<Line> lines = new ArrayList<>();
+		lines.add(Line.read("line-f.txt"));
 		lines.add(Line.read("line-y.txt"));
 		lines.add(Line.read("line-o.txt"));
 
-		OSMRouter osmRouter = new OSMRouter(new File("ligne-y.osm.xml"), "Y", "O");
+		OSMRouter osmRouter = new OSMRouter(new File("ligne-y.osm.xml"), "F", "Y", "O");
 		EntityManager em = DBUtils.getEntityManager();
 		WKTWriter wktWriter = new WKTWriter();
 		StringBuilder builder = new StringBuilder();
