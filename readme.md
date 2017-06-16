@@ -47,8 +47,8 @@ These tables are required by the data-gatherer service.
 
 In the database, as tpg user:
 
-	create schema app;
-	\i data-gatherer/tpgstoproute.sql
+	psql -h localhost -U tpg -d tpg -p <port> -c "create schema app;"
+	psql -h localhost -U tpg -d tpg -p <port> -f data-gatherer/tpgstoproute.sql
 
 ## Data-gatherer
 
@@ -61,7 +61,7 @@ All docker images accessing the database, like `data-gatherer`, take into accoun
 
 Execute a docker container with the data-gatherer image created before using the previous environment variables to point to the PostgreSQL/PostGIS container.
 
-A volume can be mounted in /var/traffic-viewer in order to get a file with the log.
+A volume can be mounted in `/var/traffic-viewer` in order to get a file with the log.
 
 See logs to check it is working.
 
@@ -277,7 +277,7 @@ Comma separated and without the "EPSG:" prefix:
 
 3. Set the style in the layer
 4. Set `draw_timestamp` as temporal column in the dimension tab.
-5. Navigate to `http://<server>:<mappedport>/geoserver/
+5. Navigate to `http://<server>:<mappedport>/geoserver/`
 
 ## Viewer
 
