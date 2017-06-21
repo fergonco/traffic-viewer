@@ -1,6 +1,7 @@
 package org.fergonco.traffic.analyzer;
 
 import java.io.IOException;
+import java.io.PrintStream;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -21,12 +22,12 @@ import org.fergonco.tpg.trafficViewer.jpa.WeatherConditions;
 
 public class DatasetBuilder {
 
-	public void build() throws IOException, ParseException {
+	public void build(PrintStream stream, long startNode, long endNode) throws IOException, ParseException {
 		EntityManager em = DBUtils.getEntityManager();
 		TypedQuery<OSMShift> query = em.createQuery(
 				"SELECT s FROM OSMShift s WHERE s.startNode=:startNode and s.endNode=:endNode", OSMShift.class);
-		query.setParameter("startNode", 907579280);
-		query.setParameter("endNode", 906227763);
+		query.setParameter("startNode", startNode);
+		query.setParameter("endNode", endNode);
 		List<OSMShift> osmShifts = query.getResultList();
 
 		/*
@@ -71,7 +72,7 @@ public class DatasetBuilder {
 		for (OutputFieldSet outputFieldSet : outputFieldSets) {
 			Collections.addAll(outputLine, outputFieldSet.getNames());
 		}
-		System.out.println(StringUtils.join(outputLine, ","));
+		stream.println(StringUtils.join(outputLine, ","));
 		for (OSMShift osmShift : osmShifts) {
 			Shift shift = osmShift.getShift();
 
@@ -102,11 +103,11 @@ public class DatasetBuilder {
 				Collections.addAll(outputLine, outputFieldSet.getValues(outputContext));
 			}
 
-			System.out.println(StringUtils.join(outputLine, ","));
+			stream.println(StringUtils.join(outputLine, ","));
 		}
 	}
 
 	public static void main(String[] args) throws Exception {
-		new DatasetBuilder().build();
+		new DatasetBuilder().build(System.out, 907579280, 906227763);
 	}
 }
