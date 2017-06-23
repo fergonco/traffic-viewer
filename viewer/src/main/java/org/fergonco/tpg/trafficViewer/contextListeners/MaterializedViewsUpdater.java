@@ -10,9 +10,12 @@ import javax.servlet.ServletContextListener;
 import javax.servlet.annotation.WebListener;
 
 import org.fergonco.tpg.trafficViewer.DBUtils;
+import org.fergonco.traffic.analyzer.predict.Predictor;
 
 @WebListener
 public class MaterializedViewsUpdater implements ServletContextListener {
+
+	private Predictor predictor = new Predictor();
 
 	@Override
 	public void contextInitialized(ServletContextEvent sce) {
@@ -22,6 +25,9 @@ public class MaterializedViewsUpdater implements ServletContextListener {
 
 			@Override
 			public void run() {
+
+				predictor.updatePredictions();
+
 				refresh("app.osmshiftinfo");
 				refresh("app.timestamps");
 				refresh("app.timestamped_measured_osmshifts");

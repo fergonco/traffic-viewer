@@ -1,4 +1,4 @@
-package org.fergonco.traffic.analyzer;
+package org.fergonco.traffic.analyzer.predict;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -16,6 +16,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
 import org.fergonco.tpg.trafficViewer.DBUtils;
+import org.fergonco.traffic.analyzer.DatasetBuilder;
 import org.postgresql.util.PGobject;
 
 public class ModelBuilder {
@@ -45,7 +46,7 @@ public class ModelBuilder {
 		return new File("/tmp/dataset-" + startNode + "-" + endNode + ".csv");
 	}
 
-	private ArrayList<OSMNodePair> buildNodePairList() {
+	public ArrayList<OSMNodePair> buildNodePairList() {
 		ArrayList<OSMNodePair> nodePairs = new ArrayList<>();
 
 		EntityManager em = DBUtils.getEntityManager();

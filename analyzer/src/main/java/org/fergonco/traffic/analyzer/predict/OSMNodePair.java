@@ -1,4 +1,4 @@
-package org.fergonco.traffic.analyzer;
+package org.fergonco.traffic.analyzer.predict;
 
 public class OSMNodePair {
 	long startNode;

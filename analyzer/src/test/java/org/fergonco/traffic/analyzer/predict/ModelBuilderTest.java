@@ -1,8 +1,10 @@
-package org.fergonco.traffic.analyzer;
+package org.fergonco.traffic.analyzer.predict;
 
 import java.io.File;
 import java.io.IOException;
 
+import org.fergonco.traffic.analyzer.predict.LinearModel;
+import org.fergonco.traffic.analyzer.predict.ModelBuilder;
 import org.junit.Test;
 
 public class ModelBuilderTest {
