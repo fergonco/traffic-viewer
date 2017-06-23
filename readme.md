@@ -112,7 +112,7 @@ In the database, as tpg user:
 		from app.shift;
 
 	-- Create a table adding to the osmshiftinfo a timestamp for drawing
-	create materialized view app.timestamped_osmshiftinfo as
+	create materialized view app.timestamped_measured_osmshifts as
 		select 
 			to_timestamp(timestamps.millis/1000) as draw_timestamp, osmshift.*
 		from 
@@ -135,7 +135,24 @@ In the database, as tpg user:
 					and
 					osmshift2.timestamp > osmshift.timestamp
 			);
-	create index ON app.timestamped_osmshiftinfo (draw_timestamp);
+	create index ON app.timestamped_measured_osmshifts (draw_timestamp);
+	
+	-- Predictions table
+	create table app.timestamped_predicted_osmshifts (
+		id serial,
+		geom geometry(LineString, 4326),
+		draw_timestamp timestamp,
+		speed integer,
+		predictionerror real
+	);
+	create index ON app.timestamped_predicted_osmshifts (draw_timestamp);
+	
+	-- Predicted and measured osmshifts
+	create materialized view app.timestamped_osmshiftinfo as 
+		(select id, geom, draw_timestamp, speed, -1 as predictionerror from app.timestamped_measured_osmshifts)
+		union
+		(select id, geom, draw_timestamp, speed, predictionerror from app.timestamped_predicted_osmshifts);
+	
 
 ## geoserver
 
