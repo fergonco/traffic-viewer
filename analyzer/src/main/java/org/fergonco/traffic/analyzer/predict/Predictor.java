@@ -1,12 +1,18 @@
 package org.fergonco.traffic.analyzer.predict;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.persistence.EntityManager;
 
+import org.apache.commons.io.IOUtils;
 import org.fergonco.tpg.trafficViewer.DBUtils;
+import org.fergonco.tpg.trafficViewer.jpa.OSMShift;
 import org.fergonco.tpg.trafficViewer.jpa.TimestampedPredictedOSMShift;
 
 public class Predictor {
@@ -22,9 +28,8 @@ public class Predictor {
 
 		// Add new predictions
 
-		// TODO get geometry as well
 		ModelBuilder modelBuilder = new ModelBuilder();
-		ArrayList<OSMNodePair> nodePairs = modelBuilder.buildNodePairList();
+		ArrayList<OSMShift> osmShifts = modelBuilder.getUniqueOSMShifts();
 
 		// Variable: day of week
 		Calendar c = Calendar.getInstance();
@@ -42,7 +47,7 @@ public class Predictor {
 			int minutesSinceMidnight = hours * 60 + minutes;
 			double distortedMinutes = Math.sqrt(Math.abs(450 - minutesSinceMidnight));
 
-			for (OSMNodePair osmNodePair : nodePairs) {
+			for (OSMShift osmShift : osmShifts) {
 				// TODO
 				// Recover model from database and save it on a file
 				// Run RScript reading the model from the file
@@ -54,12 +59,32 @@ public class Predictor {
 				// TODO
 				// predictedShift.setSpeed(speed);
 				// predictedShift.setPredictionerror(predictionerror);
-				// predictedShift.setGeom(geometry);
+				predictedShift.setGeom(osmShift.getGeom());
 
 				em.persist(predictedShift);
 			}
 			predictionTimestamp += QUARTER_OF_HOUR;
 		}
 		em.getTransaction().commit();
+	}
+
+	public double[] getCenterAndPredictedInterval(File modelFile, File datasetFile)
+			throws IOException, PredictionException {
+		String command = "Rscript analyse/predictor.r " + modelFile.getAbsolutePath() + " "
+				+ datasetFile.getAbsolutePath();
+		ProcessBuilder processBuilder = new ProcessBuilder(command.split("\\s"));
+		// processBuilder.redirectErrorStream(true);
+		Process process = processBuilder.start();
+		String predictionOutput = IOUtils.toString(process.getInputStream(), "utf-8");
+		Pattern pattern = Pattern.compile("1\\s+(\\d+\\.\\d+)\\s+(\\d+\\.\\d+)\\s+(\\d+\\.\\d+)");
+		Matcher matcher = pattern.matcher(predictionOutput);
+		if (matcher.find()) {
+			double prediction = Double.parseDouble(matcher.group(1));
+			double lowerEnd = Double.parseDouble(matcher.group(2));
+			double upperEnd = Double.parseDouble(matcher.group(3));
+			return new double[] { prediction, lowerEnd, upperEnd };
+		} else {
+			throw new PredictionException("Could not understand Rscript output: \"" + predictionOutput + "\"");
+		}
 	}
 }

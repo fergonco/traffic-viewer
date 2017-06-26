@@ -1,93 +1,110 @@
 package org.fergonco.traffic.analyzer.predict;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.PrintStream;
-import java.lang.ProcessBuilder.Redirect;
+import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import javax.persistence.EntityManager;
-import javax.persistence.Query;
+import javax.persistence.TypedQuery;
 
 import org.fergonco.tpg.trafficViewer.DBUtils;
+import org.fergonco.tpg.trafficViewer.jpa.OSMShift;
 import org.fergonco.traffic.analyzer.DatasetBuilder;
-import org.postgresql.util.PGobject;
 
 public class ModelBuilder {
 
 	public static void main(String[] args) throws Exception {
 		ModelBuilder mb = new ModelBuilder();
-		ArrayList<OSMNodePair> nodePairs = mb.buildNodePairList();
+		ArrayList<OSMShift> osmShifts = mb.getUniqueOSMShifts();
+		mb.generateModels(osmShifts);
+	}
 
+	private void generateModels(ArrayList<OSMShift> osmShifts) throws IOException, ParseException {
 		DatasetBuilder datasetBuilder = new DatasetBuilder();
 		int i = 0;
-		for (OSMNodePair osmNodePair : nodePairs) {
-			long startNode = osmNodePair.startNode;
-			long endNode = osmNodePair.endNode;
-			PrintStream stream = new PrintStream(new FileOutputStream(getFileName(startNode, endNode)));
+		for (OSMShift osmShift : osmShifts) {
+			long startNode = osmShift.getStartNode();
+			long endNode = osmShift.getEndNode();
+			File datasetFileName = getDatasetFileName(startNode, endNode);
+
+			// Build dataset
+			PrintStream stream = new PrintStream(new FileOutputStream(datasetFileName));
 			datasetBuilder.build(stream, startNode, endNode);
 			stream.close();
-			System.out.println(++i + "/" + nodePairs.size());
-		}
 
-		for (OSMNodePair osmNodePair : nodePairs) {
-			LinearModel linearModel = mb.parse(getFileName(osmNodePair.startNode, osmNodePair.endNode));
-			System.out.println(linearModel);
+			// Generate file with the model
+			File modelFileName = getModelFileName(osmShift.getStartNode(), osmShift.getEndNode());
+			generateModel(datasetFileName, modelFileName);
+			System.out.println(++i + "/" + osmShifts.size());
 		}
 	}
 
-	private static File getFileName(long startNode, long endNode) {
+	public void generateModel(File datasetFileName, File modelFileName) throws IOException {
+		String command = "Rscript analyse/modeler.r " + datasetFileName.getAbsolutePath() + " " + modelFileName;
+		ProcessBuilder processBuilder = new ProcessBuilder(command.split("\\s"));
+		Process process = processBuilder.start();
+		while (process.isAlive()) {
+			try {
+				process.waitFor();
+			} catch (InterruptedException e) {
+			}
+		}
+	}
+
+	private static File getModelFileName(long startNode, long endNode) {
+		return new File("/tmp/dataset-" + startNode + "-" + endNode + ".rda");
+	}
+
+	private static File getDatasetFileName(long startNode, long endNode) {
 		return new File("/tmp/dataset-" + startNode + "-" + endNode + ".csv");
 	}
 
-	public ArrayList<OSMNodePair> buildNodePairList() {
-		ArrayList<OSMNodePair> nodePairs = new ArrayList<>();
+	public ArrayList<OSMShift> getUniqueOSMShifts() {
+		ArrayList<OSMShift> osmShifts = new ArrayList<>();
 
 		EntityManager em = DBUtils.getEntityManager();
-		Query query = em.createNativeQuery("select distinct(startnode, endnode) from app.osmshiftinfo;");
-		@SuppressWarnings("unchecked")
-		List<PGobject> list = query.getResultList();
-		for (PGobject nodePairObject : list) {
-			String nodePair = nodePairObject.getValue();
-			Pattern pattern = Pattern.compile("\\((\\d*),(\\d*)\\)");
-			Matcher matcher = pattern.matcher(nodePair);
-			if (matcher.find()) {
-				long startNode = Long.parseLong(matcher.group(1));
-				long endNode = Long.parseLong(matcher.group(2));
-				nodePairs.add(new OSMNodePair(startNode, endNode));
+		TypedQuery<OSMShift> query = em.createQuery("select o from OSMShift o", OSMShift.class);
+		List<OSMShift> list = query.getResultList();
+		HashSet<OSMNodePair> uniqueSet = new HashSet<>();
+		for (OSMShift osmShift : list) {
+			OSMNodePair osmNodePair = new OSMNodePair(osmShift.getStartNode(), osmShift.getEndNode());
+			if (uniqueSet.contains(osmNodePair)) {
+				continue;
+			} else {
+				osmShifts.add(osmShift);
+				uniqueSet.add(osmNodePair);
 			}
 		}
-		return nodePairs;
+		return osmShifts;
 	}
 
-	public LinearModel parse(File file) throws IOException {
-		String command = "Rscript analyse/modeler.r " + file.getAbsolutePath();
-		ProcessBuilder processBuilder = new ProcessBuilder(command.split("\\s"));
-		processBuilder.redirectOutput(Redirect.PIPE);
-		Process process = processBuilder.start();
-		InputStreamReader isr = new InputStreamReader(process.getInputStream());
-		BufferedReader br = new BufferedReader(isr);
-		String line;
-		Pattern pattern = Pattern.compile("\\[1\\]\\s\\\"([^\\s]+)\\s(-?\\d+\\.\\d+)");
-		LinearModel variableCoefficient = new LinearModel();
-		while ((line = br.readLine()) != null) {
-			Matcher matcher = pattern.matcher(line);
-			if (matcher.find()) {
-				String variable = matcher.group(1);
-				double coefficient = Double.parseDouble(matcher.group(2));
-				System.out.println(line);
-				System.out.println(variable + ": " + coefficient);
-				variableCoefficient.put(variable, coefficient);
-			} else {
-				throw new RuntimeException("Cannot parse line: " + line);
-			}
+	private class OSMNodePair {
+		long startNode;
+		long endNode;
+
+		public OSMNodePair(long startNode, long endNode) {
+			super();
+			this.startNode = startNode;
+			this.endNode = endNode;
 		}
-		return variableCoefficient;
+
+		@Override
+		public int hashCode() {
+			return (int) (startNode - endNode);
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (obj instanceof OSMNodePair) {
+				OSMNodePair that = (OSMNodePair) obj;
+				return this.startNode == that.startNode && this.endNode == that.endNode;
+			}
+			return false;
+		}
 	}
 }
