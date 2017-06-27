@@ -12,7 +12,9 @@ import java.util.List;
 import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
 
+import org.apache.commons.io.IOUtils;
 import org.fergonco.tpg.trafficViewer.DBUtils;
+import org.fergonco.tpg.trafficViewer.jpa.OSMSegmentModel;
 import org.fergonco.tpg.trafficViewer.jpa.OSMShift;
 import org.fergonco.traffic.analyzer.DatasetBuilder;
 
@@ -20,11 +22,14 @@ public class ModelBuilder {
 
 	public static void main(String[] args) throws Exception {
 		ModelBuilder mb = new ModelBuilder();
-		ArrayList<OSMShift> osmShifts = mb.getUniqueOSMShifts();
-		mb.generateModels(osmShifts);
+		mb.generateModels();
 	}
 
-	private void generateModels(ArrayList<OSMShift> osmShifts) throws IOException, ParseException {
+	public void generateModels() throws IOException, ParseException, RException {
+		generateModels(getUniqueOSMShifts());
+	}
+
+	private void generateModels(ArrayList<OSMShift> osmShifts) throws IOException, ParseException, RException {
 		DatasetBuilder datasetBuilder = new DatasetBuilder();
 		int i = 0;
 		for (OSMShift osmShift : osmShifts) {
@@ -41,10 +46,21 @@ public class ModelBuilder {
 			File modelFileName = getModelFileName(osmShift.getStartNode(), osmShift.getEndNode());
 			generateModel(datasetFileName, modelFileName);
 			System.out.println(++i + "/" + osmShifts.size());
+
+			// Store model in database
+			byte[] modelBytes = IOUtils.toByteArray(datasetFileName.toURI());
+			EntityManager em = DBUtils.getEntityManager();
+			OSMSegmentModel osmSegmentModel = new OSMSegmentModel();
+			osmSegmentModel.setStartNode(startNode);
+			osmSegmentModel.setEndNode(endNode);
+			osmSegmentModel.setModel(modelBytes);
+			em.getTransaction().begin();
+			em.persist(osmSegmentModel);
+			em.getTransaction().commit();
 		}
 	}
 
-	public void generateModel(File datasetFileName, File modelFileName) throws IOException {
+	public void generateModel(File datasetFileName, File modelFileName) throws IOException, RException {
 		String command = "Rscript analyse/modeler.r " + datasetFileName.getAbsolutePath() + " " + modelFileName;
 		ProcessBuilder processBuilder = new ProcessBuilder(command.split("\\s"));
 		Process process = processBuilder.start();
@@ -53,6 +69,9 @@ public class ModelBuilder {
 				process.waitFor();
 			} catch (InterruptedException e) {
 			}
+		}
+		if (process.exitValue() > 0) {
+			throw new RException("modeler returned error");
 		}
 	}
 

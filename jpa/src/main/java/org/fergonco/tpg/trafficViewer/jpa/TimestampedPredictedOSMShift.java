@@ -37,4 +37,11 @@ public class TimestampedPredictedOSMShift {
 		this.predictionerror = predictionerror;
 	}
 
+	public long getMillis() {
+		return millis;
+	}
+
+	public int getSpeed() {
+		return speed;
+	}
 }
