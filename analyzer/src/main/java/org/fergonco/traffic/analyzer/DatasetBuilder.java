@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
@@ -14,7 +13,6 @@ import javax.persistence.NoResultException;
 import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 
-import org.apache.commons.lang3.StringUtils;
 import org.fergonco.tpg.trafficViewer.DBUtils;
 import org.fergonco.tpg.trafficViewer.jpa.OSMShift;
 import org.fergonco.tpg.trafficViewer.jpa.Shift;
@@ -37,7 +35,8 @@ public class DatasetBuilder {
 		HashMap<String, ArrayList<Shift>> idShiftDuplicates = new HashMap<>();
 		for (OSMShift osmShift : osmShifts) {
 			Shift shift = osmShift.getShift();
-			String shiftId = IdFieldSet.getShiftId(shift);
+			ShiftEntryImpl shiftEntry = new ShiftEntryImpl(shift);
+			String shiftId = shiftEntry.getId();
 			ArrayList<Shift> shiftDuplicates = idShiftDuplicates.get(shiftId);
 			if (shiftDuplicates == null) {
 				shiftDuplicates = new ArrayList<>();
@@ -66,25 +65,19 @@ public class DatasetBuilder {
 			}
 		}
 
-		OutputFieldSet[] outputFieldSets = new OutputFieldSet[] { new IdFieldSet(), new ShiftFieldSet(),
-				new CalendarFieldSet(), new WeatherFieldSet() };
-		ArrayList<Object> outputLine = new ArrayList<>();
-		for (OutputFieldSet outputFieldSet : outputFieldSets) {
-			Collections.addAll(outputLine, outputFieldSet.getNames());
-		}
-		stream.println(StringUtils.join(outputLine, ","));
+		Dataset dataset = new Dataset(stream);
+		dataset.writeHeader();
 		for (OSMShift osmShift : osmShifts) {
 			Shift shift = osmShift.getShift();
+			ShiftEntryImpl shiftEntry = new ShiftEntryImpl(shift);
 
 			// Check if this is the right duplicate
-			String shiftId = IdFieldSet.getShiftId(shift);
+			String shiftId = shiftEntry.getId();
 			Shift rightShift = idRightShift.get(shiftId);
 			if (rightShift == null || rightShift.getId() != shift.getId()) {
 				// wrong duplicate
 				continue;
 			}
-
-			outputLine.clear();
 
 			WeatherConditions weatherConditions = null;
 			try {
@@ -98,12 +91,8 @@ public class DatasetBuilder {
 			} catch (NoResultException e) {
 			}
 
-			OutputContext outputContext = new OutputContext(shift, weatherConditions);
-			for (OutputFieldSet outputFieldSet : outputFieldSets) {
-				Collections.addAll(outputLine, outputFieldSet.getValues(outputContext));
-			}
-
-			stream.println(StringUtils.join(outputLine, ","));
+			OutputContext outputContext = new OutputContext(new ShiftEntryImpl(shift), weatherConditions);
+			dataset.writeEntry(outputContext);
 		}
 	}
 

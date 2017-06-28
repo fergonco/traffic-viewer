@@ -26,4 +26,9 @@ public class OWM {
 		return parser.parseWeather(owmResponse);
 	}
 
+	public WeatherForecast forecastedConditions() throws IOException {
+		String owmResponse = client.get("forecast", params);
+		return parser.parseForecast(owmResponse);
+	}
+
 }

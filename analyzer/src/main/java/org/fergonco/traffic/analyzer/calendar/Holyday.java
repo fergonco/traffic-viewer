@@ -20,7 +20,7 @@ public class Holyday {
 		return country;
 	}
 
-	public boolean isHoliday(long timestamp) throws ParseException {
+	public boolean isHoliday(long timestamp) {
 		long[] holidaysTimestamps = getHolidaysTimestamps();
 		for (long holidayTimestamp : holidaysTimestamps) {
 			if (holidayTimestamp < timestamp && holidayTimestamp + SchoolCalendar.DAY_MILLIS > timestamp) {
@@ -30,11 +30,15 @@ public class Holyday {
 		return false;
 	}
 
-	private long[] getHolidaysTimestamps() throws ParseException {
+	private long[] getHolidaysTimestamps() {
 		if (holidaysTimestamps == null) {
 			holidaysTimestamps = new long[days.length];
 			for (int i = 0; i < days.length; i++) {
-				holidaysTimestamps[i] = SchoolCalendar.SDF.parse(days[i]).getTime();
+				try {
+					holidaysTimestamps[i] = SchoolCalendar.SDF.parse(days[i]).getTime();
+				} catch (ParseException e) {
+					throw new RuntimeException("Bad syntax in calendar.json!", e);
+				}
 			}
 		}
 

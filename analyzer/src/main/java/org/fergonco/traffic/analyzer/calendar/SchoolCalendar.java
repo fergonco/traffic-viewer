@@ -1,6 +1,5 @@
 package org.fergonco.traffic.analyzer.calendar;
 
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 
 public class SchoolCalendar {
@@ -25,7 +24,7 @@ public class SchoolCalendar {
 		return ret.toString();
 	}
 
-	public boolean isHoliday(String country, long timestamp) throws ParseException {
+	public boolean isHoliday(String country, long timestamp) {
 		for (Holyday h : holiday) {
 			if (h.getCountry().equals(country)) {
 				return h.isHoliday(timestamp);
@@ -35,7 +34,7 @@ public class SchoolCalendar {
 		throw new IllegalArgumentException("Country not found: " + country);
 	}
 
-	public boolean isSchool(String country, long timestamp) throws ParseException {
+	public boolean isSchool(String country, long timestamp) {
 		for (School h : school) {
 			if (h.getCountry().equals(country)) {
 				return h.isSchool(timestamp);
