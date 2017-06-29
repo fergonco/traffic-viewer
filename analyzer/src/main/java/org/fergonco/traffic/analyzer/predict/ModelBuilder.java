@@ -48,7 +48,7 @@ public class ModelBuilder {
 			System.out.println(++i + "/" + osmShifts.size());
 
 			// Store model in database
-			byte[] modelBytes = IOUtils.toByteArray(datasetFileName.toURI());
+			byte[] modelBytes = IOUtils.toByteArray(modelFileName.toURI());
 			EntityManager em = DBUtils.getEntityManager();
 			OSMSegmentModel osmSegmentModel = new OSMSegmentModel();
 			osmSegmentModel.setStartNode(startNode);
@@ -60,7 +60,7 @@ public class ModelBuilder {
 		}
 	}
 
-	public void generateModel(File datasetFileName, File modelFileName) throws IOException, RException {
+	private void generateModel(File datasetFileName, File modelFileName) throws IOException, RException {
 		String command = "Rscript analyse/modeler.r " + datasetFileName.getAbsolutePath() + " " + modelFileName;
 		ProcessBuilder processBuilder = new ProcessBuilder(command.split("\\s"));
 		Process process = processBuilder.start();
