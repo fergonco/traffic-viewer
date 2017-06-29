@@ -6,15 +6,15 @@ public class SchoolCalendar {
 	public static final long DAY_MILLIS = 1000 * 60 * 60 * 24;
 	public static SimpleDateFormat SDF = new SimpleDateFormat("d/M/yyyy");
 
-	private Holyday[] holiday;
+	private Holiday[] holiday;
 	private School[] school;
 
 	@Override
 	public String toString() {
 		StringBuilder ret = new StringBuilder();
 		ret.append("holidays\n***********\n");
-		for (Holyday holyday : holiday) {
-			ret.append(holyday.toString()).append("\n");
+		for (Holiday holiday : holiday) {
+			ret.append(holiday.toString()).append("\n");
 		}
 		ret.append("school\n***********\n");
 		for (School school : school) {
@@ -25,7 +25,7 @@ public class SchoolCalendar {
 	}
 
 	public boolean isHoliday(String country, long timestamp) {
-		for (Holyday h : holiday) {
+		for (Holiday h : holiday) {
 			if (h.getCountry().equals(country)) {
 				return h.isHoliday(timestamp);
 			}

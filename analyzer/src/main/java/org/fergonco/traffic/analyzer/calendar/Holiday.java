@@ -4,7 +4,7 @@ import java.text.ParseException;
 
 import org.apache.commons.lang3.StringUtils;
 
-public class Holyday {
+public class Holiday {
 	private String country;
 	private String[] days;
 	private long[] holidaysTimestamps = null;
