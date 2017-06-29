@@ -11,9 +11,12 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
 import javax.persistence.TypedQuery;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.fergonco.tpg.trafficViewer.DBUtils;
 import org.fergonco.tpg.trafficViewer.jpa.OSMSegmentModel;
 import org.fergonco.tpg.trafficViewer.jpa.OSMShift;
@@ -27,8 +30,12 @@ import org.fergonco.traffic.dataGatherer.owm.WeatherForecast;
 import com.vividsolutions.jts.geom.Point;
 
 public class Predictor {
-	private static final int QUARTER_OF_HOUR = 15 * 60 * 1000;
-	private static final long PREDICTION_LIMIT = 24 * 60 * 60 * 1000;
+
+	private static final Logger logger = LogManager.getLogger(Predictor.class.getName());
+
+	private static final int HOUR = 60 * 60 * 1000;
+	private static final int FORECAST_STEP = 15 * 60 * 1000;
+	private static final long FORECAST_LIMIT = 24 * 60 * 60 * 1000;
 
 	public void updatePredictions() throws IOException, PredictionException {
 		EntityManager em = DBUtils.getEntityManager();
@@ -44,7 +51,11 @@ public class Predictor {
 
 		Date now = new Date();
 		long forecastTimestamp = now.getTime();
-		while (forecastTimestamp - PREDICTION_LIMIT < now.getTime()) {
+		logger.debug(
+				"Predicting for next " + (FORECAST_LIMIT / HOUR) + " hours each " + (FORECAST_STEP / HOUR) + " hours");
+		while (forecastTimestamp - FORECAST_LIMIT < now.getTime()) {
+
+			logger.debug("Forecast timestamp: " + forecastTimestamp);
 
 			for (OSMShift osmShift : osmShifts) {
 				// Recover model from database and save it on a file
@@ -55,7 +66,14 @@ public class Predictor {
 								OSMSegmentModel.class);
 				modelQuery.setParameter("startNode", osmShift.getStartNode());
 				modelQuery.setParameter("endNode", osmShift.getEndNode());
-				OSMSegmentModel model = modelQuery.getSingleResult();
+				OSMSegmentModel model;
+				try {
+					model = modelQuery.getSingleResult();
+				} catch (NoResultException e) {
+					logger.error("Could not find a model for OSMShift (" + osmShift.getStartNode() + ","
+							+ osmShift.getEndNode() + ")");
+					continue;
+				}
 				File modelFile = File.createTempFile("rmodel", ".rds");
 				BufferedOutputStream outputStream = new BufferedOutputStream(new FileOutputStream(modelFile));
 				IOUtils.write(model.getModel(), outputStream);
@@ -63,7 +81,13 @@ public class Predictor {
 
 				// Build prediction dataset
 				Point coordinate = osmShift.getGeom().getCentroid();
-				WeatherForecast forecast = new OWM(coordinate.getX(), coordinate.getY()).forecastedConditions();
+				WeatherForecast forecast;
+				try {
+					forecast = new OWM(coordinate.getX(), coordinate.getY()).forecastedConditions();
+				} catch (IOException e) {
+					logger.error("Couldn't get weather conditions", e);
+					continue;
+				}
 				OutputContext outputContext = new OutputContext(new ForecastShiftEntry(forecastTimestamp),
 						forecast.getForecast(forecastTimestamp));
 
@@ -76,9 +100,16 @@ public class Predictor {
 
 				// Run RScript reading the model from the file and get
 				// prediction
-				double[] prediction = getCenterAndPredictedInterval(modelFile, datasetFile);
-				modelFile.delete();
-				datasetFile.delete();
+				double[] prediction;
+				try {
+					prediction = getCenterAndPredictedInterval(modelFile, datasetFile);
+				} catch (PredictionException | IOException e) {
+					logger.error("Cannot get prediction", e);
+					continue;
+				} finally {
+					modelFile.delete();
+					datasetFile.delete();
+				}
 
 				// Insert the prediction in the table
 				TimestampedPredictedOSMShift predictedShift = new TimestampedPredictedOSMShift();
@@ -89,7 +120,7 @@ public class Predictor {
 
 				em.persist(predictedShift);
 			}
-			forecastTimestamp += QUARTER_OF_HOUR;
+			forecastTimestamp += FORECAST_STEP;
 		}
 		em.getTransaction().commit();
 	}
