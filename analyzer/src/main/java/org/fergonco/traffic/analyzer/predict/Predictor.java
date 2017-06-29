@@ -27,6 +27,9 @@ import org.fergonco.traffic.analyzer.OutputContext.ShiftEntry;
 import org.fergonco.traffic.dataGatherer.owm.OWM;
 import org.fergonco.traffic.dataGatherer.owm.WeatherForecast;
 
+import com.vividsolutions.jts.geom.Geometry;
+import com.vividsolutions.jts.geom.GeometryCollection;
+import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.Point;
 
 public class Predictor {
@@ -38,21 +41,28 @@ public class Predictor {
 	private static final long FORECAST_LIMIT = 24 * 60 * 60 * 1000;
 
 	public void updatePredictions() throws IOException {
-		EntityManager em = DBUtils.getEntityManager();
-		em.getTransaction().begin();
-
-		// Remove existing predictions
-		em.createQuery("DELETE FROM " + TimestampedPredictedOSMShift.class.getName() + " o").executeUpdate();
-
-		// Add new predictions
-
+		// Get osmshift center and get a weather prediction
 		ModelBuilder modelBuilder = new ModelBuilder();
 		ArrayList<OSMShift> osmShifts = modelBuilder.getUniqueOSMShifts();
+		GeometryFactory gf = new GeometryFactory();
+		ArrayList<Geometry> geometries = new ArrayList<>();
+		for (OSMShift osmShift : osmShifts) {
+			geometries.add(osmShift.getGeom());
+		}
+		GeometryCollection gc = gf.createGeometryCollection(geometries.toArray(new Geometry[geometries.size()]));
+		Point centroid = gc.getCentroid();
+		WeatherForecast forecast = new OWM(centroid.getX(), centroid.getY()).forecastedConditions();
 
+		// Remove existing predictions
+		EntityManager em = DBUtils.getEntityManager();
+		em.getTransaction().begin();
+		em.createQuery("DELETE FROM " + TimestampedPredictedOSMShift.class.getName() + " o").executeUpdate();
+
+		// Generate new predictions
 		Date now = new Date();
 		long forecastTimestamp = now.getTime();
-		logger.debug(
-				"Predicting for next " + (FORECAST_LIMIT / HOUR) + " hours each " + (FORECAST_STEP / HOUR) + " hours");
+		logger.debug("Predicting for next " + (FORECAST_LIMIT / HOUR) + " hours each " + (FORECAST_STEP / (double) HOUR)
+				+ " hours");
 		while (forecastTimestamp - FORECAST_LIMIT < now.getTime()) {
 
 			logger.debug("Forecast timestamp: " + forecastTimestamp);
@@ -80,14 +90,6 @@ public class Predictor {
 				outputStream.close();
 
 				// Build prediction dataset
-				Point coordinate = osmShift.getGeom().getCentroid();
-				WeatherForecast forecast;
-				try {
-					forecast = new OWM(coordinate.getX(), coordinate.getY()).forecastedConditions();
-				} catch (IOException e) {
-					logger.error("Couldn't get weather conditions", e);
-					continue;
-				}
 				OutputContext outputContext = new OutputContext(new ForecastShiftEntry(forecastTimestamp),
 						forecast.getForecast(forecastTimestamp));
 
@@ -103,7 +105,7 @@ public class Predictor {
 				double[] prediction;
 				try {
 					prediction = getCenterAndPredictedInterval(modelFile, datasetFile);
-				} catch (PredictionException | IOException e) {
+				} catch (PredictionException | RException | IOException e) {
 					logger.error("Cannot get prediction", e);
 					continue;
 				} finally {
@@ -126,13 +128,10 @@ public class Predictor {
 	}
 
 	public double[] getCenterAndPredictedInterval(File modelFile, File datasetFile)
-			throws IOException, PredictionException {
-		String command = "Rscript analyse/predictor.r " + modelFile.getAbsolutePath() + " "
-				+ datasetFile.getAbsolutePath();
-		ProcessBuilder processBuilder = new ProcessBuilder(command.split("\\s"));
-		processBuilder.redirectErrorStream(true);
-		Process process = processBuilder.start();
-		String predictionOutput = IOUtils.toString(process.getInputStream(), "utf-8");
+			throws IOException, PredictionException, RException {
+		Rscript rscript = new Rscript();
+		String predictionOutput = rscript.executeResource("predictor.r", modelFile.getAbsolutePath(),
+				datasetFile.getAbsolutePath());
 		Pattern pattern = Pattern.compile("1\\s+(\\d+\\.\\d+)\\s+(\\d+\\.\\d+)\\s+(\\d+\\.\\d+)");
 		Matcher matcher = pattern.matcher(predictionOutput);
 		if (matcher.find()) {

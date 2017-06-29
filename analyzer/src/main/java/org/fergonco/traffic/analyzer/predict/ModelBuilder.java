@@ -44,8 +44,8 @@ public class ModelBuilder {
 
 			// Generate file with the model
 			File modelFileName = getModelFileName(osmShift.getStartNode(), osmShift.getEndNode());
-			generateModel(datasetFileName, modelFileName);
-			System.out.println(++i + "/" + osmShifts.size());
+			new Rscript().executeResource("modeler.r", datasetFileName.getAbsolutePath(),
+					modelFileName.getAbsolutePath());
 
 			// Store model in database
 			byte[] modelBytes = IOUtils.toByteArray(modelFileName.toURI());
@@ -57,21 +57,8 @@ public class ModelBuilder {
 			em.getTransaction().begin();
 			em.persist(osmSegmentModel);
 			em.getTransaction().commit();
-		}
-	}
 
-	private void generateModel(File datasetFileName, File modelFileName) throws IOException, RException {
-		String command = "Rscript analyse/modeler.r " + datasetFileName.getAbsolutePath() + " " + modelFileName;
-		ProcessBuilder processBuilder = new ProcessBuilder(command.split("\\s"));
-		Process process = processBuilder.start();
-		while (process.isAlive()) {
-			try {
-				process.waitFor();
-			} catch (InterruptedException e) {
-			}
-		}
-		if (process.exitValue() > 0) {
-			throw new RException("modeler returned error");
+			System.out.println(++i + "/" + osmShifts.size());
 		}
 	}
 

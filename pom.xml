@@ -18,8 +18,9 @@
 		<module>jpa</module>
 		<module>dbstatus</module>
 		<module>data-gatherer</module>
-    <module>analyzer</module>
-  </modules>
+		<module>analyzer</module>
+		<module>owmapi</module>
+	</modules>
 
 	<build>
 		<plugins>
