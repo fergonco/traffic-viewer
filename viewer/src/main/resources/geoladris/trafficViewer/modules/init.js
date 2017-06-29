@@ -40,7 +40,7 @@ define([ "message-bus", "iso8601" ], function(bus, iso8601) {
          "controlId" : "navigation"
       });
       bus.send("ajax", {
-         "url" : "/geoserver/ows?service=wms&version=1.3.0&request=GetCapabilities",
+         "url" : "/geoserver/ows?service=wms&version=1.3.0&request=GetCapabilities&nocache=" + new Date().getTime(),
          "dataType" : "text",
          "success" : function(data) {
             var timeDimension = data
