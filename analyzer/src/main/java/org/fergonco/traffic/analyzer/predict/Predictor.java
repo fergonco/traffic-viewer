@@ -37,7 +37,7 @@ public class Predictor {
 	private static final int FORECAST_STEP = 15 * 60 * 1000;
 	private static final long FORECAST_LIMIT = 24 * 60 * 60 * 1000;
 
-	public void updatePredictions() throws IOException, PredictionException {
+	public void updatePredictions() throws IOException {
 		EntityManager em = DBUtils.getEntityManager();
 		em.getTransaction().begin();
 
