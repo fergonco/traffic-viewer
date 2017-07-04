@@ -43,7 +43,7 @@ public class Rscript {
 			}
 		}
 		if (process.exitValue() > 0) {
-			throw new RException("modeler returned error");
+			throw new RException("modeler returned error: " + output);
 		}
 		return output;
 	}
