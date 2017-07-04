@@ -10,7 +10,6 @@ import java.io.StringReader;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -63,110 +62,94 @@ public class Predictor {
 		em.getTransaction().begin();
 		em.createQuery("DELETE FROM " + TimestampedPredictedOSMShift.class.getName() + " o").executeUpdate();
 
-		// Generate new predictions
+		// Generate forecast folder
+		File forecastFolder = Files.createTempDirectory("traffic-forecast").toFile();
+
+		// Build prediction dataset
 		Date now = new Date();
 		long forecastTimestamp = now.getTime();
 		logger.debug("Predicting for next " + (FORECAST_LIMIT / HOUR) + " hours each " + (FORECAST_STEP / (double) HOUR)
 				+ " hours");
+		PrintStream datasetStream = new PrintStream(new FileOutputStream(new File(forecastFolder, "dataset.csv")));
+		Dataset dataset = new Dataset(datasetStream);
+		dataset.writeHeader();
 		while (forecastTimestamp - FORECAST_LIMIT < now.getTime()) {
-
-			logger.debug("Forecast timestamp: " + forecastTimestamp);
-
-			// Generate forecast folder
-			File forecastFolder = Files.createTempDirectory("traffic-forecast").toFile();
-
-			// Build prediction dataset
 			OutputContext outputContext = new OutputContext(new ForecastShiftEntry(forecastTimestamp),
 					forecast.getForecast(forecastTimestamp));
-
-			PrintStream datasetStream = new PrintStream(new FileOutputStream(new File(forecastFolder, "dataset.csv")));
-			Dataset dataset = new Dataset(datasetStream);
-			dataset.writeHeader();
 			dataset.writeEntry(outputContext);
-			datasetStream.close();
-
-			// Write model files
-			logger.debug("Writting model files");
-			for (OSMShift osmShift : osmShifts) {
-				// Recover model from database and save it on a file
-				TypedQuery<OSMSegmentModel> modelQuery = em
-						.createQuery(
-								"select m from " + OSMSegmentModel.class.getName()
-										+ " m where m.startNode=:startNode and m.endNode=:endNode",
-								OSMSegmentModel.class);
-				modelQuery.setParameter("startNode", osmShift.getStartNode());
-				modelQuery.setParameter("endNode", osmShift.getEndNode());
-				OSMSegmentModel model;
-				try {
-					model = modelQuery.getSingleResult();
-				} catch (NoResultException e) {
-					logger.error("Could not find a model for OSMShift (" + osmShift.getStartNode() + ","
-							+ osmShift.getEndNode() + ")");
-					continue;
-				}
-				File modelFile = new File(forecastFolder, osmShift.getId() + ".rds");
-				BufferedOutputStream outputStream = new BufferedOutputStream(new FileOutputStream(modelFile));
-				IOUtils.write(model.getModel(), outputStream);
-				outputStream.close();
-
-			}
-
-			// Run RScript reading the model from the file and get
-			// prediction
-			logger.debug("Getting forecasts");
-			HashMap<Long, double[]> predictions = null;
-			try {
-				predictions = getCenterAndPredictedInterval(forecastFolder);
-			} catch (PredictionException | RException | IOException e) {
-				logger.error("Cannot get prediction", e);
-				continue;
-			} finally {
-				FileUtils.deleteDirectory(forecastFolder);
-			}
-			logger.debug("Updating db");
-			for (OSMShift osmShift : osmShifts) {
-				// Insert the prediction in the table
-				double[] prediction = predictions.get(osmShift.getId());
-				if (prediction != null) {
-					TimestampedPredictedOSMShift predictedShift = new TimestampedPredictedOSMShift();
-					predictedShift.setMillis(forecastTimestamp);
-					predictedShift.setSpeed((int) prediction[0]);
-					predictedShift.setPredictionerror((float) prediction[1]);
-					predictedShift.setGeom(osmShift.getGeom());
-
-					em.persist(predictedShift);
-				} else {
-					logger.error("Didn't get a prediction for osmshift: " + osmShift.getStartNode() + " -> "
-							+ osmShift.getEndNode());
-					continue;
-				}
-			}
 			forecastTimestamp += FORECAST_STEP;
 		}
-		em.getTransaction().commit();
-	}
+		datasetStream.close();
 
-	public HashMap<Long, double[]> getCenterAndPredictedInterval(File forecastFolder)
-			throws IOException, PredictionException, RException {
-		Rscript rscript = new Rscript();
-		String predictionOutput = rscript.executeResource("predictor.r", forecastFolder.getAbsolutePath());
-		BufferedReader reader = new BufferedReader(new StringReader(predictionOutput));
-		Pattern pattern = Pattern.compile("Result\\|(\\d+)\\|(\\d+\\.\\d+)\\|(\\d+\\.\\d+)\\|(\\d+\\.\\d+)");
-		String line = null;
-		HashMap<Long, double[]> ret = new HashMap<>();
-		while ((line = reader.readLine()) != null) {
-			Matcher matcher = pattern.matcher(line);
-			if (matcher.find()) {
-				long osmShiftId = Long.parseLong(matcher.group(1));
-				double prediction = Double.parseDouble(matcher.group(2));
-				double lowerEnd = Double.parseDouble(matcher.group(3));
-				double upperEnd = Double.parseDouble(matcher.group(4));
-				ret.put(osmShiftId, new double[] { prediction, lowerEnd, upperEnd });
-			} else {
-				logger.info("Ignoring Rscript output: \"" + line + "\"");
+		// Write model files
+		logger.debug("Writting model files");
+		for (OSMShift osmShift : osmShifts) {
+			// Recover model from database and save it on a file
+			TypedQuery<OSMSegmentModel> modelQuery = em.createQuery("select m from " + OSMSegmentModel.class.getName()
+					+ " m where m.startNode=:startNode and m.endNode=:endNode", OSMSegmentModel.class);
+			modelQuery.setParameter("startNode", osmShift.getStartNode());
+			modelQuery.setParameter("endNode", osmShift.getEndNode());
+			OSMSegmentModel model;
+			try {
+				model = modelQuery.getSingleResult();
+			} catch (NoResultException e) {
+				logger.error("Could not find a model for OSMShift (" + osmShift.getStartNode() + ","
+						+ osmShift.getEndNode() + ")");
+				continue;
 			}
+			File modelFile = new File(forecastFolder, osmShift.getId() + ".rds");
+			BufferedOutputStream outputStream = new BufferedOutputStream(new FileOutputStream(modelFile));
+			IOUtils.write(model.getModel(), outputStream);
+			outputStream.close();
+
 		}
-		return ret;
+
+		// Run RScript processing folder and get a map from predictions
+		logger.debug("Getting forecasts");
+		try {
+			Rscript rscript = new Rscript();
+			String predictionOutput = rscript.executeResource("predictor.r", forecastFolder.getAbsolutePath());
+			System.out.println(predictionOutput);
+			BufferedReader reader = new BufferedReader(new StringReader(predictionOutput));
+			Pattern pattern = Pattern
+					.compile("Result\\|(\\d+)\\|(\\d+)\\|(\\d+\\.\\d+)\\|(\\d+\\.\\d+)\\|(\\d+\\.\\d+)");
+			String line = null;
+			while ((line = reader.readLine()) != null) {
+				Matcher matcher = pattern.matcher(line);
+				if (matcher.find()) {
+					try {
+						long osmShiftId = Long.parseLong(matcher.group(1));
+						long timestamp = Long.parseLong(matcher.group(2));
+						double prediction = Double.parseDouble(matcher.group(3));
+						double lowerEnd = Double.parseDouble(matcher.group(4));
+						double upperEnd = Double.parseDouble(matcher.group(5));
+
+						TimestampedPredictedOSMShift predictedShift = new TimestampedPredictedOSMShift();
+						predictedShift.setMillis(timestamp);
+						predictedShift.setSpeed((int) prediction);
+						predictedShift.setPredictionerror((float) ((upperEnd - lowerEnd) / 2));
+						OSMShift osmShift = em.find(OSMShift.class, osmShiftId);
+						if (osmShift != null) {
+							predictedShift.setGeom(osmShift.getGeom());
+						} else {
+							throw new RuntimeException("bug: unrecognized osmShift id");
+						}
+
+						em.persist(predictedShift);
+
+					} catch (NumberFormatException e) {
+						logger.error("Bad R output: \"" + line + "\"");
+					}
+				} else {
+					logger.info("Ignoring Rscript output: \"" + line + "\"");
+				}
+			}
+		} catch (RException | IOException e) {
+			logger.error("Cannot get predictions", e);
+		} finally {
+			FileUtils.deleteDirectory(forecastFolder);
+		}
+		em.getTransaction().commit();
 	}
 
 	private class ForecastShiftEntry implements ShiftEntry {
