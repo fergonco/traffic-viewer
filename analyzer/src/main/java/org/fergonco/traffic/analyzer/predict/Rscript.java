@@ -6,15 +6,15 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class Rscript {
 	private static final Logger logger = LogManager.getLogger(Rscript.class);
+	private Process process = null;
 
-	public String executeResource(String resourceName, String... parameters) throws IOException, RException {
+	public InputStream executeResource(String resourceName, String... parameters) throws IOException {
 		ArrayList<String> command = new ArrayList<String>();
 		command.add("Rscript");
 		InputStream scriptStream = this.getClass().getResourceAsStream(resourceName);
@@ -34,18 +34,23 @@ public class Rscript {
 
 		ProcessBuilder processBuilder = new ProcessBuilder(command);
 		processBuilder.redirectErrorStream(true);
-		Process process = processBuilder.start();
-		String output = IOUtils.toString(process.getInputStream(), "utf-8");
+		process = processBuilder.start();
+		return process.getInputStream();
+	}
+
+	public int getExitCode() {
+		if (process == null) {
+			throw new IllegalStateException(
+					"executeResource must be successfully executed before getExitCode is called");
+		}
 		while (process.isAlive()) {
 			try {
 				process.waitFor();
 			} catch (InterruptedException e) {
 			}
 		}
-		if (process.exitValue() > 0) {
-			throw new RException("modeler returned error: " + output);
-		}
-		return output;
+		return process.exitValue();
+
 	}
 
 }

@@ -25,11 +25,11 @@ public class ModelBuilder {
 		mb.generateModels();
 	}
 
-	public void generateModels() throws IOException, ParseException, RException {
+	public void generateModels() throws IOException, ParseException {
 		generateModels(getUniqueOSMShifts());
 	}
 
-	private void generateModels(ArrayList<OSMShift> osmShifts) throws IOException, ParseException, RException {
+	private void generateModels(ArrayList<OSMShift> osmShifts) throws IOException, ParseException {
 		DatasetBuilder datasetBuilder = new DatasetBuilder();
 		int i = 0;
 		for (OSMShift osmShift : osmShifts) {
@@ -101,7 +101,7 @@ public class ModelBuilder {
 
 		@Override
 		public int hashCode() {
-			return (int) (startNode - endNode);
+			return (int) (startNode + endNode);
 		}
 
 		@Override

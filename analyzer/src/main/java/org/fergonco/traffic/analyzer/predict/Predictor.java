@@ -5,11 +5,13 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.PrintStream;
-import java.io.StringReader;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -60,8 +62,14 @@ public class Predictor {
 		// Remove existing predictions
 		EntityManager em = DBUtils.getEntityManager();
 		em.getTransaction().begin();
-		em.createQuery("DELETE FROM " + TimestampedPredictedOSMShift.class.getName() + " o").executeUpdate();
-
+		try {
+			em.createQuery("DELETE FROM " + TimestampedPredictedOSMShift.class.getName() + " o").executeUpdate();
+			em.getTransaction().commit();
+		} catch (RuntimeException e) {
+			if (em.getTransaction().isActive()) {
+				em.getTransaction().rollback();
+			}
+		}
 		// Generate forecast folder
 		File forecastFolder = Files.createTempDirectory("traffic-forecast").toFile();
 
@@ -83,7 +91,10 @@ public class Predictor {
 
 		// Write model files
 		logger.debug("Writting model files");
+		HashMap<Long, Geometry> osmShiftGeometries = new HashMap<Long, Geometry>();
 		for (OSMShift osmShift : osmShifts) {
+			osmShiftGeometries.put(osmShift.getId(), osmShift.getGeom());
+
 			// Recover model from database and save it on a file
 			TypedQuery<OSMSegmentModel> modelQuery = em.createQuery("select m from " + OSMSegmentModel.class.getName()
 					+ " m where m.startNode=:startNode and m.endNode=:endNode", OSMSegmentModel.class);
@@ -108,12 +119,16 @@ public class Predictor {
 		logger.debug("Getting forecasts");
 		try {
 			Rscript rscript = new Rscript();
-			String predictionOutput = rscript.executeResource("predictor.r", forecastFolder.getAbsolutePath());
-			System.out.println(predictionOutput);
-			BufferedReader reader = new BufferedReader(new StringReader(predictionOutput));
+			InputStream predictionOutput = rscript.executeResource("predictor.r", forecastFolder.getAbsolutePath());
+			BufferedReader reader = new BufferedReader(new InputStreamReader(predictionOutput));
 			Pattern pattern = Pattern
 					.compile("Result\\|(\\d+)\\|(\\d+)\\|(\\d+\\.\\d+)\\|(\\d+\\.\\d+)\\|(\\d+\\.\\d+)");
 			String line = null;
+			// Writer writer = new BufferedWriter(new FileWriter(new
+			// File("/tmp/forecasts.sql")));
+			int persistCounter = 0;
+			int batchSize = 50;
+			em.getTransaction().begin();
 			while ((line = reader.readLine()) != null) {
 				Matcher matcher = pattern.matcher(line);
 				if (matcher.find()) {
@@ -128,14 +143,22 @@ public class Predictor {
 						predictedShift.setMillis(timestamp);
 						predictedShift.setSpeed((int) prediction);
 						predictedShift.setPredictionerror((float) ((upperEnd - lowerEnd) / 2));
-						OSMShift osmShift = em.find(OSMShift.class, osmShiftId);
-						if (osmShift != null) {
-							predictedShift.setGeom(osmShift.getGeom());
+						Geometry geometry = osmShiftGeometries.get(osmShiftId);
+						if (geometry != null) {
+							predictedShift.setGeom(geometry);
 						} else {
 							throw new RuntimeException("bug: unrecognized osmShift id");
 						}
 
 						em.persist(predictedShift);
+
+						persistCounter++;
+						if (persistCounter > 0 && persistCounter % batchSize == 0) {
+							em.getTransaction().commit();
+							em.clear();
+							em.getTransaction().begin();
+
+						}
 
 					} catch (NumberFormatException e) {
 						logger.error("Bad R output: \"" + line + "\"");
@@ -144,12 +167,17 @@ public class Predictor {
 					logger.info("Ignoring Rscript output: \"" + line + "\"");
 				}
 			}
-		} catch (RException | IOException e) {
+			em.getTransaction().commit();
+			// writer.close();
+			if (rscript.getExitCode() != 0) {
+				logger.error("Script exited with non zero code");
+			}
+		} catch (IOException e) {
 			logger.error("Cannot get predictions", e);
 		} finally {
 			FileUtils.deleteDirectory(forecastFolder);
 		}
-		em.getTransaction().commit();
+		logger.debug("predictions done");
 	}
 
 	private class ForecastShiftEntry implements ShiftEntry {
