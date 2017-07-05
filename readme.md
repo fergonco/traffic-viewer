@@ -151,7 +151,7 @@ In the database, as tpg user:
 	create materialized view app.timestamped_osmshiftinfo as 
 		(select id, geom, draw_timestamp, speed, -1 as predictionerror from app.timestamped_measured_osmshifts)
 		union
-		(select id, geom, draw_timestamp, speed, predictionerror from app.timestamped_predicted_osmshifts);
+		(select id, geom, draw_timestamp, speed, predictionerror from app.timestamped_predicted_osmshifts where draw_timestamp > (select max(draw_timestamp) from app.timestamped_measured_osmshifts);
 	
 
 ## geoserver
