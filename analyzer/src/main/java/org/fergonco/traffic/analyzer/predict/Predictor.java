@@ -124,10 +124,8 @@ public class Predictor {
 			Pattern pattern = Pattern
 					.compile("Result\\|(\\d+)\\|(\\d+)\\|(\\d+\\.\\d+)\\|(\\d+\\.\\d+)\\|(\\d+\\.\\d+)");
 			String line = null;
-			// Writer writer = new BufferedWriter(new FileWriter(new
-			// File("/tmp/forecasts.sql")));
 			int persistCounter = 0;
-			int batchSize = 50;
+			int batchSize = 100;
 			em.getTransaction().begin();
 			while ((line = reader.readLine()) != null) {
 				Matcher matcher = pattern.matcher(line);
@@ -153,11 +151,9 @@ public class Predictor {
 						em.persist(predictedShift);
 
 						persistCounter++;
-						if (persistCounter > 0 && persistCounter % batchSize == 0) {
-							em.getTransaction().commit();
+						if (persistCounter % batchSize == 0) {
+							em.flush();
 							em.clear();
-							em.getTransaction().begin();
-
 						}
 
 					} catch (NumberFormatException e) {
@@ -168,7 +164,6 @@ public class Predictor {
 				}
 			}
 			em.getTransaction().commit();
-			// writer.close();
 			if (rscript.getExitCode() != 0) {
 				logger.error("Script exited with non zero code");
 			}

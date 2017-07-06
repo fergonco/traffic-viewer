@@ -12,7 +12,7 @@ import com.vividsolutions.jts.geom.Geometry;
 @Entity
 public class TimestampedPredictedOSMShift {
 	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@GeneratedValue(strategy = GenerationType.SEQUENCE)
 	private long id;
 	@Column(columnDefinition = "geometry('LINESTRING', 4326)")
 	@Convert(converter = JTSConverter.class)
