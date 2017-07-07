@@ -24,6 +24,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.fergonco.tpg.trafficViewer.DBUtils;
+import org.fergonco.tpg.trafficViewer.DBUtils.AbortPaginationException;
 import org.fergonco.tpg.trafficViewer.jpa.OSMSegmentModel;
 import org.fergonco.tpg.trafficViewer.jpa.OSMShift;
 import org.fergonco.tpg.trafficViewer.jpa.TimestampedPredictedOSMShift;
@@ -97,21 +98,31 @@ public class Predictor {
 		logger.debug("Writting model files");
 		TypedQuery<OSMSegmentModel> query = em
 				.createQuery("select m from " + OSMSegmentModel.class.getSimpleName() + " m", OSMSegmentModel.class);
-		query.setMaxResults(100);
-		int offset = 0;
-		List<OSMSegmentModel> models;
-		while ((models = query.setFirstResult(offset).getResultList()).size() > 0) {
-			for (OSMSegmentModel osmSegmentModel : models) {
-				String startEndNode = osmSegmentModel.getStartNode() + "-" + osmSegmentModel.getEndNode();
-				// write model file only if we have an associated osmshift
-				if (osmShiftGeometries.containsKey(startEndNode)) {
-					File modelFile = new File(forecastFolder, startEndNode + ".rds");
-					BufferedOutputStream outputStream = new BufferedOutputStream(new FileOutputStream(modelFile));
-					IOUtils.write(osmSegmentModel.getModel(), outputStream);
-					outputStream.close();
+		try {
+			DBUtils.paginatedProcessing(query, 100, new DBUtils.PageProcessor<OSMSegmentModel>() {
+
+				@Override
+				public void processPage(List<OSMSegmentModel> models) throws AbortPaginationException {
+					try {
+						for (OSMSegmentModel osmSegmentModel : models) {
+							String startEndNode = osmSegmentModel.getStartNode() + "-" + osmSegmentModel.getEndNode();
+							// write model file only if we have an associated
+							// osmshift
+							if (osmShiftGeometries.containsKey(startEndNode)) {
+								File modelFile = new File(forecastFolder, startEndNode + ".rds");
+								BufferedOutputStream outputStream = new BufferedOutputStream(
+										new FileOutputStream(modelFile));
+								IOUtils.write(osmSegmentModel.getModel(), outputStream);
+								outputStream.close();
+							}
+						}
+					} catch (IOException e) {
+						throw new DBUtils.AbortPaginationException(e);
+					}
 				}
-			}
-			offset += models.size();
+			});
+		} catch (AbortPaginationException e) {
+			throw new IOException(e.getCause());
 		}
 
 		// Run RScript processing folder and get a map from predictions

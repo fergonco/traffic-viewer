@@ -13,12 +13,16 @@ import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.fergonco.tpg.trafficViewer.DBUtils;
+import org.fergonco.tpg.trafficViewer.DBUtils.AbortPaginationException;
 import org.fergonco.tpg.trafficViewer.jpa.OSMSegmentModel;
 import org.fergonco.tpg.trafficViewer.jpa.OSMShift;
 import org.fergonco.traffic.analyzer.DatasetBuilder;
 
 public class ModelBuilder {
+	private static final Logger logger = LogManager.getLogger(ModelBuilder.class.getName());
 
 	public static void main(String[] args) throws Exception {
 		ModelBuilder mb = new ModelBuilder();
@@ -26,10 +30,8 @@ public class ModelBuilder {
 	}
 
 	public void generateModels() throws IOException, ParseException {
-		generateModels(getUniqueOSMShifts());
-	}
-
-	private void generateModels(ArrayList<OSMShift> osmShifts) throws IOException, ParseException {
+		logger.debug("Getting unique osmshifts");
+		ArrayList<OSMShift> osmShifts = getUniqueOSMShifts();
 		DatasetBuilder datasetBuilder = new DatasetBuilder();
 		int i = 0;
 		for (OSMShift osmShift : osmShifts) {
@@ -58,7 +60,7 @@ public class ModelBuilder {
 			em.persist(osmSegmentModel);
 			em.getTransaction().commit();
 
-			System.out.println(++i + "/" + osmShifts.size());
+			logger.debug(++i + "/" + osmShifts.size());
 		}
 	}
 
@@ -72,19 +74,29 @@ public class ModelBuilder {
 
 	public ArrayList<OSMShift> getUniqueOSMShifts() {
 		ArrayList<OSMShift> osmShifts = new ArrayList<>();
+		HashSet<OSMNodePair> uniqueSet = new HashSet<>();
 
 		EntityManager em = DBUtils.getEntityManager();
 		TypedQuery<OSMShift> query = em.createQuery("select o from OSMShift o", OSMShift.class);
-		List<OSMShift> list = query.getResultList();
-		HashSet<OSMNodePair> uniqueSet = new HashSet<>();
-		for (OSMShift osmShift : list) {
-			OSMNodePair osmNodePair = new OSMNodePair(osmShift.getStartNode(), osmShift.getEndNode());
-			if (uniqueSet.contains(osmNodePair)) {
-				continue;
-			} else {
-				osmShifts.add(osmShift);
-				uniqueSet.add(osmNodePair);
-			}
+		try {
+			DBUtils.paginatedProcessing(query, 20000, new DBUtils.PageProcessor<OSMShift>() {
+
+				@Override
+				public void processPage(List<OSMShift> list) throws AbortPaginationException {
+					logger.debug("processing page...");
+					for (OSMShift osmShift : list) {
+						OSMNodePair osmNodePair = new OSMNodePair(osmShift.getStartNode(), osmShift.getEndNode());
+						if (uniqueSet.contains(osmNodePair)) {
+							continue;
+						} else {
+							osmShifts.add(osmShift);
+							uniqueSet.add(osmNodePair);
+						}
+					}
+				}
+			});
+		} catch (AbortPaginationException e) {
+			throw new RuntimeException("Bug", e);
 		}
 		return osmShifts;
 	}
