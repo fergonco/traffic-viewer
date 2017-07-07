@@ -22,7 +22,7 @@ The .war files generated in the previous step can be packed as docker images usi
 
 ## PostgreSQL/PostGIS
 
-We use the [image created by kartoza](https://hub.docker.com/r/kartoza/postgis/)).
+We use the [image created by kartoza](https://hub.docker.com/r/kartoza/postgis/).
 
 1. Create a folder in the server where the postgresql data is to be held
 2. Launch a container based on the image
