@@ -2,7 +2,7 @@
 datasetName <- commandArgs(TRUE)[1]
 modelFilename <- commandArgs(TRUE)[2]
 
-datasetName <- "/home/fergonco/b/java/geomatico/traffic/analyzer/analyse/tocern.csv"
+# datasetName <- "/home/fergonco/b/java/geomatico/traffic/analyzer/analyse/tocern.csv"
 # modelFilename <- "/tmp/model.rda"
 
 speeds <- read.csv(datasetName)
