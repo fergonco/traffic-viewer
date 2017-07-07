@@ -31,4 +31,12 @@ public class OSMSegmentModel {
 	public byte[] getModel() {
 		return model;
 	}
+
+	public long getStartNode() {
+		return startNode;
+	}
+
+	public long getEndNode() {
+		return endNode;
+	}
 }

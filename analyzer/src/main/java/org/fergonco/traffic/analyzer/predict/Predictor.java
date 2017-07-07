@@ -12,11 +12,11 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.persistence.EntityManager;
-import javax.persistence.NoResultException;
 import javax.persistence.TypedQuery;
 
 import org.apache.commons.io.FileUtils;
@@ -48,11 +48,14 @@ public class Predictor {
 
 	public void updatePredictions() throws IOException {
 		// Get osmshift center and get a weather prediction
+		logger.debug("Get forecast for centroid");
 		ModelBuilder modelBuilder = new ModelBuilder();
 		ArrayList<OSMShift> osmShifts = modelBuilder.getUniqueOSMShifts();
 		GeometryFactory gf = new GeometryFactory();
 		ArrayList<Geometry> geometries = new ArrayList<>();
+		HashMap<String, Geometry> osmShiftGeometries = new HashMap<>();
 		for (OSMShift osmShift : osmShifts) {
+			osmShiftGeometries.put(osmShift.getStartNode() + "-" + osmShift.getEndNode(), osmShift.getGeom());
 			geometries.add(osmShift.getGeom());
 		}
 		GeometryCollection gc = gf.createGeometryCollection(geometries.toArray(new Geometry[geometries.size()]));
@@ -60,6 +63,7 @@ public class Predictor {
 		WeatherForecast forecast = new OWM(centroid.getX(), centroid.getY()).forecastedConditions();
 
 		// Remove existing predictions
+		logger.debug("Remove existing predictions");
 		EntityManager em = DBUtils.getEntityManager();
 		em.getTransaction().begin();
 		try {
@@ -91,28 +95,23 @@ public class Predictor {
 
 		// Write model files
 		logger.debug("Writting model files");
-		HashMap<Long, Geometry> osmShiftGeometries = new HashMap<Long, Geometry>();
-		for (OSMShift osmShift : osmShifts) {
-			osmShiftGeometries.put(osmShift.getId(), osmShift.getGeom());
-
-			// Recover model from database and save it on a file
-			TypedQuery<OSMSegmentModel> modelQuery = em.createQuery("select m from " + OSMSegmentModel.class.getName()
-					+ " m where m.startNode=:startNode and m.endNode=:endNode", OSMSegmentModel.class);
-			modelQuery.setParameter("startNode", osmShift.getStartNode());
-			modelQuery.setParameter("endNode", osmShift.getEndNode());
-			OSMSegmentModel model;
-			try {
-				model = modelQuery.getSingleResult();
-			} catch (NoResultException e) {
-				logger.error("Could not find a model for OSMShift (" + osmShift.getStartNode() + ","
-						+ osmShift.getEndNode() + ")");
-				continue;
+		TypedQuery<OSMSegmentModel> query = em
+				.createQuery("select m from " + OSMSegmentModel.class.getSimpleName() + " m", OSMSegmentModel.class);
+		query.setMaxResults(100);
+		int offset = 0;
+		List<OSMSegmentModel> models;
+		while ((models = query.setFirstResult(offset).getResultList()).size() > 0) {
+			for (OSMSegmentModel osmSegmentModel : models) {
+				String startEndNode = osmSegmentModel.getStartNode() + "-" + osmSegmentModel.getEndNode();
+				// write model file only if we have an associated osmshift
+				if (osmShiftGeometries.containsKey(startEndNode)) {
+					File modelFile = new File(forecastFolder, startEndNode + ".rds");
+					BufferedOutputStream outputStream = new BufferedOutputStream(new FileOutputStream(modelFile));
+					IOUtils.write(osmSegmentModel.getModel(), outputStream);
+					outputStream.close();
+				}
 			}
-			File modelFile = new File(forecastFolder, osmShift.getId() + ".rds");
-			BufferedOutputStream outputStream = new BufferedOutputStream(new FileOutputStream(modelFile));
-			IOUtils.write(model.getModel(), outputStream);
-			outputStream.close();
-
+			offset += models.size();
 		}
 
 		// Run RScript processing folder and get a map from predictions
@@ -122,7 +121,7 @@ public class Predictor {
 			InputStream predictionOutput = rscript.executeResource("predictor.r", forecastFolder.getAbsolutePath());
 			BufferedReader reader = new BufferedReader(new InputStreamReader(predictionOutput));
 			Pattern pattern = Pattern
-					.compile("Result\\|(\\d+)\\|(\\d+)\\|(\\d+\\.\\d+)\\|(\\d+\\.\\d+)\\|(\\d+\\.\\d+)");
+					.compile("Result\\|(\\d+-\\d+)\\|(\\d+)\\|(\\d+\\.\\d+)\\|(\\d+\\.\\d+)\\|(\\d+\\.\\d+)");
 			String line = null;
 			int persistCounter = 0;
 			int batchSize = 100;
@@ -131,7 +130,7 @@ public class Predictor {
 				Matcher matcher = pattern.matcher(line);
 				if (matcher.find()) {
 					try {
-						long osmShiftId = Long.parseLong(matcher.group(1));
+						String osmShiftStartEndNode = matcher.group(1);
 						long timestamp = Long.parseLong(matcher.group(2));
 						double prediction = Double.parseDouble(matcher.group(3));
 						double lowerEnd = Double.parseDouble(matcher.group(4));
@@ -141,11 +140,11 @@ public class Predictor {
 						predictedShift.setMillis(timestamp);
 						predictedShift.setSpeed((int) prediction);
 						predictedShift.setPredictionerror((float) ((upperEnd - lowerEnd) / 2));
-						Geometry geometry = osmShiftGeometries.get(osmShiftId);
+						Geometry geometry = osmShiftGeometries.get(osmShiftStartEndNode);
 						if (geometry != null) {
 							predictedShift.setGeom(geometry);
 						} else {
-							throw new RuntimeException("bug: unrecognized osmShift id");
+							throw new RuntimeException("bug: unrecognized osmShift id: " + osmShiftStartEndNode);
 						}
 
 						em.persist(predictedShift);
