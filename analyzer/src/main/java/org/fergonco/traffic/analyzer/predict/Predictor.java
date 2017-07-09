@@ -47,7 +47,11 @@ public class Predictor {
 	private static final int FORECAST_STEP = 15 * 60 * 1000;
 	private static final long FORECAST_LIMIT = 24 * 60 * 60 * 1000;
 
-	public void updatePredictions() throws IOException {
+	public void updatePredictions() throws IOException, RException {
+		updatePredictions(new OWM());
+	}
+
+	public void updatePredictions(OWM owm) throws IOException, RException {
 		// Get osmshift center and get a weather prediction
 		logger.debug("Get forecast for centroid");
 		ModelBuilder modelBuilder = new ModelBuilder();
@@ -61,7 +65,7 @@ public class Predictor {
 		}
 		GeometryCollection gc = gf.createGeometryCollection(geometries.toArray(new Geometry[geometries.size()]));
 		Point centroid = gc.getCentroid();
-		WeatherForecast forecast = new OWM(centroid.getX(), centroid.getY()).forecastedConditions();
+		WeatherForecast forecast = owm.forecastedConditions(centroid.getX(), centroid.getY());
 
 		// Remove existing predictions
 		logger.debug("Remove existing predictions");
@@ -87,6 +91,7 @@ public class Predictor {
 		Dataset dataset = new Dataset(datasetStream);
 		dataset.writeHeader();
 		while (forecastTimestamp - FORECAST_LIMIT < now.getTime()) {
+			logger.debug(forecastTimestamp);
 			OutputContext outputContext = new OutputContext(new ForecastShiftEntry(forecastTimestamp),
 					forecast.getForecast(forecastTimestamp));
 			dataset.writeEntry(outputContext);
@@ -122,7 +127,7 @@ public class Predictor {
 				}
 			});
 		} catch (AbortPaginationException e) {
-			throw new IOException(e.getCause());
+			throw new RException(e.getCause());
 		}
 
 		// Run RScript processing folder and get a map from predictions
@@ -132,7 +137,7 @@ public class Predictor {
 			InputStream predictionOutput = rscript.executeResource("predictor.r", forecastFolder.getAbsolutePath());
 			BufferedReader reader = new BufferedReader(new InputStreamReader(predictionOutput));
 			Pattern pattern = Pattern
-					.compile("Result\\|(\\d+-\\d+)\\|(\\d+)\\|(\\d+\\.\\d+)\\|(\\d+\\.\\d+)\\|(\\d+\\.\\d+)");
+					.compile("Result\\|(\\d+-\\d+)\\|(\\d+)\\|(\\d+[\\.\\d+]?)\\|(\\d+[\\.\\d+]?)\\|(\\d+[\\.\\d+]?)");
 			String line = null;
 			int persistCounter = 0;
 			int batchSize = 100;

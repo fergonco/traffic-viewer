@@ -3,6 +3,7 @@ package org.fergonco.tpg.trafficViewer.owm;
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertNull;
+import static org.mockito.Matchers.anyDouble;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -78,8 +79,8 @@ public class OpenWeatherMapClientTest {
 
 	@Test
 	public void testOWM() throws IOException {
-		OWM owm = new OWM(6, 46.25);
-		WeatherConditions weather = owm.currentConditions();
+		OWM owm = new OWM();
+		WeatherConditions weather = owm.currentConditions(6, 46.25);
 		assertNotNull(weather);
 	}
 
@@ -89,11 +90,11 @@ public class OpenWeatherMapClientTest {
 		OWMListener listener = mock(OWMListener.class);
 		OWMTimer timer = new OWMTimer(owm, 500, listener);
 		timer.start();
-		verify(owm, never()).currentConditions();
+		verify(owm, never()).currentConditions(anyDouble(), anyDouble());
 		synchronized (this) {
 			wait(700);
 		}
-		verify(owm, times(1)).currentConditions();
+		verify(owm, times(1)).currentConditions(anyDouble(), anyDouble());
 	}
 
 	@Test
@@ -106,6 +107,6 @@ public class OpenWeatherMapClientTest {
 		synchronized (this) {
 			wait(700);
 		}
-		verify(owm, never()).currentConditions();
+		verify(owm, never()).currentConditions(anyDouble(), anyDouble());
 	}
 }

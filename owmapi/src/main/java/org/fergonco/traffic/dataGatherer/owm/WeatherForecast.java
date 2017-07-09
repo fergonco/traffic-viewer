@@ -27,17 +27,20 @@ public class WeatherForecast {
 	public WeatherConditions getForecast(long forecastTimestamp) {
 		Iterator<WeatherConditions> forecastIterator = forecasts.iterator();
 
-		WeatherConditions lastForecast = forecastIterator.next();
+		WeatherConditions ret = null;
 		while (forecastIterator.hasNext()) {
 			WeatherConditions currentForecast = (WeatherConditions) forecastIterator.next();
-			if (currentForecast.getTimestamp() >= forecastTimestamp) {
-				return lastForecast;
+			if (ret == null) {
+				ret = currentForecast;
+			} else if (currentForecast.getTimestamp() < forecastTimestamp) {
+				ret = currentForecast;
+			} else {
+				break;
 			}
 
-			lastForecast = currentForecast;
 		}
 
-		throw new IllegalStateException("All forecasts were calculated for a period prior to the requested timestamp");
+		return ret;
 	}
 
 }

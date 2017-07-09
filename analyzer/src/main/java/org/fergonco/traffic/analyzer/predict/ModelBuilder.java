@@ -3,6 +3,7 @@ package org.fergonco.traffic.analyzer.predict;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintStream;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -29,7 +30,7 @@ public class ModelBuilder {
 		mb.generateModels();
 	}
 
-	public void generateModels() throws IOException, ParseException {
+	public void generateModels() throws IOException, ParseException, RException {
 		logger.debug("Getting unique osmshifts");
 		ArrayList<OSMShift> osmShifts = getUniqueOSMShifts();
 		DatasetBuilder datasetBuilder = new DatasetBuilder();
@@ -46,8 +47,12 @@ public class ModelBuilder {
 
 			// Generate file with the model
 			File modelFileName = getModelFileName(osmShift.getStartNode(), osmShift.getEndNode());
-			new Rscript().executeResource("modeler.r", datasetFileName.getAbsolutePath(),
+			Rscript r = new Rscript();
+			InputStream stdout = r.executeResource("modeler.r", datasetFileName.getAbsolutePath(),
 					modelFileName.getAbsolutePath());
+			if (r.getExitCode() != 0) {
+				throw new RException(IOUtils.toString(stdout, "utf-8"));
+			}
 
 			// Store model in database
 			byte[] modelBytes = IOUtils.toByteArray(modelFileName.toURI());

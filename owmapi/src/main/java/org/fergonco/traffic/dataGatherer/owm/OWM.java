@@ -14,20 +14,18 @@ public class OWM {
 		parser = new OWMParser();
 	}
 
-	private String[] params;
-
-	public OWM(double lon, double lat) {
+	private String[] getParameters(double lon, double lat) {
 		String paramString = "lon=" + lon + ",lat=" + lat + ",units=metric";
-		this.params = paramString.split(Pattern.quote(","));
+		return paramString.split(Pattern.quote(","));
 	}
 
-	public WeatherConditions currentConditions() throws IOException {
-		String owmResponse = client.get("weather", params);
+	public WeatherConditions currentConditions(double lon, double lat) throws IOException {
+		String owmResponse = client.get("weather", getParameters(lon, lat));
 		return parser.parseWeather(owmResponse);
 	}
 
-	public WeatherForecast forecastedConditions() throws IOException {
-		String owmResponse = client.get("forecast", params);
+	public WeatherForecast forecastedConditions(double lon, double lat) throws IOException {
+		String owmResponse = client.get("forecast", getParameters(lon, lat));
 		return parser.parseForecast(owmResponse);
 	}
 
