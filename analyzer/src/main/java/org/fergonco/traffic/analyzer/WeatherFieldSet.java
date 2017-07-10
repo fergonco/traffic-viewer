@@ -1,7 +1,5 @@
 package org.fergonco.traffic.analyzer;
 
-import java.text.ParseException;
-
 import org.fergonco.tpg.trafficViewer.jpa.WeatherConditions;
 
 public class WeatherFieldSet implements OutputFieldSet {
@@ -12,7 +10,7 @@ public class WeatherFieldSet implements OutputFieldSet {
 	}
 
 	@Override
-	public Object[] getValues(OutputContext outputContext) throws ParseException {
+	public Object[] getValues(OutputContext outputContext) {
 		WeatherConditions weatherConditions = outputContext.getWeatherConditions();
 		String humidity = "";
 		String pressure = "";

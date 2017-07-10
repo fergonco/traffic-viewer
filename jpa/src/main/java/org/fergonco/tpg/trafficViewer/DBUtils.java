@@ -1,11 +1,13 @@
 package org.fergonco.tpg.trafficViewer;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
+import javax.persistence.TypedQuery;
 
 import org.eclipse.persistence.config.PersistenceUnitProperties;
 import org.eclipse.persistence.config.SessionCustomizer;
@@ -59,4 +61,29 @@ public class DBUtils {
 
 	}
 
+	public static <T> void paginatedProcessing(TypedQuery<T> query, int fetchSize, PageProcessor<T> pageProcessor)
+			throws AbortPaginationException {
+		query.setMaxResults(fetchSize);
+		int offset = 0;
+		List<T> resultList;
+		while ((resultList = query.setFirstResult(offset).getResultList()).size() > 0) {
+			pageProcessor.processPage(resultList);
+			offset += resultList.size();
+		}
+
+	}
+
+	public static interface PageProcessor<T> {
+		void processPage(List<T> pageContents) throws AbortPaginationException;
+	}
+
+	public static class AbortPaginationException extends Exception {
+		private static final long serialVersionUID = 1L;
+
+		public AbortPaginationException(Throwable cause) {
+			super(cause);
+			// TODO Auto-generated constructor stub
+		}
+
+	}
 }

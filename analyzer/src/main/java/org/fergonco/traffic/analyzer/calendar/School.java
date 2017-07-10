@@ -22,7 +22,7 @@ public class School {
 		return country;
 	}
 
-	public boolean isSchool(long timestamp) throws ParseException {
+	public boolean isSchool(long timestamp) {
 		long[][] intervalsTimestamps = getIntervalsTimestamps();
 		for (long[] intervalTimestamp : intervalsTimestamps) {
 			if (intervalTimestamp[0] < timestamp && intervalTimestamp[1] >= timestamp) {
@@ -32,12 +32,16 @@ public class School {
 		return false;
 	}
 
-	private long[][] getIntervalsTimestamps() throws ParseException {
+	private long[][] getIntervalsTimestamps() {
 		if (intervalsTimestamps == null) {
 			intervalsTimestamps = new long[intervals.length][];
 			for (int i = 0; i < intervals.length; i++) {
-				intervalsTimestamps[i] = new long[] { SchoolCalendar.SDF.parse(intervals[i][0]).getTime(),
-						SchoolCalendar.SDF.parse(intervals[i][1]).getTime() };
+				try {
+					intervalsTimestamps[i] = new long[] { SchoolCalendar.SDF.parse(intervals[i][0]).getTime(),
+							SchoolCalendar.SDF.parse(intervals[i][1]).getTime() };
+				} catch (ParseException e) {
+					throw new RuntimeException("Bad syntax in calendar.json!", e);
+				}
 			}
 
 		}

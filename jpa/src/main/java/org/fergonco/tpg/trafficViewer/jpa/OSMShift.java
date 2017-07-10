@@ -26,6 +26,10 @@ public class OSMShift {
 	@ManyToOne
 	private Shift shift;
 
+	public long getId() {
+		return id;
+	}
+
 	public long getStartNode() {
 		return startNode;
 	}

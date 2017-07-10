@@ -1,6 +1,6 @@
 package org.fergonco.traffic.analyzer;
 
-import org.fergonco.tpg.trafficViewer.jpa.Shift;
+import org.fergonco.traffic.analyzer.OutputContext.ShiftEntry;
 
 public class ShiftFieldSet implements OutputFieldSet {
 
@@ -11,7 +11,7 @@ public class ShiftFieldSet implements OutputFieldSet {
 
 	@Override
 	public Object[] getValues(OutputContext outputContext) {
-		Shift shift = outputContext.getShift();
+		ShiftEntry shift = outputContext.getShift();
 		return new Object[] { shift.getSpeed(), shift.getTimestamp() };
 	}
 

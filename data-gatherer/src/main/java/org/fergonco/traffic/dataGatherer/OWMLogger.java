@@ -24,7 +24,7 @@ public class OWMLogger implements ServletContextListener {
 
 	@Override
 	public void contextInitialized(ServletContextEvent sce) {
-		OWM owm = new OWM(6, 46.25);
+		OWM owm = new OWM();
 		int fourHours = 4 * 60 * 60 * 1000;
 		timer = new OWMTimer(owm, fourHours, new OWMListener() {
 

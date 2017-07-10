@@ -27,7 +27,7 @@ public class OWMTimer {
 			@Override
 			public void run() {
 				try {
-					listener.newConditions(owm.currentConditions());
+					listener.newConditions(owm.currentConditions(6, 46.25));
 				} catch (IOException e) {
 					listener.error(e);
 				}

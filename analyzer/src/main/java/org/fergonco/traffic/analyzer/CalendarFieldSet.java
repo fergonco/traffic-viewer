@@ -2,7 +2,6 @@ package org.fergonco.traffic.analyzer;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.text.ParseException;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
@@ -19,10 +18,15 @@ public class CalendarFieldSet implements OutputFieldSet {
 	private Map<Integer, String> previousDay;
 	private SchoolCalendar schoolCalendar;
 
-	public CalendarFieldSet() throws IOException {
+	public CalendarFieldSet() {
 		// build calendar data
 		InputStream stream = this.getClass().getResourceAsStream("calendar.json");
-		String jsonContent = IOUtils.toString(stream, "utf8");
+		String jsonContent;
+		try {
+			jsonContent = IOUtils.toString(stream, "utf8");
+		} catch (IOException e) {
+			throw new RuntimeException("Should not happen", e);
+		}
 		Gson gson = new Gson();
 		schoolCalendar = gson.fromJson(jsonContent, SchoolCalendar.class);
 
@@ -52,7 +56,7 @@ public class CalendarFieldSet implements OutputFieldSet {
 	}
 
 	@Override
-	public Object[] getValues(OutputContext outputContext) throws ParseException {
+	public Object[] getValues(OutputContext outputContext) {
 		long timestamp = outputContext.getShift().getTimestamp();
 		Calendar calendar = Calendar.getInstance();
 		calendar.setTimeInMillis(timestamp);
