@@ -41,14 +41,12 @@ We use the [image created by kartoza](https://hub.docker.com/r/kartoza/postgis/)
 	create extension hstore;
 3. Close connection
 
-## Populate distance tables
-
-These tables are required by the data-gatherer service.
+## Create database model
 
 In the database, as tpg user:
 
 	psql -h localhost -U tpg -d tpg -p <port> -c "create schema app;"
-	psql -h localhost -U tpg -d tpg -p <port> -f data-gatherer/tpgstoproute.sql
+	psql -h localhost -U tpg -d tpg -p <port> -f jpa/db.sql
 
 ## Data-gatherer
 
