@@ -14,6 +14,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.fergonco.tpg.trafficViewer.DBUtils;
 import org.fergonco.traffic.analyzer.predict.Predictor;
+import org.fergonco.traffic.analyzer.predict.RException;
 
 @WebListener
 public class MaterializedViewsUpdater implements ServletContextListener {
@@ -32,7 +33,7 @@ public class MaterializedViewsUpdater implements ServletContextListener {
 
 				try {
 					predictor.updatePredictions();
-				} catch (IOException e) {
+				} catch (IOException | RException e) {
 					logger.error("Error while updating predictions", e);
 				}
 
@@ -42,7 +43,7 @@ public class MaterializedViewsUpdater implements ServletContextListener {
 				refresh("app.timestamped_osmshiftinfo");
 
 			}
-		}, _15minutes, _15minutes);
+		}, 0, _15minutes);
 	}
 
 	@Override
