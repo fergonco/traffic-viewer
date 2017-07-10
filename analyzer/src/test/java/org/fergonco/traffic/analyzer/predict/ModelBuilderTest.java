@@ -5,9 +5,6 @@ import static org.mockito.Matchers.anyDouble;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.Statement;
 import java.util.Date;
 import java.util.List;
 
@@ -32,13 +29,13 @@ public class ModelBuilderTest {
 
 	@Before
 	public void prepareDatabase() throws Exception {
-		Connection connection = DriverManager.getConnection("jdbc:postgresql://localhost:54322/tpgtest", "tpg", "tpg");
-		Statement statement = connection.createStatement();
-		statement.execute("DROP SCHEMA IF EXISTS app CASCADE;");
-		statement.execute("CREATE SCHEMA app;");
-		connection.close();
-
 		DBUtils.setPersistenceUnit("test");
+		EntityManager em = DBUtils.getEntityManager();
+		em.getTransaction().begin();
+		em.createQuery("DELETE FROM " + WeatherConditions.class.getSimpleName()).executeUpdate();
+		em.createQuery("DELETE FROM " + OSMShift.class.getSimpleName()).executeUpdate();
+		em.createQuery("DELETE FROM " + Shift.class.getSimpleName()).executeUpdate();
+		em.getTransaction().commit();
 	}
 
 	@Test
