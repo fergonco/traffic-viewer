@@ -1,11 +1,15 @@
 package org.fergonco.tpg.trafficViewer.jpa;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import javax.persistence.Column;
 import javax.persistence.Convert;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.OneToMany;
 
 import com.vividsolutions.jts.geom.Geometry;
 
@@ -28,6 +32,8 @@ public class Shift {
 	@Column(columnDefinition = "geometry('POINT', 4326)")
 	@Convert(converter = JTSConverter.class)
 	private Geometry endPoint;
+	@OneToMany
+	private List<OSMSegment> segments = new ArrayList<OSMSegment>();
 
 	public long getId() {
 		return id;
@@ -121,6 +127,10 @@ public class Shift {
 
 	public void setSourceShiftId(String sourceShiftId) {
 		this.sourceShiftId = sourceShiftId;
+	}
+
+	public void setSegments(List<OSMSegment> segments) {
+		this.segments = segments;
 	}
 
 }

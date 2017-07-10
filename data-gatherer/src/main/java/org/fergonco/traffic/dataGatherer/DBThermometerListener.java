@@ -2,7 +2,6 @@ package org.fergonco.traffic.dataGatherer;
 
 import java.util.Calendar;
 import java.util.GregorianCalendar;
-import java.util.List;
 
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
@@ -11,12 +10,8 @@ import javax.persistence.TypedQuery;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.fergonco.tpg.trafficViewer.DBUtils;
-import org.fergonco.tpg.trafficViewer.jpa.OSMShift;
 import org.fergonco.tpg.trafficViewer.jpa.Shift;
 import org.fergonco.tpg.trafficViewer.jpa.TPGStopRoute;
-import org.fergonco.tpg.trafficViewer.jpa.TPGStopRouteSegment;
-
-import com.vividsolutions.jts.geom.Geometry;
 
 import co.geomati.tpg.Step;
 import co.geomati.tpg.ThermometerListener;
@@ -70,19 +65,8 @@ public class DBThermometerListener implements ThermometerListener {
 			logger.debug("New Shift to be inserted from " + previousStep.getStopCode() + "("
 					+ previousStep.getActualTimestamp() + ") to " + currentStep.getStopCode() + "("
 					+ currentStep.getActualTimestamp() + "). Path length: " + km + ". Speed:" + shift.getSpeed());
+			shift.setSegments(distance.getSegments());
 			em.persist(shift);
-
-			List<TPGStopRouteSegment> segments = distance.getSegments();
-			for (TPGStopRouteSegment segment : segments) {
-				OSMShift osmShift = new OSMShift();
-				osmShift.setShift(shift);
-				osmShift.setStartNode(segment.getStartNode());
-				osmShift.setEndNode(segment.getEndNode());
-				Geometry segmentGeometry = segment.getGeometry();
-				segmentGeometry.setSRID(4326);
-				osmShift.setGeom(segmentGeometry);
-				em.persist(osmShift);
-			}
 			em.getTransaction().commit();
 		}
 	}

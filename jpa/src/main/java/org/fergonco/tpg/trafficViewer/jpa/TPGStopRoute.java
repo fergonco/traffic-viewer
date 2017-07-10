@@ -28,7 +28,7 @@ public class TPGStopRoute {
 	@Convert(converter = JTSConverter.class)
 	private Geometry route;
 	@OneToMany
-	private List<TPGStopRouteSegment> segments = new ArrayList<TPGStopRouteSegment>();
+	private List<OSMSegment> segments = new ArrayList<OSMSegment>();
 
 	public void setStartTPGCode(String startTPGCode) {
 		this.startTPGCode = startTPGCode;
@@ -54,7 +54,7 @@ public class TPGStopRoute {
 		return distance;
 	}
 
-	public List<TPGStopRouteSegment> getSegments() {
+	public List<OSMSegment> getSegments() {
 		return segments;
 	}
 }
