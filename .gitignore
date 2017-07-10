@@ -5,3 +5,7 @@ target/
 
 .R*
 .Rproj.user
+
+${env:TRAFFIC_VIEWER_CONFIGURATION_FOLDER}/
+
+
