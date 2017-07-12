@@ -15,7 +15,7 @@ import org.fergonco.tpg.trafficViewer.DBUtils;
 import org.fergonco.tpg.trafficViewer.TestUtils;
 import org.fergonco.tpg.trafficViewer.jpa.OSMSegment;
 import org.fergonco.tpg.trafficViewer.jpa.Shift;
-import org.fergonco.tpg.trafficViewer.jpa.TimestampedPredictedOSMShift;
+import org.fergonco.tpg.trafficViewer.jpa.PredictedShift;
 import org.fergonco.tpg.trafficViewer.jpa.WeatherConditions;
 import org.fergonco.traffic.dataGatherer.owm.OWM;
 import org.fergonco.traffic.dataGatherer.owm.WeatherForecast;
@@ -71,9 +71,9 @@ public class ModelBuilderTest {
 		predictor.updatePredictions(mock);
 
 		// Check the predictions are there
-		List<TimestampedPredictedOSMShift> predictedOSMShifts = em
-				.createQuery("select p FROM " + TimestampedPredictedOSMShift.class.getName() + " p order by p.millis",
-						TimestampedPredictedOSMShift.class)
+		List<PredictedShift> predictedOSMShifts = em
+				.createQuery("select p FROM " + PredictedShift.class.getName() + " p order by p.millis",
+						PredictedShift.class)
 				.getResultList();
 		assertTrue("there are predictions", predictedOSMShifts.size() > 0);
 		assertTrue("predictions are not 0", predictedOSMShifts.get(0).getSpeed() > 0);

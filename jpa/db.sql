@@ -131,10 +131,10 @@ CREATE TABLE shift_osmsegment (
 ALTER TABLE app.shift_osmsegment OWNER TO tpg;
 
 --
--- Name: timestampedpredictedosmshift; Type: TABLE; Schema: app; Owner: tpg; Tablespace: 
+-- Name: predictedshift; Type: TABLE; Schema: app; Owner: tpg; Tablespace: 
 --
 
-CREATE TABLE timestampedpredictedosmshift (
+CREATE TABLE predictedshift (
     id bigint NOT NULL,
     millis bigint,
     predictionerror double precision,
@@ -143,7 +143,7 @@ CREATE TABLE timestampedpredictedosmshift (
 );
 
 
-ALTER TABLE app.timestampedpredictedosmshift OWNER TO tpg;
+ALTER TABLE app.predictedshift OWNER TO tpg;
 
 --
 -- Name: tpgstop; Type: TABLE; Schema: app; Owner: tpg; Tablespace: 
@@ -5675,10 +5675,10 @@ COPY shift_osmsegment (shift_id, segments_id) FROM stdin;
 
 
 --
--- Data for Name: timestampedpredictedosmshift; Type: TABLE DATA; Schema: app; Owner: tpg
+-- Data for Name: predictedshift; Type: TABLE DATA; Schema: app; Owner: tpg
 --
 
-COPY timestampedpredictedosmshift (id, millis, predictionerror, speed, segment_id) FROM stdin;
+COPY predictedshift (id, millis, predictionerror, speed, segment_id) FROM stdin;
 \.
 
 
@@ -11435,11 +11435,11 @@ ALTER TABLE ONLY shift
 
 
 --
--- Name: timestampedpredictedosmshift_pkey; Type: CONSTRAINT; Schema: app; Owner: tpg; Tablespace: 
+-- Name: predictedshift_pkey; Type: CONSTRAINT; Schema: app; Owner: tpg; Tablespace: 
 --
 
-ALTER TABLE ONLY timestampedpredictedosmshift
-    ADD CONSTRAINT timestampedpredictedosmshift_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY predictedshift
+    ADD CONSTRAINT predictedshift_pkey PRIMARY KEY (id);
 
 
 --
@@ -11515,11 +11515,11 @@ ALTER TABLE ONLY shift_osmsegment
 
 
 --
--- Name: fk_timestampedpredictedosmshift_segment_id; Type: FK CONSTRAINT; Schema: app; Owner: tpg
+-- Name: fk_predictedshift_segment_id; Type: FK CONSTRAINT; Schema: app; Owner: tpg
 --
 
-ALTER TABLE ONLY timestampedpredictedosmshift
-    ADD CONSTRAINT fk_timestampedpredictedosmshift_segment_id FOREIGN KEY (segment_id) REFERENCES osmsegment(id);
+ALTER TABLE ONLY predictedshift
+    ADD CONSTRAINT fk_predictedshift_segment_id FOREIGN KEY (segment_id) REFERENCES osmsegment(id);
 
 
 --

@@ -24,7 +24,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.fergonco.tpg.trafficViewer.DBUtils;
 import org.fergonco.tpg.trafficViewer.jpa.OSMSegment;
-import org.fergonco.tpg.trafficViewer.jpa.TimestampedPredictedOSMShift;
+import org.fergonco.tpg.trafficViewer.jpa.PredictedShift;
 import org.fergonco.traffic.analyzer.Dataset;
 import org.fergonco.traffic.analyzer.OutputContext;
 import org.fergonco.traffic.analyzer.OutputContext.ShiftEntry;
@@ -70,7 +70,7 @@ public class Predictor {
 		logger.debug("Remove existing predictions");
 		em.getTransaction().begin();
 		try {
-			em.createQuery("DELETE FROM " + TimestampedPredictedOSMShift.class.getName() + " o").executeUpdate();
+			em.createQuery("DELETE FROM " + PredictedShift.class.getName() + " o").executeUpdate();
 			em.getTransaction().commit();
 		} catch (RuntimeException e) {
 			if (em.getTransaction().isActive()) {
@@ -131,7 +131,7 @@ public class Predictor {
 						double lowerEnd = Double.parseDouble(matcher.group(4));
 						double upperEnd = Double.parseDouble(matcher.group(5));
 
-						TimestampedPredictedOSMShift predictedShift = new TimestampedPredictedOSMShift();
+						PredictedShift predictedShift = new PredictedShift();
 						predictedShift.setMillis(timestamp);
 						predictedShift.setSpeed((int) prediction);
 						predictedShift.setPredictionerror((float) ((upperEnd - lowerEnd) / 2));
