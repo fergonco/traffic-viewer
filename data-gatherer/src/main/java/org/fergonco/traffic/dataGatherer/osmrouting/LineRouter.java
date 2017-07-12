@@ -9,7 +9,7 @@ import javax.persistence.EntityManager;
 
 import org.apache.commons.io.IOUtils;
 import org.fergonco.tpg.trafficViewer.DBUtils;
-import org.fergonco.tpg.trafficViewer.jpa.TPGStop2;
+import org.fergonco.tpg.trafficViewer.jpa.TPGStop;
 import org.fergonco.traffic.dataGatherer.Utils;
 
 import com.vividsolutions.jts.io.WKTWriter;
@@ -34,8 +34,8 @@ public class LineRouter {
 			String[] stopSequence = line.stopSequence;
 			for (int i = 0; i < stopSequence.length - 1; i++) {
 				// forward route
-				TPGStop2 start = Utils.getTPGStop(em, stopSequence[i], line.lineName, line.forwardDestination);
-				TPGStop2 end = Utils.getTPGStop(em, stopSequence[i + 1], line.lineName, line.forwardDestination);
+				TPGStop start = Utils.getTPGStop(em, stopSequence[i], line.lineName, line.forwardDestination);
+				TPGStop end = Utils.getTPGStop(em, stopSequence[i + 1], line.lineName, line.forwardDestination);
 				String startNodeId = start.getNodeId();
 				String endNodeId = end.getNodeId();
 				OSMRoutingResult result = osmRouter.getPathFromNodeOutsideGraph(line.lineName, startNodeId, endNodeId);

@@ -86,4 +86,8 @@ public class DBUtils {
 		}
 
 	}
+
+	public static String getSchemaName() {
+		return schemaName;
+	}
 }

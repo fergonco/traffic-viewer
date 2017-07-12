@@ -133,4 +133,7 @@ public class Shift {
 		this.segments = segments;
 	}
 
+	public List<OSMSegment> getSegments() {
+		return segments;
+	}
 }

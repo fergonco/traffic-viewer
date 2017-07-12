@@ -30,6 +30,9 @@
 			<property name="eclipselink.logging.level" value="FINE" />
 			<property name="eclipselink.ddl-generation" value="create-tables" />
 			<property name="eclipselink.database.delimiters" value="true" />
+			<property name="eclipselink.target-database" value="PostgreSQL" />
+			<property name="eclipselink.jdbc.batch-writing" value="JDBC" />
+			<property name="eclipselink.jdbc.batch-writing.size" value="100" />
 		</properties>
 	</persistence-unit>
 

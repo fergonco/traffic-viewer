@@ -19,13 +19,19 @@ import org.fergonco.tpg.trafficViewer.jpa.WeatherConditions;
 
 public class DatasetBuilder {
 
-	public void build(PrintStream stream, long startNode, long endNode) throws IOException, ParseException {
+	private void build(PrintStream stream, long startNode, long endNode) throws IOException, ParseException {
 		EntityManager em = DBUtils.getEntityManager();
 		TypedQuery<OSMSegment> query = em.createQuery("SELECT s FROM " + OSMSegment.class.getSimpleName()
 				+ " s WHERE s.startNode=:startNode and s.endNode=:endNode", OSMSegment.class);
 		query.setParameter("startNode", startNode);
 		query.setParameter("endNode", endNode);
 		OSMSegment osmSegment = query.getSingleResult();
+
+		build(stream, osmSegment);
+	}
+
+	public void build(PrintStream stream, OSMSegment osmSegment) {
+		EntityManager em = DBUtils.getEntityManager();
 		List<Shift> shifts = osmSegment.getShifts();
 
 		/*

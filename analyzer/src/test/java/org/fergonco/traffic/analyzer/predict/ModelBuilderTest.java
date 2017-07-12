@@ -5,14 +5,14 @@ import static org.mockito.Matchers.anyDouble;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
 import javax.persistence.EntityManager;
 
 import org.fergonco.tpg.trafficViewer.DBUtils;
-import org.fergonco.tpg.trafficViewer.jpa.OSMSegmentModel;
-import org.fergonco.tpg.trafficViewer.jpa.OSMShift;
+import org.fergonco.tpg.trafficViewer.jpa.OSMSegment;
 import org.fergonco.tpg.trafficViewer.jpa.Shift;
 import org.fergonco.tpg.trafficViewer.jpa.TimestampedPredictedOSMShift;
 import org.fergonco.tpg.trafficViewer.jpa.WeatherConditions;
@@ -33,7 +33,20 @@ public class ModelBuilderTest {
 		EntityManager em = DBUtils.getEntityManager();
 		em.getTransaction().begin();
 		em.createQuery("DELETE FROM " + WeatherConditions.class.getSimpleName()).executeUpdate();
-		em.createQuery("DELETE FROM " + OSMShift.class.getSimpleName()).executeUpdate();
+		List<OSMSegment> osmSegments = em
+				.createQuery("SELECT s from " + OSMSegment.class.getSimpleName() + " s", OSMSegment.class)
+				.getResultList();
+		for (OSMSegment osmSegment : osmSegments) {
+			osmSegment.getShifts().clear();
+			em.persist(osmSegment);
+		}
+		List<Shift> shifts = em.createQuery("SELECT s from " + Shift.class.getSimpleName() + " s", Shift.class)
+				.getResultList();
+		for (Shift shift : shifts) {
+			shift.getSegments().clear();
+			em.persist(shift);
+		}
+		em.createQuery("UPDATE " + OSMSegment.class.getSimpleName() + " SET model = null").executeUpdate();
 		em.createQuery("DELETE FROM " + Shift.class.getSimpleName()).executeUpdate();
 		em.getTransaction().commit();
 	}
@@ -61,8 +74,9 @@ public class ModelBuilderTest {
 		builder.generateModels();
 
 		// Check the models are generated
-		List<OSMSegmentModel> resultList = em
-				.createQuery("select m FROM " + OSMSegmentModel.class.getName() + " m", OSMSegmentModel.class)
+		List<OSMSegment> resultList = em
+				.createQuery("select m FROM " + OSMSegment.class.getName() + " m where m.model is not null",
+						OSMSegment.class)
 				.getResultList();
 		assertTrue("Some model in database", resultList.size() > 0);
 
@@ -106,13 +120,13 @@ public class ModelBuilderTest {
 		shift.setTimestamp(timestamp);
 		shift.setVehicleId(Integer.toString(index));
 		shift.setSpeed(20);
-		OSMShift osmShift = new OSMShift();
-		osmShift.setStartNode(startNode);
-		osmShift.setEndNode(endNode);
-		osmShift.setGeom(geometry);
-		osmShift.setShift(shift);
+		OSMSegment osmSegment = em
+				.createQuery("select s from " + OSMSegment.class.getSimpleName() + " s", OSMSegment.class)
+				.setMaxResults(1).getSingleResult();
+		shift.setSegments(Collections.singletonList(osmSegment));
+		osmSegment.getShifts().add(shift);
+		em.persist(osmSegment);
 		em.persist(shift);
-		em.persist(osmShift);
 	}
 
 }

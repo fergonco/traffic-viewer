@@ -16,10 +16,10 @@ SET default_tablespace = '';
 SET default_with_oids = false;
 
 --
--- Name: tpgstop2; Type: TABLE; Schema: app; Owner: tpg; Tablespace: 
+-- Name: tpgstop; Type: TABLE; Schema: app; Owner: tpg; Tablespace: 
 --
 
-CREATE TABLE tpgstop2 (
+CREATE TABLE tpgstop (
     id integer NOT NULL,
     destination character varying(255),
     line character varying(255),
@@ -28,13 +28,13 @@ CREATE TABLE tpgstop2 (
 );
 
 
-ALTER TABLE app.tpgstop2 OWNER TO tpg;
+ALTER TABLE app.tpgstop OWNER TO tpg;
 
 --
--- Name: tpgstop2_id_seq; Type: SEQUENCE; Schema: app; Owner: tpg
+-- Name: tpgstop_id_seq; Type: SEQUENCE; Schema: app; Owner: tpg
 --
 
-CREATE SEQUENCE tpgstop2_id_seq
+CREATE SEQUENCE tpgstop_id_seq
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -42,27 +42,27 @@ CREATE SEQUENCE tpgstop2_id_seq
     CACHE 1;
 
 
-ALTER TABLE app.tpgstop2_id_seq OWNER TO tpg;
+ALTER TABLE app.tpgstop_id_seq OWNER TO tpg;
 
 --
--- Name: tpgstop2_id_seq; Type: SEQUENCE OWNED BY; Schema: app; Owner: tpg
+-- Name: tpgstop_id_seq; Type: SEQUENCE OWNED BY; Schema: app; Owner: tpg
 --
 
-ALTER SEQUENCE tpgstop2_id_seq OWNED BY tpgstop2.id;
+ALTER SEQUENCE tpgstop_id_seq OWNED BY tpgstop.id;
 
 
 --
 -- Name: id; Type: DEFAULT; Schema: app; Owner: tpg
 --
 
-ALTER TABLE ONLY tpgstop2 ALTER COLUMN id SET DEFAULT nextval('tpgstop2_id_seq'::regclass);
+ALTER TABLE ONLY tpgstop ALTER COLUMN id SET DEFAULT nextval('tpgstop_id_seq'::regclass);
 
 
 --
--- Data for Name: tpgstop2; Type: TABLE DATA; Schema: app; Owner: tpg
+-- Data for Name: tpgstop; Type: TABLE DATA; Schema: app; Owner: tpg
 --
 
-COPY tpgstop2 (id, destination, line, osmid, tpgcode) FROM stdin;
+COPY tpgstop (id, destination, line, osmid, tpgcode) FROM stdin;
 2	FERNEY-VOLTAIRE	Y	1161861705	VATH
 3	FERNEY-VOLTAIRE	Y	1163093869	THGA
 4	FERNEY-VOLTAIRE	Y	1163096998	THMA
@@ -245,26 +245,26 @@ COPY tpgstop2 (id, destination, line, osmid, tpgcode) FROM stdin;
 
 
 --
--- Name: tpgstop2_id_seq; Type: SEQUENCE SET; Schema: app; Owner: tpg
+-- Name: tpgstop_id_seq; Type: SEQUENCE SET; Schema: app; Owner: tpg
 --
 
-SELECT pg_catalog.setval('tpgstop2_id_seq', 179, true);
-
-
---
--- Name: tpgstop2_pkey; Type: CONSTRAINT; Schema: app; Owner: tpg; Tablespace: 
---
-
-ALTER TABLE ONLY tpgstop2
-    ADD CONSTRAINT tpgstop2_pkey PRIMARY KEY (id);
+SELECT pg_catalog.setval('tpgstop_id_seq', 179, true);
 
 
 --
--- Name: unq_tpgstop2_0; Type: CONSTRAINT; Schema: app; Owner: tpg; Tablespace: 
+-- Name: tpgstop_pkey; Type: CONSTRAINT; Schema: app; Owner: tpg; Tablespace: 
 --
 
-ALTER TABLE ONLY tpgstop2
-    ADD CONSTRAINT unq_tpgstop2_0 UNIQUE (tpgcode, line, destination);
+ALTER TABLE ONLY tpgstop
+    ADD CONSTRAINT tpgstop_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: unq_tpgstop_0; Type: CONSTRAINT; Schema: app; Owner: tpg; Tablespace: 
+--
+
+ALTER TABLE ONLY tpgstop
+    ADD CONSTRAINT unq_tpgstop_0 UNIQUE (tpgcode, line, destination);
 
 
 --

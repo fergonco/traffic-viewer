@@ -2,6 +2,7 @@ package org.fergonco.traffic.dataGatherer;
 
 import java.util.Calendar;
 import java.util.GregorianCalendar;
+import java.util.List;
 
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
@@ -10,6 +11,7 @@ import javax.persistence.TypedQuery;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.fergonco.tpg.trafficViewer.DBUtils;
+import org.fergonco.tpg.trafficViewer.jpa.OSMSegment;
 import org.fergonco.tpg.trafficViewer.jpa.Shift;
 import org.fergonco.tpg.trafficViewer.jpa.TPGStopRoute;
 
@@ -42,10 +44,14 @@ public class DBThermometerListener implements ThermometerListener {
 						Shift.class);
 				query.setParameter("sourceShiftId", sourceShiftId);
 				Shift existingShift = query.getSingleResult();
-				long shiftId = existingShift.getId();
-				em.createQuery("DELETE FROM OSMShift s WHERE s.shift=:shift").setParameter("shift", existingShift)
-						.executeUpdate();
-				em.createQuery("DELETE FROM Shift s WHERE s.id=:id").setParameter("id", shiftId).executeUpdate();
+				List<OSMSegment> segments = existingShift.getSegments();
+				for (OSMSegment osmSegment : segments) {
+					osmSegment.getShifts().remove(existingShift);
+					em.persist(osmSegment);
+				}
+				segments.clear();
+				em.persist(existingShift);
+				em.remove(existingShift);
 			} catch (NoResultException e) {
 			}
 
@@ -66,6 +72,10 @@ public class DBThermometerListener implements ThermometerListener {
 					+ previousStep.getActualTimestamp() + ") to " + currentStep.getStopCode() + "("
 					+ currentStep.getActualTimestamp() + "). Path length: " + km + ". Speed:" + shift.getSpeed());
 			shift.setSegments(distance.getSegments());
+			for (OSMSegment segment : distance.getSegments()) {
+				segment.getShifts().add(shift);
+				em.persist(segment);
+			}
 			em.persist(shift);
 			em.getTransaction().commit();
 		}

@@ -12,6 +12,7 @@ import java.util.List;
 import javax.persistence.EntityManager;
 import javax.xml.parsers.ParserConfigurationException;
 
+import org.fergonco.tpg.trafficViewer.jpa.OSMSegment;
 import org.fergonco.tpg.trafficViewer.jpa.Shift;
 import org.fergonco.traffic.dataGatherer.DBThermometerListener;
 import org.junit.Before;
@@ -34,7 +35,11 @@ public class DBThermometerListenerTest {
 		DBUtils.setPersistenceUnit("test");
 		em = DBUtils.getEntityManager();
 		em.getTransaction().begin();
-		em.createQuery("DELETE FROM OSMShift").executeUpdate();
+		em.createQuery("UPDATE " + OSMSegment.class.getSimpleName() + " SET model = null").executeUpdate();
+		em.createNativeQuery("DELETE FROM " + DBUtils.getSchemaName() + "." + OSMSegment.class.getSimpleName() + "_"
+				+ Shift.class.getSimpleName()).executeUpdate();
+		em.createNativeQuery("DELETE FROM " + DBUtils.getSchemaName() + "." + Shift.class.getSimpleName() + "_"
+				+ OSMSegment.class.getSimpleName()).executeUpdate();
 		em.createQuery("DELETE FROM Shift").executeUpdate();
 		em.getTransaction().commit();
 
@@ -59,6 +64,10 @@ public class DBThermometerListenerTest {
 
 		List<Shift> list = em.createQuery("SELECT s FROM Shift s", Shift.class).getResultList();
 		assertEquals(1, list.size());
+
+		// Check OSMSegments have the Shift associated
+		Shift shift = list.get(0);
+		assertTrue(shift.getSegments().get(0).getShifts().contains(shift));
 	}
 
 	@Test
@@ -75,8 +84,19 @@ public class DBThermometerListenerTest {
 		assertEquals(1, list.size());
 
 		// speed is slower
-		int newSpeed = em.createQuery("SELECT s FROM Shift s", Shift.class).getSingleResult().getSpeed();
+		Shift newShift = em.createQuery("SELECT s FROM Shift s", Shift.class).getSingleResult();
+		int newSpeed = newShift.getSpeed();
 		assertTrue(newSpeed < speed);
+
+		// Check the OSMSegments do not have the reference to the old Shift
+		List<OSMSegment> segments = newShift.getSegments();
+		for (OSMSegment osmSegment : segments) {
+			List<Shift> shifts = osmSegment.getShifts();
+			for (Shift shift : shifts) {
+				System.out.println(shift);
+			}
+			assertTrue(shifts.size() == 1);
+		}
 	}
 
 	@Test
