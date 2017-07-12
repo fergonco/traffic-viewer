@@ -32,17 +32,9 @@ public class DBThermometerListenerTest {
 
 	@Before
 	public void clean() throws ParserConfigurationException, SAXException, IOException {
-		DBUtils.setPersistenceUnit("test");
-		em = DBUtils.getEntityManager();
-		em.getTransaction().begin();
-		em.createQuery("UPDATE " + OSMSegment.class.getSimpleName() + " SET model = null").executeUpdate();
-		em.createNativeQuery("DELETE FROM " + DBUtils.getSchemaName() + "." + OSMSegment.class.getSimpleName() + "_"
-				+ Shift.class.getSimpleName()).executeUpdate();
-		em.createNativeQuery("DELETE FROM " + DBUtils.getSchemaName() + "." + Shift.class.getSimpleName() + "_"
-				+ OSMSegment.class.getSimpleName()).executeUpdate();
-		em.createQuery("DELETE FROM Shift").executeUpdate();
-		em.getTransaction().commit();
+		TestUtils.configureDBUtilsAndClearDatabase();
 
+		em = DBUtils.getEntityManager();
 		now = new Date().getTime();
 		someMinutesAgo = now - 10 * 60 * 1000;
 		previousStep = new Step();

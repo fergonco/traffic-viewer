@@ -12,6 +12,7 @@ import java.util.List;
 import javax.persistence.EntityManager;
 
 import org.fergonco.tpg.trafficViewer.DBUtils;
+import org.fergonco.tpg.trafficViewer.TestUtils;
 import org.fergonco.tpg.trafficViewer.jpa.OSMSegment;
 import org.fergonco.tpg.trafficViewer.jpa.Shift;
 import org.fergonco.tpg.trafficViewer.jpa.TimestampedPredictedOSMShift;
@@ -29,26 +30,7 @@ public class ModelBuilderTest {
 
 	@Before
 	public void prepareDatabase() throws Exception {
-		DBUtils.setPersistenceUnit("test");
-		EntityManager em = DBUtils.getEntityManager();
-		em.getTransaction().begin();
-		em.createQuery("DELETE FROM " + WeatherConditions.class.getSimpleName()).executeUpdate();
-		List<OSMSegment> osmSegments = em
-				.createQuery("SELECT s from " + OSMSegment.class.getSimpleName() + " s", OSMSegment.class)
-				.getResultList();
-		for (OSMSegment osmSegment : osmSegments) {
-			osmSegment.getShifts().clear();
-			em.persist(osmSegment);
-		}
-		List<Shift> shifts = em.createQuery("SELECT s from " + Shift.class.getSimpleName() + " s", Shift.class)
-				.getResultList();
-		for (Shift shift : shifts) {
-			shift.getSegments().clear();
-			em.persist(shift);
-		}
-		em.createQuery("UPDATE " + OSMSegment.class.getSimpleName() + " SET model = null").executeUpdate();
-		em.createQuery("DELETE FROM " + Shift.class.getSimpleName()).executeUpdate();
-		em.getTransaction().commit();
+		TestUtils.configureDBUtilsAndClearDatabase();
 	}
 
 	@Test
