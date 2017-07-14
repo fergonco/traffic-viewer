@@ -1,6 +1,5 @@
 package org.fergonco.tpg.trafficViewer;
 
-import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
 
@@ -20,10 +19,7 @@ public class CreateDatabaseSchema {
 		JDBCScript script = new JDBCScript("jdbc:postgresql://localhost:54322/tpgtest", "tpg", "tpg");
 		script.executeCommands("create schema app;");
 
-		// Some of the tables with data: tpgstoproute
-		script.executeScript(new File("../data-gatherer/tpgstoproute.sql"));
-
-		// The rest of the tables
+		// generate tables
 		DBUtils.setPersistenceUnit("test");
 		EntityManager em = DBUtils.getEntityManager();
 		em.createQuery("SELECT s FROM Shift s", Shift.class).getResultList();

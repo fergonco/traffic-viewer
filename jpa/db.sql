@@ -64,6 +64,21 @@ CREATE TABLE osmsegment_shift (
 ALTER TABLE app.osmsegment_shift OWNER TO tpg;
 
 --
+-- Name: predictedshift; Type: TABLE; Schema: app; Owner: tpg; Tablespace: 
+--
+
+CREATE TABLE predictedshift (
+    id bigint NOT NULL,
+    millis bigint,
+    predictionerror double precision,
+    speed integer,
+    segment_id bigint
+);
+
+
+ALTER TABLE app.predictedshift OWNER TO tpg;
+
+--
 -- Name: seq_gen_sequence; Type: SEQUENCE; Schema: app; Owner: tpg
 --
 
@@ -83,13 +98,12 @@ ALTER TABLE app.seq_gen_sequence OWNER TO tpg;
 
 CREATE TABLE shift (
     id integer NOT NULL,
-    endpoint public.geometry(Point,4326),
+    seconds integer,
     sourceendpoint character varying(255),
+    sourcelinecode character varying(255),
     sourceshiftid character varying(255),
     sourcestartpoint character varying(255),
     sourcetype character varying(255),
-    speed integer,
-    startpoint public.geometry(Point,4326),
     "timestamp" bigint,
     vehicleid character varying(255)
 );
@@ -5645,6 +5659,14 @@ COPY osmsegment_shift (osmsegment_id, shifts_id) FROM stdin;
 
 
 --
+-- Data for Name: predictedshift; Type: TABLE DATA; Schema: app; Owner: tpg
+--
+
+COPY predictedshift (id, millis, predictionerror, speed, segment_id) FROM stdin;
+\.
+
+
+--
 -- Name: seq_gen_sequence; Type: SEQUENCE SET; Schema: app; Owner: tpg
 --
 
@@ -5655,7 +5677,7 @@ SELECT pg_catalog.setval('seq_gen_sequence', 50, false);
 -- Data for Name: shift; Type: TABLE DATA; Schema: app; Owner: tpg
 --
 
-COPY shift (id, endpoint, sourceendpoint, sourceshiftid, sourcestartpoint, sourcetype, speed, startpoint, "timestamp", vehicleid) FROM stdin;
+COPY shift (id, seconds, sourceendpoint, sourcelinecode, sourceshiftid, sourcestartpoint, sourcetype, "timestamp", vehicleid) FROM stdin;
 \.
 
 
@@ -5671,14 +5693,6 @@ SELECT pg_catalog.setval('shift_id_seq', 1, false);
 --
 
 COPY shift_osmsegment (shift_id, segments_id) FROM stdin;
-\.
-
-
---
--- Data for Name: predictedshift; Type: TABLE DATA; Schema: app; Owner: tpg
---
-
-COPY predictedshift (id, millis, predictionerror, speed, segment_id) FROM stdin;
 \.
 
 
@@ -11419,6 +11433,14 @@ ALTER TABLE ONLY osmsegment_shift
 
 
 --
+-- Name: predictedshift_pkey; Type: CONSTRAINT; Schema: app; Owner: tpg; Tablespace: 
+--
+
+ALTER TABLE ONLY predictedshift
+    ADD CONSTRAINT predictedshift_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: shift_osmsegment_pkey; Type: CONSTRAINT; Schema: app; Owner: tpg; Tablespace: 
 --
 
@@ -11432,14 +11454,6 @@ ALTER TABLE ONLY shift_osmsegment
 
 ALTER TABLE ONLY shift
     ADD CONSTRAINT shift_pkey PRIMARY KEY (id);
-
-
---
--- Name: predictedshift_pkey; Type: CONSTRAINT; Schema: app; Owner: tpg; Tablespace: 
---
-
-ALTER TABLE ONLY predictedshift
-    ADD CONSTRAINT predictedshift_pkey PRIMARY KEY (id);
 
 
 --
@@ -11499,6 +11513,14 @@ ALTER TABLE ONLY osmsegment_shift
 
 
 --
+-- Name: fk_predictedshift_segment_id; Type: FK CONSTRAINT; Schema: app; Owner: tpg
+--
+
+ALTER TABLE ONLY predictedshift
+    ADD CONSTRAINT fk_predictedshift_segment_id FOREIGN KEY (segment_id) REFERENCES osmsegment(id);
+
+
+--
 -- Name: fk_shift_osmsegment_segments_id; Type: FK CONSTRAINT; Schema: app; Owner: tpg
 --
 
@@ -11512,14 +11534,6 @@ ALTER TABLE ONLY shift_osmsegment
 
 ALTER TABLE ONLY shift_osmsegment
     ADD CONSTRAINT fk_shift_osmsegment_shift_id FOREIGN KEY (shift_id) REFERENCES shift(id);
-
-
---
--- Name: fk_predictedshift_segment_id; Type: FK CONSTRAINT; Schema: app; Owner: tpg
---
-
-ALTER TABLE ONLY predictedshift
-    ADD CONSTRAINT fk_predictedshift_segment_id FOREIGN KEY (segment_id) REFERENCES osmsegment(id);
 
 
 --
