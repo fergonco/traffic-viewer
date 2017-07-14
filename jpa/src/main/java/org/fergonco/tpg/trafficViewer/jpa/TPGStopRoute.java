@@ -34,8 +34,16 @@ public class TPGStopRoute {
 		this.startTPGCode = startTPGCode;
 	}
 
+	public String getStartTPGCode() {
+		return startTPGCode;
+	}
+
 	public void setEndTPGCode(String endTPGCode) {
 		this.endTPGCode = endTPGCode;
+	}
+
+	public String getEndTPGCode() {
+		return endTPGCode;
 	}
 
 	public void setDistance(double d) {
@@ -44,6 +52,10 @@ public class TPGStopRoute {
 
 	public void setLine(String line) {
 		this.line = line;
+	}
+
+	public String getLine() {
+		return line;
 	}
 
 	public void setRoute(Geometry route) {
@@ -57,4 +69,5 @@ public class TPGStopRoute {
 	public List<OSMSegment> getSegments() {
 		return segments;
 	}
+
 }

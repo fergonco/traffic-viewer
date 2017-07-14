@@ -15,6 +15,7 @@ import javax.persistence.TypedQuery;
 import org.fergonco.tpg.trafficViewer.DBUtils;
 import org.fergonco.tpg.trafficViewer.jpa.OSMSegment;
 import org.fergonco.tpg.trafficViewer.jpa.Shift;
+import org.fergonco.tpg.trafficViewer.jpa.TPGStopRoute;
 import org.fergonco.tpg.trafficViewer.jpa.WeatherConditions;
 
 public class DatasetBuilder {
@@ -30,21 +31,38 @@ public class DatasetBuilder {
 		build(stream, osmSegment);
 	}
 
+	private String getRouteUID(String line, String startCode, String endCode) {
+		return line + ":" + startCode + "-" + endCode;
+	}
+
 	public void build(PrintStream stream, OSMSegment osmSegment) {
 		EntityManager em = DBUtils.getEntityManager();
-		List<Shift> shifts = osmSegment.getShifts();
 
+		// Build a distance table to calculate speeds
+		List<TPGStopRoute> tpgStopRoutes = em
+				.createQuery("select r from " + TPGStopRoute.class.getSimpleName() + " r", TPGStopRoute.class)
+				.getResultList();
+		HashMap<String, Double> distances = new HashMap<>();
+		for (TPGStopRoute tpgStopRoute : tpgStopRoutes) {
+			String routeUID = getRouteUID(tpgStopRoute.getLine(), tpgStopRoute.getStartTPGCode(),
+					tpgStopRoute.getEndTPGCode());
+			distances.put(routeUID, tpgStopRoute.getDistance());
+		}
+
+		List<Shift> shifts = osmSegment.getShifts();
 		/*
 		 * We iterate all the shifts. We keep the latest when there are
 		 * duplicates unless any of the duplicates has weird measures.
 		 */
 		HashMap<String, Shift> idShift = new HashMap<>();
 		for (Shift shift : shifts) {
-			if (shift.getSpeed() < 0 || shift.getSpeed() > 80) {
+			String routeUID = getRouteUID(shift.getSourceLineCode(), shift.getSourceStartPoint(),
+					shift.getSourceEndPoint());
+			ShiftEntryImpl shiftEntry = new ShiftEntryImpl(shift, distances.get(routeUID));
+			if (shiftEntry.getSpeed() < 0 || shiftEntry.getSpeed() > 80) {
 				// Remove weird measures
 				continue;
 			}
-			ShiftEntryImpl shiftEntry = new ShiftEntryImpl(shift);
 			String shiftId = shiftEntry.getId();
 			Shift duplicatedShift = idShift.get(shiftId);
 			if (duplicatedShift == null) {
@@ -72,7 +90,10 @@ public class DatasetBuilder {
 			} catch (NoResultException e) {
 			}
 
-			OutputContext outputContext = new OutputContext(new ShiftEntryImpl(shift), weatherConditions);
+			String routeUID = getRouteUID(shift.getSourceLineCode(), shift.getSourceStartPoint(),
+					shift.getSourceEndPoint());
+			ShiftEntryImpl shiftEntry = new ShiftEntryImpl(shift, distances.get(routeUID));
+			OutputContext outputContext = new OutputContext(shiftEntry, weatherConditions);
 			dataset.writeEntry(outputContext);
 		}
 	}

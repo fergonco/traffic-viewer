@@ -14,8 +14,8 @@ import javax.persistence.EntityManager;
 import org.fergonco.tpg.trafficViewer.DBUtils;
 import org.fergonco.tpg.trafficViewer.TestUtils;
 import org.fergonco.tpg.trafficViewer.jpa.OSMSegment;
-import org.fergonco.tpg.trafficViewer.jpa.Shift;
 import org.fergonco.tpg.trafficViewer.jpa.PredictedShift;
+import org.fergonco.tpg.trafficViewer.jpa.Shift;
 import org.fergonco.tpg.trafficViewer.jpa.WeatherConditions;
 import org.fergonco.traffic.dataGatherer.owm.OWM;
 import org.fergonco.traffic.dataGatherer.owm.WeatherForecast;
@@ -101,7 +101,10 @@ public class ModelBuilderTest {
 		Shift shift = new Shift();
 		shift.setTimestamp(timestamp);
 		shift.setVehicleId(Integer.toString(index));
-		shift.setSpeed(20);
+		shift.setSourceStartPoint("VATH");
+		shift.setSourceEndPoint("THGA");
+		shift.setSourceLineCode("Y");
+		shift.setSeconds(300);
 		OSMSegment osmSegment = em
 				.createQuery("select s from " + OSMSegment.class.getSimpleName() + " s", OSMSegment.class)
 				.setMaxResults(1).getSingleResult();

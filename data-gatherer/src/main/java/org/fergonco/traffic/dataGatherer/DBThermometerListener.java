@@ -60,17 +60,15 @@ public class DBThermometerListener implements ThermometerListener {
 			shift.setSourceShiftId(sourceShiftId);
 			shift.setSourceStartPoint(previousStep.getStopCode());
 			shift.setSourceEndPoint(currentStep.getStopCode());
+			shift.setSourceLineCode(line);
 			shift.setSourceType("TPG");
-			shift.setEndPoint(null);
-			shift.setStartPoint(null);
-			double km = distance.getDistance();
-			double h = (currentStep.getActualTimestamp() - previousStep.getActualTimestamp()) / (1000.0 * 60 * 60);
-			shift.setSpeed((int) Math.round(km / h));
+			long seconds = (currentStep.getActualTimestamp() - previousStep.getActualTimestamp()) / 1000;
+			shift.setSeconds((int) seconds);
 			shift.setVehicleId(currentStep.getDepartureCode());
 			shift.setTimestamp(currentStep.getActualTimestamp());
 			logger.debug("New Shift to be inserted from " + previousStep.getStopCode() + "("
 					+ previousStep.getActualTimestamp() + ") to " + currentStep.getStopCode() + "("
-					+ currentStep.getActualTimestamp() + "). Path length: " + km + ". Speed:" + shift.getSpeed());
+					+ currentStep.getActualTimestamp() + ")");
 			shift.setSegments(distance.getSegments());
 			for (OSMSegment segment : distance.getSegments()) {
 				segment.getShifts().add(shift);

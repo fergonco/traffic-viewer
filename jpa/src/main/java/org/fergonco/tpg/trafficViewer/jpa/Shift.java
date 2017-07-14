@@ -3,15 +3,11 @@ package org.fergonco.tpg.trafficViewer.jpa;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.persistence.Column;
-import javax.persistence.Convert;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.OneToMany;
-
-import com.vividsolutions.jts.geom.Geometry;
 
 @Entity
 public class Shift {
@@ -21,17 +17,12 @@ public class Shift {
 	private long id;
 	private long timestamp;
 	private String vehicleId;
-	private int speed;
+	private int seconds;
 	private String sourceType;
 	private String sourceStartPoint;
 	private String sourceEndPoint;
+	private String sourceLineCode;
 	private String sourceShiftId;
-	@Column(columnDefinition = "geometry('POINT', 4326)")
-	@Convert(converter = JTSConverter.class)
-	private Geometry startPoint;
-	@Column(columnDefinition = "geometry('POINT', 4326)")
-	@Convert(converter = JTSConverter.class)
-	private Geometry endPoint;
 	@OneToMany
 	private List<OSMSegment> segments = new ArrayList<OSMSegment>();
 
@@ -55,46 +46,16 @@ public class Shift {
 		this.vehicleId = vehicleId;
 	}
 
-	public Geometry getStartPoint() {
-		return startPoint;
-	}
-
-	/**
-	 * Must be kept because it's the only data we have about the stops of the
-	 * shifts for the data that was gathered at the beginning
-	 * 
-	 * @param startPoint
-	 */
-	@Deprecated
-	public void setStartPoint(Geometry startPoint) {
-		this.startPoint = startPoint;
-	}
-
-	public Geometry getEndPoint() {
-		return endPoint;
-	}
-
-	/**
-	 * Must be kept because it's the only data we have about the stops of the
-	 * shifts for the data that was gathered at the beginning
-	 * 
-	 * @param startPoint
-	 */
-	@Deprecated
-	public void setEndPoint(Geometry endPoint) {
-		this.endPoint = endPoint;
-	}
-
 	public void setId(long id) {
 		this.id = id;
 	}
 
-	public int getSpeed() {
-		return speed;
+	public int getSeconds() {
+		return seconds;
 	}
 
-	public void setSpeed(int speed) {
-		this.speed = speed;
+	public void setSeconds(int seconds) {
+		this.seconds = seconds;
 	}
 
 	public String getSourceType() {
@@ -127,6 +88,14 @@ public class Shift {
 
 	public void setSourceShiftId(String sourceShiftId) {
 		this.sourceShiftId = sourceShiftId;
+	}
+
+	public String getSourceLineCode() {
+		return sourceLineCode;
+	}
+
+	public void setSourceLineCode(String sourceLineCode) {
+		this.sourceLineCode = sourceLineCode;
 	}
 
 	public void setSegments(List<OSMSegment> segments) {

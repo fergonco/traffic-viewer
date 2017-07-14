@@ -65,7 +65,7 @@ public class DBThermometerListenerTest {
 	@Test
 	public void avoidRepeated() {
 		insert();
-		int speed = em.createQuery("SELECT s FROM Shift s", Shift.class).getSingleResult().getSpeed();
+		int seconds = em.createQuery("SELECT s FROM Shift s", Shift.class).getSingleResult().getSeconds();
 
 		// Correct the current shift by indicating a later arrival
 		currentStep.setActualTimestamp(now + 30 * 1000);
@@ -77,16 +77,13 @@ public class DBThermometerListenerTest {
 
 		// speed is slower
 		Shift newShift = em.createQuery("SELECT s FROM Shift s", Shift.class).getSingleResult();
-		int newSpeed = newShift.getSpeed();
-		assertTrue(newSpeed < speed);
+		int newSeconds = newShift.getSeconds();
+		assertTrue(newSeconds > seconds);
 
 		// Check the OSMSegments do not have the reference to the old Shift
 		List<OSMSegment> segments = newShift.getSegments();
 		for (OSMSegment osmSegment : segments) {
 			List<Shift> shifts = osmSegment.getShifts();
-			for (Shift shift : shifts) {
-				System.out.println(shift);
-			}
 			assertTrue(shifts.size() == 1);
 		}
 	}
