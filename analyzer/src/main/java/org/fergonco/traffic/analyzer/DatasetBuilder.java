@@ -42,11 +42,11 @@ public class DatasetBuilder {
 		List<TPGStopRoute> tpgStopRoutes = em
 				.createQuery("select r from " + TPGStopRoute.class.getSimpleName() + " r", TPGStopRoute.class)
 				.getResultList();
-		HashMap<String, Double> distances = new HashMap<>();
+		HashMap<String, Double> km = new HashMap<>();
 		for (TPGStopRoute tpgStopRoute : tpgStopRoutes) {
 			String routeUID = getRouteUID(tpgStopRoute.getLine(), tpgStopRoute.getStartTPGCode(),
 					tpgStopRoute.getEndTPGCode());
-			distances.put(routeUID, tpgStopRoute.getDistance());
+			km.put(routeUID, tpgStopRoute.getDistance());
 		}
 
 		List<Shift> shifts = osmSegment.getShifts();
@@ -58,7 +58,7 @@ public class DatasetBuilder {
 		for (Shift shift : shifts) {
 			String routeUID = getRouteUID(shift.getSourceLineCode(), shift.getSourceStartPoint(),
 					shift.getSourceEndPoint());
-			ShiftEntryImpl shiftEntry = new ShiftEntryImpl(shift, distances.get(routeUID));
+			ShiftEntryImpl shiftEntry = new ShiftEntryImpl(shift, km.get(routeUID));
 			if (shiftEntry.getSpeed() < 0 || shiftEntry.getSpeed() > 80) {
 				// Remove weird measures
 				continue;
@@ -92,7 +92,7 @@ public class DatasetBuilder {
 
 			String routeUID = getRouteUID(shift.getSourceLineCode(), shift.getSourceStartPoint(),
 					shift.getSourceEndPoint());
-			ShiftEntryImpl shiftEntry = new ShiftEntryImpl(shift, distances.get(routeUID));
+			ShiftEntryImpl shiftEntry = new ShiftEntryImpl(shift, km.get(routeUID));
 			OutputContext outputContext = new OutputContext(shiftEntry, weatherConditions);
 			dataset.writeEntry(outputContext);
 		}

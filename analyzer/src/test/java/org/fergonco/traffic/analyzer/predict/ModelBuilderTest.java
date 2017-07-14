@@ -76,7 +76,7 @@ public class ModelBuilderTest {
 						PredictedShift.class)
 				.getResultList();
 		assertTrue("there are predictions", predictedOSMShifts.size() > 0);
-		assertTrue("predictions are not 0", predictedOSMShifts.get(0).getSpeed() > 0);
+		assertTrue("speed predictions are not 0", predictedOSMShifts.get(0).getSpeed() > 0);
 		long closestPrediction = predictedOSMShifts.get(0).getMillis();
 		long furtherstPrediction = predictedOSMShifts.get(predictedOSMShifts.size() - 1).getMillis();
 		long range = furtherstPrediction - closestPrediction;
