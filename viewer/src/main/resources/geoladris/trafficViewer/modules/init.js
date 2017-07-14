@@ -68,7 +68,7 @@ define([ "message-bus", "iso8601" ], function(bus, iso8601) {
                "layerId" : "osm_speeds",
                "wms" : {
                   "baseUrl" : "/geoserver/wms",
-                  "wmsName" : "tpg:timestamped_osmshiftinfo",
+                  "wmsName" : "tpg:timestamped_geoshift",
                   "parameters" : {
                      "time" : timeString
                   }
