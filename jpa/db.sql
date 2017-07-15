@@ -52,18 +52,6 @@ ALTER SEQUENCE osmsegment_id_seq OWNED BY osmsegment.id;
 
 
 --
--- Name: osmsegment_shift; Type: TABLE; Schema: app; Owner: tpg; Tablespace: 
---
-
-CREATE TABLE osmsegment_shift (
-    osmsegment_id bigint NOT NULL,
-    shifts_id bigint NOT NULL
-);
-
-
-ALTER TABLE app.osmsegment_shift OWNER TO tpg;
-
---
 -- Name: predictedshift; Type: TABLE; Schema: app; Owner: tpg; Tablespace: 
 --
 
@@ -137,27 +125,12 @@ ALTER SEQUENCE shift_id_seq OWNED BY shift.id;
 --
 
 CREATE TABLE shift_osmsegment (
-    shift_id bigint NOT NULL,
-    segments_id bigint NOT NULL
+    segment_id bigint NOT NULL,
+    shift_id bigint NOT NULL
 );
 
 
 ALTER TABLE app.shift_osmsegment OWNER TO tpg;
-
---
--- Name: predictedshift; Type: TABLE; Schema: app; Owner: tpg; Tablespace: 
---
-
-CREATE TABLE predictedshift (
-    id bigint NOT NULL,
-    millis bigint,
-    predictionerror double precision,
-    speed integer,
-    segment_id bigint
-);
-
-
-ALTER TABLE app.predictedshift OWNER TO tpg;
 
 --
 -- Name: tpgstop; Type: TABLE; Schema: app; Owner: tpg; Tablespace: 
@@ -5651,14 +5624,6 @@ SELECT pg_catalog.setval('osmsegment_id_seq', 5317, true);
 
 
 --
--- Data for Name: osmsegment_shift; Type: TABLE DATA; Schema: app; Owner: tpg
---
-
-COPY osmsegment_shift (osmsegment_id, shifts_id) FROM stdin;
-\.
-
-
---
 -- Data for Name: predictedshift; Type: TABLE DATA; Schema: app; Owner: tpg
 --
 
@@ -5692,7 +5657,7 @@ SELECT pg_catalog.setval('shift_id_seq', 1, false);
 -- Data for Name: shift_osmsegment; Type: TABLE DATA; Schema: app; Owner: tpg
 --
 
-COPY shift_osmsegment (shift_id, segments_id) FROM stdin;
+COPY shift_osmsegment (shift_id, segment_id) FROM stdin;
 \.
 
 
@@ -11425,14 +11390,6 @@ ALTER TABLE ONLY osmsegment
 
 
 --
--- Name: osmsegment_shift_pkey; Type: CONSTRAINT; Schema: app; Owner: tpg; Tablespace: 
---
-
-ALTER TABLE ONLY osmsegment_shift
-    ADD CONSTRAINT osmsegment_shift_pkey PRIMARY KEY (osmsegment_id, shifts_id);
-
-
---
 -- Name: predictedshift_pkey; Type: CONSTRAINT; Schema: app; Owner: tpg; Tablespace: 
 --
 
@@ -11445,7 +11402,7 @@ ALTER TABLE ONLY predictedshift
 --
 
 ALTER TABLE ONLY shift_osmsegment
-    ADD CONSTRAINT shift_osmsegment_pkey PRIMARY KEY (shift_id, segments_id);
+    ADD CONSTRAINT shift_osmsegment_pkey PRIMARY KEY (segment_id, shift_id);
 
 
 --
@@ -11497,22 +11454,6 @@ ALTER TABLE ONLY weatherconditions
 
 
 --
--- Name: fk_osmsegment_shift_osmsegment_id; Type: FK CONSTRAINT; Schema: app; Owner: tpg
---
-
-ALTER TABLE ONLY osmsegment_shift
-    ADD CONSTRAINT fk_osmsegment_shift_osmsegment_id FOREIGN KEY (osmsegment_id) REFERENCES osmsegment(id);
-
-
---
--- Name: fk_osmsegment_shift_shifts_id; Type: FK CONSTRAINT; Schema: app; Owner: tpg
---
-
-ALTER TABLE ONLY osmsegment_shift
-    ADD CONSTRAINT fk_osmsegment_shift_shifts_id FOREIGN KEY (shifts_id) REFERENCES shift(id);
-
-
---
 -- Name: fk_predictedshift_segment_id; Type: FK CONSTRAINT; Schema: app; Owner: tpg
 --
 
@@ -11521,11 +11462,11 @@ ALTER TABLE ONLY predictedshift
 
 
 --
--- Name: fk_shift_osmsegment_segments_id; Type: FK CONSTRAINT; Schema: app; Owner: tpg
+-- Name: fk_shift_osmsegment_segment_id; Type: FK CONSTRAINT; Schema: app; Owner: tpg
 --
 
 ALTER TABLE ONLY shift_osmsegment
-    ADD CONSTRAINT fk_shift_osmsegment_segments_id FOREIGN KEY (segments_id) REFERENCES osmsegment(id);
+    ADD CONSTRAINT fk_shift_osmsegment_segment_id FOREIGN KEY (segment_id) REFERENCES osmsegment(id);
 
 
 --

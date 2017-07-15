@@ -7,7 +7,9 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.OneToMany;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
 
 @Entity
 public class Shift {
@@ -23,7 +25,8 @@ public class Shift {
 	private String sourceEndPoint;
 	private String sourceLineCode;
 	private String sourceShiftId;
-	@OneToMany
+	@ManyToMany
+	@JoinTable(name = "shift_osmsegment", joinColumns = @JoinColumn(name = "shift_id"), inverseJoinColumns = @JoinColumn(name = "segment_id"))
 	private List<OSMSegment> segments = new ArrayList<OSMSegment>();
 
 	public long getId() {

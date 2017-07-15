@@ -9,7 +9,7 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.OneToMany;
+import javax.persistence.ManyToMany;
 
 import com.vividsolutions.jts.geom.Geometry;
 
@@ -28,7 +28,7 @@ public class OSMSegment {
 
 	private byte[] model;
 
-	@OneToMany
+	@ManyToMany(mappedBy = "segments")
 	private List<Shift> shifts = new ArrayList<Shift>();
 
 	public List<Shift> getShifts() {
