@@ -90,4 +90,8 @@ public class DBUtils {
 	public static String getSchemaName() {
 		return schemaName;
 	}
+
+	public static <T> List<T> getAll(EntityManager em, Class<T> c) {
+		return em.createQuery("Select a from " + c.getSimpleName() + " a", c).getResultList();
+	}
 }
