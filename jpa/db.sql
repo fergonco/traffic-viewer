@@ -87,13 +87,10 @@ ALTER TABLE app.seq_gen_sequence OWNER TO tpg;
 CREATE TABLE shift (
     id integer NOT NULL,
     seconds integer,
-    sourceendpoint character varying(255),
-    sourcelinecode character varying(255),
     sourceshiftid character varying(255),
-    sourcestartpoint character varying(255),
-    sourcetype character varying(255),
     "timestamp" bigint,
-    vehicleid character varying(255)
+    vehicleid character varying(255),
+    route_id bigint
 );
 
 
@@ -119,18 +116,6 @@ ALTER TABLE app.shift_id_seq OWNER TO tpg;
 
 ALTER SEQUENCE shift_id_seq OWNED BY shift.id;
 
-
---
--- Name: shift_osmsegment; Type: TABLE; Schema: app; Owner: tpg; Tablespace: 
---
-
-CREATE TABLE shift_osmsegment (
-    segment_id bigint NOT NULL,
-    shift_id bigint NOT NULL
-);
-
-
-ALTER TABLE app.shift_osmsegment OWNER TO tpg;
 
 --
 -- Name: tpgstop; Type: TABLE; Schema: app; Owner: tpg; Tablespace: 
@@ -5642,7 +5627,7 @@ SELECT pg_catalog.setval('seq_gen_sequence', 50, false);
 -- Data for Name: shift; Type: TABLE DATA; Schema: app; Owner: tpg
 --
 
-COPY shift (id, seconds, sourceendpoint, sourcelinecode, sourceshiftid, sourcestartpoint, sourcetype, "timestamp", vehicleid) FROM stdin;
+COPY shift (id, seconds, sourceshiftid, "timestamp", vehicleid, route_id) FROM stdin;
 \.
 
 
@@ -5651,14 +5636,6 @@ COPY shift (id, seconds, sourceendpoint, sourcelinecode, sourceshiftid, sourcest
 --
 
 SELECT pg_catalog.setval('shift_id_seq', 1, false);
-
-
---
--- Data for Name: shift_osmsegment; Type: TABLE DATA; Schema: app; Owner: tpg
---
-
-COPY shift_osmsegment (shift_id, segment_id) FROM stdin;
-\.
 
 
 --
@@ -11398,14 +11375,6 @@ ALTER TABLE ONLY predictedshift
 
 
 --
--- Name: shift_osmsegment_pkey; Type: CONSTRAINT; Schema: app; Owner: tpg; Tablespace: 
---
-
-ALTER TABLE ONLY shift_osmsegment
-    ADD CONSTRAINT shift_osmsegment_pkey PRIMARY KEY (segment_id, shift_id);
-
-
---
 -- Name: shift_pkey; Type: CONSTRAINT; Schema: app; Owner: tpg; Tablespace: 
 --
 
@@ -11462,19 +11431,11 @@ ALTER TABLE ONLY predictedshift
 
 
 --
--- Name: fk_shift_osmsegment_segment_id; Type: FK CONSTRAINT; Schema: app; Owner: tpg
+-- Name: fk_shift_route_id; Type: FK CONSTRAINT; Schema: app; Owner: tpg
 --
 
-ALTER TABLE ONLY shift_osmsegment
-    ADD CONSTRAINT fk_shift_osmsegment_segment_id FOREIGN KEY (segment_id) REFERENCES osmsegment(id);
-
-
---
--- Name: fk_shift_osmsegment_shift_id; Type: FK CONSTRAINT; Schema: app; Owner: tpg
---
-
-ALTER TABLE ONLY shift_osmsegment
-    ADD CONSTRAINT fk_shift_osmsegment_shift_id FOREIGN KEY (shift_id) REFERENCES shift(id);
+ALTER TABLE ONLY shift
+    ADD CONSTRAINT fk_shift_route_id FOREIGN KEY (route_id) REFERENCES tpgstoproute(id);
 
 
 --

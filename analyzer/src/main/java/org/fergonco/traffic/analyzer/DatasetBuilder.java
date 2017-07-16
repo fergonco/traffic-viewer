@@ -6,6 +6,7 @@ import java.text.ParseException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
@@ -20,7 +21,10 @@ import org.fergonco.tpg.trafficViewer.jpa.WeatherConditions;
 
 public class DatasetBuilder {
 
-	private void build(PrintStream stream, long startNode, long endNode) throws IOException, ParseException {
+	private Map<String, Double> km = null;
+
+	private void build(PrintStream stream, long startNode, long endNode)
+			throws IOException, ParseException, NotEnoughShiftsForSegment {
 		EntityManager em = DBUtils.getEntityManager();
 		TypedQuery<OSMSegment> query = em.createQuery("SELECT s FROM " + OSMSegment.class.getSimpleName()
 				+ " s WHERE s.startNode=:startNode and s.endNode=:endNode", OSMSegment.class);
@@ -35,29 +39,41 @@ public class DatasetBuilder {
 		return line + ":" + startCode + "-" + endCode;
 	}
 
-	public void build(PrintStream stream, OSMSegment osmSegment) {
+	public void build(PrintStream stream, OSMSegment osmSegment) throws NotEnoughShiftsForSegment {
 		EntityManager em = DBUtils.getEntityManager();
 
 		// Build a distance table to calculate speeds
-		List<TPGStopRoute> tpgStopRoutes = em
-				.createQuery("select r from " + TPGStopRoute.class.getSimpleName() + " r", TPGStopRoute.class)
-				.getResultList();
-		HashMap<String, Double> km = new HashMap<>();
-		for (TPGStopRoute tpgStopRoute : tpgStopRoutes) {
-			String routeUID = getRouteUID(tpgStopRoute.getLine(), tpgStopRoute.getStartTPGCode(),
-					tpgStopRoute.getEndTPGCode());
-			km.put(routeUID, tpgStopRoute.getDistance());
+		if (km == null) {
+			List<TPGStopRoute> tpgStopRoutes = em
+					.createQuery("select r from " + TPGStopRoute.class.getSimpleName() + " r", TPGStopRoute.class)
+					.getResultList();
+			HashMap<String, Double> km = new HashMap<>();
+			for (TPGStopRoute tpgStopRoute : tpgStopRoutes) {
+				String routeUID = getRouteUID(tpgStopRoute.getLine(), tpgStopRoute.getStartTPGCode(),
+						tpgStopRoute.getEndTPGCode());
+				km.put(routeUID, tpgStopRoute.getDistance());
+			}
+			this.km = km;
 		}
 
-		List<Shift> shifts = osmSegment.getShifts();
+		String sql = "SELECT shift FROM $shift shift, $route r, $segment seg WHERE shift.route=r AND seg MEMBER OF r.segments AND seg.id=:segid"
+				.replace("$shift", Shift.class.getSimpleName()).replace("$route", TPGStopRoute.class.getSimpleName())
+				.replace("$segment", OSMSegment.class.getSimpleName());
+		TypedQuery<Shift> query = em.createQuery(sql, Shift.class);
+		query.setParameter("segid", osmSegment.getId());
+		List<Shift> shifts = query.getResultList();
+
+		if (shifts.size() <= 2) {
+			throw new NotEnoughShiftsForSegment();
+		}
 		/*
 		 * We iterate all the shifts. We keep the latest when there are
 		 * duplicates unless any of the duplicates has weird measures.
 		 */
 		HashMap<String, Shift> idShift = new HashMap<>();
 		for (Shift shift : shifts) {
-			String routeUID = getRouteUID(shift.getSourceLineCode(), shift.getSourceStartPoint(),
-					shift.getSourceEndPoint());
+			String routeUID = getRouteUID(shift.getRoute().getLine(), shift.getRoute().getStartTPGCode(),
+					shift.getRoute().getEndTPGCode());
 			ShiftEntryImpl shiftEntry = new ShiftEntryImpl(shift, km.get(routeUID));
 			if (shiftEntry.getSpeed() < 0 || shiftEntry.getSpeed() > 80) {
 				// Remove weird measures
@@ -90,8 +106,8 @@ public class DatasetBuilder {
 			} catch (NoResultException e) {
 			}
 
-			String routeUID = getRouteUID(shift.getSourceLineCode(), shift.getSourceStartPoint(),
-					shift.getSourceEndPoint());
+			String routeUID = getRouteUID(shift.getRoute().getLine(), shift.getRoute().getStartTPGCode(),
+					shift.getRoute().getEndTPGCode());
 			ShiftEntryImpl shiftEntry = new ShiftEntryImpl(shift, km.get(routeUID));
 			OutputContext outputContext = new OutputContext(shiftEntry, weatherConditions);
 			dataset.writeEntry(outputContext);

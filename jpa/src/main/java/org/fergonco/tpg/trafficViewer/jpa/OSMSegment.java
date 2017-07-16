@@ -1,15 +1,11 @@
 package org.fergonco.tpg.trafficViewer.jpa;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import javax.persistence.Column;
 import javax.persistence.Convert;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.ManyToMany;
 
 import com.vividsolutions.jts.geom.Geometry;
 
@@ -27,13 +23,6 @@ public class OSMSegment {
 	private Geometry geom;
 
 	private byte[] model;
-
-	@ManyToMany(mappedBy = "segments")
-	private List<Shift> shifts = new ArrayList<Shift>();
-
-	public List<Shift> getShifts() {
-		return shifts;
-	}
 
 	public void setModel(byte[] model) {
 		this.model = model;

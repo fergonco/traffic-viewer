@@ -1,6 +1,7 @@
 package org.fergonco.tpg.trafficViewer;
 
 import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertTrue;
 
 import java.io.IOException;
@@ -12,7 +13,6 @@ import java.util.List;
 import javax.persistence.EntityManager;
 import javax.xml.parsers.ParserConfigurationException;
 
-import org.fergonco.tpg.trafficViewer.jpa.OSMSegment;
 import org.fergonco.tpg.trafficViewer.jpa.Shift;
 import org.fergonco.traffic.dataGatherer.DBThermometerListener;
 import org.junit.Before;
@@ -56,10 +56,7 @@ public class DBThermometerListenerTest {
 
 		List<Shift> list = em.createQuery("SELECT s FROM Shift s", Shift.class).getResultList();
 		assertEquals(1, list.size());
-
-		// Check OSMSegments have the Shift associated
-		Shift shift = list.get(0);
-		assertTrue(shift.getSegments().get(0).getShifts().contains(shift));
+		assertNotNull(list.get(0).getRoute());
 	}
 
 	@Test
@@ -75,17 +72,10 @@ public class DBThermometerListenerTest {
 		List<Shift> list = em.createQuery("SELECT s FROM Shift s", Shift.class).getResultList();
 		assertEquals(1, list.size());
 
-		// speed is slower
+		// seconds is greater
 		Shift newShift = em.createQuery("SELECT s FROM Shift s", Shift.class).getSingleResult();
 		int newSeconds = newShift.getSeconds();
 		assertTrue(newSeconds > seconds);
-
-		// Check the OSMSegments do not have the reference to the old Shift
-		List<OSMSegment> segments = newShift.getSegments();
-		for (OSMSegment osmSegment : segments) {
-			List<Shift> shifts = osmSegment.getShifts();
-			assertTrue(shifts.size() == 1);
-		}
 	}
 
 	@Test

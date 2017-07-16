@@ -15,12 +15,8 @@ public class TestUtils {
 		String weatherconditions = WeatherConditions.class.getSimpleName();
 		String osmsegment = OSMSegment.class.getSimpleName();
 		String shift = Shift.class.getSimpleName();
-		String osmsegment_shift = DBUtils.getSchemaName() + "." + osmsegment + "_" + shift;
-		String shift_osmsegment = DBUtils.getSchemaName() + "." + shift + "_" + osmsegment;
 		em.createQuery("DELETE FROM " + weatherconditions).executeUpdate();
 		em.createQuery("UPDATE " + osmsegment + " SET model = null").executeUpdate();
-		em.createNativeQuery("DELETE FROM " + osmsegment_shift).executeUpdate();
-		em.createNativeQuery("DELETE FROM " + shift_osmsegment).executeUpdate();
 		em.createQuery("DELETE FROM " + shift).executeUpdate();
 		em.getTransaction().commit();
 	}
