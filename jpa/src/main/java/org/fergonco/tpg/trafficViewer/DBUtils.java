@@ -77,7 +77,7 @@ public class DBUtils {
 		void processPage(List<T> pageContents) throws AbortPaginationException;
 	}
 
-	public static class AbortPaginationException extends Exception {
+	public static class AbortPaginationException extends RuntimeException {
 		private static final long serialVersionUID = 1L;
 
 		public AbortPaginationException(Throwable cause) {
