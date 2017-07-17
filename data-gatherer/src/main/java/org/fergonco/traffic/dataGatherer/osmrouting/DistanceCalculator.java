@@ -2,6 +2,7 @@ package org.fergonco.traffic.dataGatherer.osmrouting;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import javax.persistence.EntityManager;
 
@@ -24,6 +25,8 @@ import com.vividsolutions.jts.geom.LineString;
 
 public class DistanceCalculator {
 
+	private static HashMap<String, OSMSegment> uniqueSegments = new HashMap<>();
+
 	public static void main(String[] args) throws Exception {
 		ArrayList<Line> lines = new ArrayList<>();
 		lines.add(Line.read("line-f.txt"));
@@ -36,9 +39,11 @@ public class DistanceCalculator {
 		OSMRouter osmRouter = new OSMRouter(new File("ligne-y.osm.xml"),
 				lineNames.toArray(new String[lineNames.size()]));
 
+		DBUtils.setPersistenceUnit("test");
 		EntityManager em = DBUtils.getEntityManager();
 		em.getTransaction().begin();
-		em.createQuery("DELETE FROM TPGStopRoute r").executeUpdate();
+		em.createQuery("DELETE FROM TPGStopRoute").executeUpdate();
+		em.createQuery("DELETE FROM OSMSegment").executeUpdate();
 		em.getTransaction().commit();
 		for (Line line : lines) {
 			String[] stopSequence = line.stopSequence;
@@ -75,12 +80,20 @@ public class DistanceCalculator {
 		OSMNode[] nodes = result.getNodes();
 		em.getTransaction().begin();
 		for (int i = 1; i < nodes.length; i++) {
-			OSMSegment segment = new OSMSegment();
-			segment.setStartNode(Long.parseLong(nodes[i - 1].getId()));
-			segment.setEndNode(Long.parseLong(nodes[i].getId()));
-			segment.setGeom(OSMUtils.buildLineString(nodes[i - 1], nodes[i], 4326));
-			segment.setModel(null);
-			em.persist(segment);
+			String nodei = nodes[i].getId();
+			String nodei_1 = nodes[i - 1].getId();
+			String nodesKey = nodei_1 + "-" + nodei;
+			OSMSegment segment = uniqueSegments.get(nodesKey);
+			if (segment == null) {
+				segment = new OSMSegment();
+				segment.setStartNode(Long.parseLong(nodei_1));
+				segment.setEndNode(Long.parseLong(nodei));
+				segment.setGeom(OSMUtils.buildLineString(nodes[i - 1], nodes[i], 4326));
+				segment.setModel(null);
+				em.persist(segment);
+				uniqueSegments.put(nodesKey, segment);
+			}
+
 			route.getSegments().add(segment);
 		}
 		em.persist(route);
