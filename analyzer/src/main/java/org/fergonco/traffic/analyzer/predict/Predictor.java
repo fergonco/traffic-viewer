@@ -115,8 +115,7 @@ public class Predictor {
 			Rscript rscript = new Rscript();
 			InputStream predictionOutput = rscript.executeResource("predictor.r", forecastFolder.getAbsolutePath());
 			BufferedReader reader = new BufferedReader(new InputStreamReader(predictionOutput));
-			Pattern pattern = Pattern
-					.compile("Result\\|(\\d+)\\|(\\d+)\\|(\\d+(?:\\.\\d+)?)\\|(\\d+(?:\\.\\d+)?)\\|(\\d+(?:\\.\\d+)?)");
+			Pattern pattern = Pattern.compile("Result\\|(\\d+)\\|(\\d+)\\|(\\d+(?:\\.\\d+)?)");
 			String line = null;
 			int persistCounter = 0;
 			int batchSize = 100;
@@ -128,13 +127,11 @@ public class Predictor {
 						Long id = new Long(matcher.group(1));
 						long timestamp = Long.parseLong(matcher.group(2));
 						double prediction = Double.parseDouble(matcher.group(3));
-						double lowerEnd = Double.parseDouble(matcher.group(4));
-						double upperEnd = Double.parseDouble(matcher.group(5));
 
 						PredictedShift predictedShift = new PredictedShift();
 						predictedShift.setMillis(timestamp);
 						predictedShift.setSpeed((int) prediction);
-						predictedShift.setPredictionerror((float) ((upperEnd - lowerEnd) / 2));
+						predictedShift.setPredictionerror(-1);
 						predictedShift.setSegment(segmentById.get(id));
 
 						em.persist(predictedShift);
