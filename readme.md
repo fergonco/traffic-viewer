@@ -77,26 +77,28 @@ Navigate to `http://<server>:<mappedport>/dbstatus` to check if data is being co
 
 In the database, as tpg user:
 
-	-- Shift + OSMShift join
+	-- Shift + OSMSegment join
 	create materialized view app.geoshift as 
 		select 
-			osm.geom, osm.startnode, osm.endnode, s.*
+			osm.geom, osm.startnode, osm.endnode, s.*, r.distance / (s.seconds / (60*60)) as speed
 		from
-			app.osmsegment osm, app.shift s, app.shift_osmsegment s_osm
+			app.osmsegment osm, app.shift s, app.tpgstoproute r, app.tpgstoproute_osmsegment r_osm
 		where
-			timestamp > (
+			s."timestamp" > (
 				extract ( 
 					epoch from localtimestamp
 				)*1000 
 				-
 				24*60*60*1000
 			) and
-			s.id = s_osm.shift_id
+			s.route_id = r.id
 			and
-			osm.id=s_osm.segments_id;
-	create index ON app.geoshift (timestamp);  
+			r.id = r_osm.tpgstoproute_id
+			and
+			r_osm.segments_id = osm.id;
+	create index ON app.geoshift ("timestamp");  
 
-	-- navigable osm speeds
+	-- navigation timestamps
 	create materialized view app.timestamps as
 		select 
 			generate_series(
