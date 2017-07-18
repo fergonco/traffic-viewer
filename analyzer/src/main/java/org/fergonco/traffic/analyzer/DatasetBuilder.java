@@ -3,14 +3,15 @@ package org.fergonco.traffic.analyzer;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeSet;
 
 import javax.persistence.EntityManager;
-import javax.persistence.NoResultException;
-import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 
 import org.fergonco.tpg.trafficViewer.DBUtils;
@@ -22,6 +23,8 @@ import org.fergonco.tpg.trafficViewer.jpa.WeatherConditions;
 public class DatasetBuilder {
 
 	private Map<String, Double> km = null;
+	private Map<Long, ArrayList<Long>> routesContainingSegment = null;
+	private TreeSet<WeatherConditions> orderedWeatherConditions = null;
 
 	private void build(PrintStream stream, long startNode, long endNode)
 			throws IOException, ParseException, NotEnoughShiftsForSegment {
@@ -43,25 +46,52 @@ public class DatasetBuilder {
 		EntityManager em = DBUtils.getEntityManager();
 
 		// Build a distance table to calculate speeds
-		if (km == null) {
+		if (km == null || routesContainingSegment == null) {
 			List<TPGStopRoute> tpgStopRoutes = em
 					.createQuery("select r from " + TPGStopRoute.class.getSimpleName() + " r", TPGStopRoute.class)
 					.getResultList();
 			HashMap<String, Double> km = new HashMap<>();
+			Map<Long, ArrayList<Long>> routesContainingSegment = new HashMap<>();
 			for (TPGStopRoute tpgStopRoute : tpgStopRoutes) {
 				String routeUID = getRouteUID(tpgStopRoute.getLine(), tpgStopRoute.getStartTPGCode(),
 						tpgStopRoute.getEndTPGCode());
 				km.put(routeUID, tpgStopRoute.getDistance());
+
+				List<OSMSegment> segments = tpgStopRoute.getSegments();
+				for (OSMSegment segment : segments) {
+					ArrayList<Long> routes = routesContainingSegment.get(segment.getId());
+					if (routes == null) {
+						routes = new ArrayList<>();
+						routesContainingSegment.put(segment.getId(), routes);
+					}
+					routes.add(tpgStopRoute.getId());
+				}
 			}
 			this.km = km;
+			this.routesContainingSegment = routesContainingSegment;
+		}
+		if (orderedWeatherConditions == null) {
+			TreeSet<WeatherConditions> orderedWeatherConditions = new TreeSet<>(new Comparator<WeatherConditions>() {
+
+				@Override
+				public int compare(WeatherConditions o1, WeatherConditions o2) {
+					return (int) (o1.getTimestamp() - o2.getTimestamp());
+				}
+			});
+			List<WeatherConditions> weatherConditions = DBUtils.getAll(em, WeatherConditions.class);
+			for (WeatherConditions weather : weatherConditions) {
+				orderedWeatherConditions.add(weather);
+			}
+			this.orderedWeatherConditions = orderedWeatherConditions;
 		}
 
-		String sql = "SELECT shift FROM $shift shift, $route r, $segment seg WHERE shift.route=r AND seg MEMBER OF r.segments AND seg.id=:segid"
-				.replace("$shift", Shift.class.getSimpleName()).replace("$route", TPGStopRoute.class.getSimpleName())
-				.replace("$segment", OSMSegment.class.getSimpleName());
+		ArrayList<Long> routes = routesContainingSegment.get(osmSegment.getId());
+		String sql = "SELECT shift FROM $shift shift WHERE shift.route.id in :routes".replace("$shift",
+				Shift.class.getSimpleName());
 		TypedQuery<Shift> query = em.createQuery(sql, Shift.class);
-		query.setParameter("segid", osmSegment.getId());
+		query.setParameter("routes", routes);
 		List<Shift> shifts = query.getResultList();
+		em.clear();
 
 		if (shifts.size() <= 2) {
 			throw new NotEnoughShiftsForSegment();
@@ -94,16 +124,11 @@ public class DatasetBuilder {
 		dataset.writeHeader();
 		Collection<Shift> cleanShifts = idShift.values();
 		for (Shift shift : cleanShifts) {
-			WeatherConditions weatherConditions = null;
-			try {
-				Query weatherConditionsQuery = em.createNativeQuery("select * from app.WeatherConditions w "
-						+ "where w.timestamp=("
-						+ "select max(w2.timestamp) from app.WeatherConditions w2 where w2.timestamp < "
-						+ shift.getTimestamp() + " and w2.timestamp + 6*60*60*1000 > " + shift.getTimestamp() + ");",
-						WeatherConditions.class);
-				weatherConditions = (WeatherConditions) weatherConditionsQuery.getSingleResult();
-
-			} catch (NoResultException e) {
+			WeatherConditions testWeatherConditions = new WeatherConditions();
+			testWeatherConditions.setTimestamp(shift.getTimestamp());
+			WeatherConditions weatherConditions = orderedWeatherConditions.lower(testWeatherConditions);
+			if (weatherConditions == null) {
+				weatherConditions = orderedWeatherConditions.first();
 			}
 
 			String routeUID = getRouteUID(shift.getRoute().getLine(), shift.getRoute().getStartTPGCode(),

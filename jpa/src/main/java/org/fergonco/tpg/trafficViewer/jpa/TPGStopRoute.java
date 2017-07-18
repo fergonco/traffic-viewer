@@ -30,6 +30,10 @@ public class TPGStopRoute {
 	@OneToMany
 	private List<OSMSegment> segments = new ArrayList<OSMSegment>();
 
+	public long getId() {
+		return id;
+	}
+
 	public void setStartTPGCode(String startTPGCode) {
 		this.startTPGCode = startTPGCode;
 	}
