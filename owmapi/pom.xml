@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>org.fergonco.traffic</groupId>
 		<artifactId>traffic</artifactId>
-		<version>1.0-SNAPSHOT</version>
+		<version>1.0.0</version>
 	</parent>
 	<artifactId>owmapi</artifactId>
 	<name>owmapi</name>
@@ -35,7 +35,7 @@
 		<dependency>
 			<groupId>org.fergonco.traffic</groupId>
 			<artifactId>jpa</artifactId>
-			<version>1.0-SNAPSHOT</version>
+			<version>1.0.0</version>
 		</dependency>
 		<dependency>
 			<groupId>com.google.code.gson</groupId>
