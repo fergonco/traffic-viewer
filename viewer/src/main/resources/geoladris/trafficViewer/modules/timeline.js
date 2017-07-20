@@ -56,6 +56,10 @@ define(
          setNearestTime(new Date().getTime());
       });
 
+      bus.listen("timeline:set", function(e, message) {
+         setNearestTime(message.timestamp, false);
+      });
+
       function applyTemplate() {
          var timestampData = [];
          var containerBounds = container.getBoundingClientRect();
@@ -70,11 +74,11 @@ define(
             timestampData.push(timestampEntry);
          }
 
-         var now = maxTimestamp + 10*60*1000;//new Date().getTime();
+         var now = new Date().getTime();
          var view = {
             "timestamps" : timestampData,
             "totalWidth" : (maxTimestamp - minTimestamp) * scaleFactor + containerBounds.width,
-            "now_x" : (now - minTimestamp) * scaleFactor + containerBounds.width/2
+            "now_x" : (now - minTimestamp) * scaleFactor + containerBounds.width / 2
          }
          container.innerHTML = Mustache.render(template, view);
 
@@ -84,13 +88,13 @@ define(
             var x = event.clientX - rect.left;
             var xForMin = containerBounds.width / 2;
             var time = ((x - xForMin) / scaleFactor) + minTimestamp;
-            setNearestTime(time);
+            setNearestTime(time, true);
          });
 
          updateSelection();
       }
 
-      function setNearestTime(time) {
+      function setNearestTime(time, animate) {
          // Find nearest timestamp
          var nearestTimestamp = null;
          var nearestDistance = Number.MAX_VALUE;
@@ -108,31 +112,39 @@ define(
             "timestamp" : selectedTimestamp
          });
 
-         updateSelection();
+         updateSelection(animate);
       }
 
-      function updateSelection() {
+      function updateSelection(doAnimate) {
          if (selectedTimestamp != null) {
             // Scroll to it
             var current = container.scrollLeft;
             var target = (selectedTimestamp - minTimestamp) * scaleFactor;
-            animate({
-               delay : 10,
-               duration : Math.abs(target - current) * 2,
-               delta : function(progress) {
-                  return progress;
-               },
-               step : function(delta) {
-                  container.scrollLeft = current + (target - current) * delta;
-                  if (delta == 1) {
-                     // center selection
-                     var containerBounds = container.getBoundingClientRect();
-                     var timelineSelection = document.getElementById("TimelineSelection");
-                     timelineSelection.setAttribute("x", container.scrollLeft + containerBounds.width / 2 - 10);
+            if (doAnimate) {
+               animate({
+                  delay : 10,
+                  duration : Math.abs(target - current),
+                  delta : function(progress) {
+                     return progress;
+                  },
+                  step : function(delta) {
+                     container.scrollLeft = current + (target - current) * delta;
+                     if (delta == 1) {
+                        centerSelection();
+                     }
                   }
-               }
-            });
+               });
+            } else {
+               container.scrollLeft = target;
+               centerSelection();
+            }
          }
+      }
+
+      function centerSelection() {
+         var containerBounds = container.getBoundingClientRect();
+         var timelineSelection = document.getElementById("TimelineSelection");
+         timelineSelection.setAttribute("x", container.scrollLeft + containerBounds.width / 2 - 10);
       }
 
       window.onresize = applyTemplate;

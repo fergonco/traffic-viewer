@@ -51,6 +51,9 @@ define([ "message-bus", "iso8601" ], function(bus, iso8601) {
                bus.send("add-timestamps", {
                   "timestamps" : timestampArray
                });
+               bus.send("timeline:set", {
+                  timestamp:new Date().getTime()
+               });
             } else {
                alert("No hay datos temporales");
             }
