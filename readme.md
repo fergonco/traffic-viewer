@@ -80,10 +80,12 @@ In the database, as tpg user:
 	-- Shift + OSMSegment join
 	create materialized view app.geoshift as 
 		select 
-			osm.geom, osm.startnode, osm.endnode, s.*, r.distance / (s.seconds / (60*60)) as speed
+			osm.geom, osm.startnode, osm.endnode, s.*, r.distance / (s.seconds / (60.0*60)) as speed
 		from
 			app.osmsegment osm, app.shift s, app.tpgstoproute r, app.tpgstoproute_osmsegment r_osm
 		where
+			s.seconds > 0
+			and
 			s."timestamp" > (
 				extract ( 
 					epoch from localtimestamp
