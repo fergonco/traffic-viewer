@@ -77,24 +77,30 @@ Navigate to `http://<server>:<mappedport>/dbstatus` to check if data is being co
 
 In the database, as tpg user:
 
-	-- Shift + OSMShift join
-	create materialized view app.osmshiftinfo as 
+	-- Shift + OSMSegment join
+	create materialized view app.geoshift as 
 		select 
-			geom, startnode, endnode, speed, timestamp, vehicleid, startpoint, endpoint
+			osm.geom, osm.startnode, osm.endnode, s.*, r.distance / (s.seconds / (60.0*60)) as speed
 		from
-			app.osmshift osms, app.shift s
+			app.osmsegment osm, app.shift s, app.tpgstoproute r, app.tpgstoproute_osmsegment r_osm
 		where
-			timestamp > (
+			s.seconds > 0
+			and
+			s."timestamp" > (
 				extract ( 
 					epoch from localtimestamp
 				)*1000 
 				-
 				24*60*60*1000
-			) and 
-			s.id=osms.shift_id;
-	create index ON app.osmshiftinfo (timestamp);  
+			) and
+			s.route_id = r.id
+			and
+			r.id = r_osm.tpgstoproute_id
+			and
+			r_osm.segments_id = osm.id;
+	create index ON app.geoshift ("timestamp");  
 
-	-- navigable osm speeds
+	-- navigation timestamps
 	create materialized view app.timestamps as
 		select 
 			generate_series(
@@ -110,46 +116,45 @@ In the database, as tpg user:
 		from app.shift;
 
 	-- Create a table adding to the osmshiftinfo a timestamp for drawing
-	create materialized view app.timestamped_measured_osmshifts as
+	create materialized view app.timestamped_measured_geoshifts as
 		select 
-			to_timestamp(timestamps.millis/1000) as draw_timestamp, osmshift.*
+			to_timestamp(timestamps.millis/1000) as draw_timestamp, geoshift.*
 		from 
 			app.timestamps timestamps,
-			app.osmshiftinfo osmshift
+			app.geoshift geoshift
 		where
-			timestamps.millis >= osmshift.timestamp
+			timestamps.millis >= geoshift.timestamp
 			and
 			not exists (
 				select
 					1
 				from
-					app.osmshiftinfo osmshift2 
+					app.geoshift geoshift2 
 				where 
-					osmshift.startnode = osmshift2.startnode
+					geoshift.startnode = geoshift2.startnode
 					and
-					osmshift.endnode = osmshift2.endnode
+					geoshift.endnode = geoshift2.endnode
 					and
-					timestamps.millis > osmshift2.timestamp
+					timestamps.millis > geoshift2.timestamp
 					and
-					osmshift2.timestamp > osmshift.timestamp
+					geoshift2.timestamp > geoshift.timestamp
 			);
-	create index ON app.timestamped_measured_osmshifts (draw_timestamp);
+	create index ON app.timestamped_measured_geoshifts (draw_timestamp);
 	
-	-- Predictions table
-	create table app.timestamped_predicted_osmshifts (
-		id serial,
-		geom geometry(LineString, 4326),
-		draw_timestamp timestamp,
-		speed integer,
-		predictionerror real
-	);
-	create index ON app.timestamped_predicted_osmshifts (draw_timestamp);
+	create materialized view app.predicted_geoshift as 
+		select 
+			osm.geom, osm.startnode, osm.endnode, s.id, to_timestamp(s.millis/1000) as draw_timestamp, s.speed, s.predictionerror
+		from
+			app.osmsegment osm, app.predictedshift s
+		where
+			osm.id=s.segment_id;
+	create index ON app.predicted_geoshift (draw_timestamp);  
 	
 	-- Predicted and measured osmshifts
-	create materialized view app.timestamped_osmshiftinfo as 
-		(select id, geom, draw_timestamp, speed, -1 as predictionerror from app.timestamped_measured_osmshifts)
+	create materialized view app.timestamped_geoshift as 
+		(select id, geom, draw_timestamp, speed, -1 as predictionerror from app.timestamped_measured_geoshifts)
 		union
-		(select id, geom, draw_timestamp, speed, predictionerror from app.timestamped_predicted_osmshifts where draw_timestamp > (select max(draw_timestamp) from app.timestamped_measured_osmshifts);
+		(select id, geom, draw_timestamp, speed, predictionerror from app.predicted_geoshift where draw_timestamp > (select max(draw_timestamp) from app.timestamped_measured_geoshifts));
 	
 
 ## geoserver

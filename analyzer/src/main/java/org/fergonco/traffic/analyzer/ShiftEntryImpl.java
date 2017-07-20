@@ -9,10 +9,12 @@ import org.fergonco.traffic.analyzer.OutputContext.ShiftEntry;
 public class ShiftEntryImpl implements ShiftEntry {
 
 	private Shift shift;
+	private double km;
 
-	public ShiftEntryImpl(Shift shift) {
+	public ShiftEntryImpl(Shift shift, double km) {
 		super();
 		this.shift = shift;
+		this.km = km;
 	}
 
 	@Override
@@ -33,7 +35,8 @@ public class ShiftEntryImpl implements ShiftEntry {
 
 	@Override
 	public int getSpeed() {
-		return shift.getSpeed();
+		double h = shift.getSeconds() / (60.0 * 60);
+		return (int) (km / h);
 	}
 
 }

@@ -1,6 +1,7 @@
 package org.fergonco.tpg.trafficViewer;
 
 import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertTrue;
 
 import java.io.IOException;
@@ -31,13 +32,9 @@ public class DBThermometerListenerTest {
 
 	@Before
 	public void clean() throws ParserConfigurationException, SAXException, IOException {
-		DBUtils.setPersistenceUnit("test");
-		em = DBUtils.getEntityManager();
-		em.getTransaction().begin();
-		em.createQuery("DELETE FROM OSMShift").executeUpdate();
-		em.createQuery("DELETE FROM Shift").executeUpdate();
-		em.getTransaction().commit();
+		TestUtils.configureDBUtilsAndClearDatabase();
 
+		em = DBUtils.getEntityManager();
 		now = new Date().getTime();
 		someMinutesAgo = now - 10 * 60 * 1000;
 		previousStep = new Step();
@@ -59,12 +56,13 @@ public class DBThermometerListenerTest {
 
 		List<Shift> list = em.createQuery("SELECT s FROM Shift s", Shift.class).getResultList();
 		assertEquals(1, list.size());
+		assertNotNull(list.get(0).getRoute());
 	}
 
 	@Test
 	public void avoidRepeated() {
 		insert();
-		int speed = em.createQuery("SELECT s FROM Shift s", Shift.class).getSingleResult().getSpeed();
+		int seconds = em.createQuery("SELECT s FROM Shift s", Shift.class).getSingleResult().getSeconds();
 
 		// Correct the current shift by indicating a later arrival
 		currentStep.setActualTimestamp(now + 30 * 1000);
@@ -74,9 +72,10 @@ public class DBThermometerListenerTest {
 		List<Shift> list = em.createQuery("SELECT s FROM Shift s", Shift.class).getResultList();
 		assertEquals(1, list.size());
 
-		// speed is slower
-		int newSpeed = em.createQuery("SELECT s FROM Shift s", Shift.class).getSingleResult().getSpeed();
-		assertTrue(newSpeed < speed);
+		// seconds is greater
+		Shift newShift = em.createQuery("SELECT s FROM Shift s", Shift.class).getSingleResult();
+		int newSeconds = newShift.getSeconds();
+		assertTrue(newSeconds > seconds);
 	}
 
 	@Test

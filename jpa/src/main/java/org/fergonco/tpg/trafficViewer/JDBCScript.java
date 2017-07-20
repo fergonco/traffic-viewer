@@ -17,7 +17,7 @@ public class JDBCScript {
 	private Connection connection;
 
 	public JDBCScript(String connectionString, String user, String password) throws SQLException {
-		connection = DriverManager.getConnection("jdbc:postgresql://localhost:54322/tpgtest", "tpg", "tpg");
+		connection = DriverManager.getConnection(connectionString, user, password);
 
 	}
 

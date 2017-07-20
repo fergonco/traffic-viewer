@@ -2,14 +2,14 @@ package org.fergonco.traffic.dataGatherer.osmrouting;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
 
 import javax.persistence.EntityManager;
 
 import org.fergonco.tpg.trafficViewer.DBUtils;
-import org.fergonco.tpg.trafficViewer.jpa.TPGStop2;
+import org.fergonco.tpg.trafficViewer.jpa.OSMSegment;
+import org.fergonco.tpg.trafficViewer.jpa.TPGStop;
 import org.fergonco.tpg.trafficViewer.jpa.TPGStopRoute;
-import org.fergonco.tpg.trafficViewer.jpa.TPGStopRouteSegment;
 import org.fergonco.traffic.dataGatherer.Utils;
 import org.geotools.geometry.jts.JTS;
 import org.geotools.referencing.CRS;
@@ -25,6 +25,8 @@ import com.vividsolutions.jts.geom.LineString;
 
 public class DistanceCalculator {
 
+	private static HashMap<String, OSMSegment> uniqueSegments = new HashMap<>();
+
 	public static void main(String[] args) throws Exception {
 		ArrayList<Line> lines = new ArrayList<>();
 		lines.add(Line.read("line-f.txt"));
@@ -37,23 +39,17 @@ public class DistanceCalculator {
 		OSMRouter osmRouter = new OSMRouter(new File("ligne-y.osm.xml"),
 				lineNames.toArray(new String[lineNames.size()]));
 
+		DBUtils.setPersistenceUnit("test");
 		EntityManager em = DBUtils.getEntityManager();
 		em.getTransaction().begin();
-		List<TPGStopRoute> allRoutes = em.createQuery("SELECT r FROM TPGStopRoute r", TPGStopRoute.class)
-				.getResultList();
-		for (TPGStopRoute tpgStopRoute : allRoutes) {
-			List<TPGStopRouteSegment> segments = tpgStopRoute.getSegments();
-			for (TPGStopRouteSegment tpgStopRouteSegment : segments) {
-				em.remove(tpgStopRouteSegment);
-			}
-			em.remove(tpgStopRoute);
-		}
+		em.createQuery("DELETE FROM TPGStopRoute").executeUpdate();
+		em.createQuery("DELETE FROM OSMSegment").executeUpdate();
 		em.getTransaction().commit();
 		for (Line line : lines) {
 			String[] stopSequence = line.stopSequence;
 			for (int i = 0; i < stopSequence.length - 1; i++) {
-				TPGStop2 start = Utils.getTPGStop(em, stopSequence[i], line.lineName, line.forwardDestination);
-				TPGStop2 end = Utils.getTPGStop(em, stopSequence[i + 1], line.lineName, line.forwardDestination);
+				TPGStop start = Utils.getTPGStop(em, stopSequence[i], line.lineName, line.forwardDestination);
+				TPGStop end = Utils.getTPGStop(em, stopSequence[i + 1], line.lineName, line.forwardDestination);
 				persist(osmRouter, em, line, start, end);
 				start = Utils.getTPGStop(em, stopSequence[i + 1], line.lineName, line.backwardDestination);
 				end = Utils.getTPGStop(em, stopSequence[i], line.lineName, line.backwardDestination);
@@ -62,7 +58,7 @@ public class DistanceCalculator {
 		}
 	}
 
-	private static void persist(OSMRouter osmRouter, EntityManager em, Line line, TPGStop2 start, TPGStop2 end)
+	private static void persist(OSMRouter osmRouter, EntityManager em, Line line, TPGStop start, TPGStop end)
 			throws MismatchedDimensionException, TransformException, NoSuchAuthorityCodeException, FactoryException {
 		String startNodeId = start.getNodeId();
 		String endNodeId = end.getNodeId();
@@ -81,16 +77,23 @@ public class DistanceCalculator {
 		flatLineString = JTS.transform(routeGeometry, transform);
 		double km = flatLineString.getLength() / 1000;
 		route.setDistance(km);
-
-		em.getTransaction().begin();
 		OSMNode[] nodes = result.getNodes();
+		em.getTransaction().begin();
 		for (int i = 1; i < nodes.length; i++) {
-			TPGStopRouteSegment segment = new TPGStopRouteSegment();
-			segment.setStartNode(Long.parseLong(nodes[i - 1].getId()));
-			segment.setEndNode(Long.parseLong(nodes[i].getId()));
-			segment.setGeometry(OSMUtils.buildLineString(nodes[i - 1], nodes[i], 4326));
-			segment.setRoute(route);
-			em.persist(segment);
+			String nodei = nodes[i].getId();
+			String nodei_1 = nodes[i - 1].getId();
+			String nodesKey = nodei_1 + "-" + nodei;
+			OSMSegment segment = uniqueSegments.get(nodesKey);
+			if (segment == null) {
+				segment = new OSMSegment();
+				segment.setStartNode(Long.parseLong(nodei_1));
+				segment.setEndNode(Long.parseLong(nodei));
+				segment.setGeom(OSMUtils.buildLineString(nodes[i - 1], nodes[i], 4326));
+				segment.setModel(null);
+				em.persist(segment);
+				uniqueSegments.put(nodesKey, segment);
+			}
+
 			route.getSegments().add(segment);
 		}
 		em.persist(route);

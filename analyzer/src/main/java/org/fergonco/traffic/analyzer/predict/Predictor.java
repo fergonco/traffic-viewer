@@ -17,17 +17,14 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.persistence.EntityManager;
-import javax.persistence.TypedQuery;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.fergonco.tpg.trafficViewer.DBUtils;
-import org.fergonco.tpg.trafficViewer.DBUtils.AbortPaginationException;
-import org.fergonco.tpg.trafficViewer.jpa.OSMSegmentModel;
-import org.fergonco.tpg.trafficViewer.jpa.OSMShift;
-import org.fergonco.tpg.trafficViewer.jpa.TimestampedPredictedOSMShift;
+import org.fergonco.tpg.trafficViewer.jpa.OSMSegment;
+import org.fergonco.tpg.trafficViewer.jpa.PredictedShift;
 import org.fergonco.traffic.analyzer.Dataset;
 import org.fergonco.traffic.analyzer.OutputContext;
 import org.fergonco.traffic.analyzer.OutputContext.ShiftEntry;
@@ -54,14 +51,16 @@ public class Predictor {
 	public void updatePredictions(OWM owm) throws IOException, RException {
 		// Get osmshift center and get a weather prediction
 		logger.debug("Get forecast for centroid");
-		ModelBuilder modelBuilder = new ModelBuilder();
-		ArrayList<OSMShift> osmShifts = modelBuilder.getUniqueOSMShifts();
+		EntityManager em = DBUtils.getEntityManager();
+		List<OSMSegment> osmSegments = em
+				.createQuery("select s from " + OSMSegment.class.getSimpleName() + " s", OSMSegment.class)
+				.getResultList();
 		GeometryFactory gf = new GeometryFactory();
 		ArrayList<Geometry> geometries = new ArrayList<>();
-		HashMap<String, Geometry> osmShiftGeometries = new HashMap<>();
-		for (OSMShift osmShift : osmShifts) {
-			osmShiftGeometries.put(osmShift.getStartNode() + "-" + osmShift.getEndNode(), osmShift.getGeom());
-			geometries.add(osmShift.getGeom());
+		HashMap<Long, OSMSegment> segmentById = new HashMap<>();
+		for (OSMSegment osmSegment : osmSegments) {
+			segmentById.put(osmSegment.getId(), osmSegment);
+			geometries.add(osmSegment.getGeom());
 		}
 		GeometryCollection gc = gf.createGeometryCollection(geometries.toArray(new Geometry[geometries.size()]));
 		Point centroid = gc.getCentroid();
@@ -69,10 +68,9 @@ public class Predictor {
 
 		// Remove existing predictions
 		logger.debug("Remove existing predictions");
-		EntityManager em = DBUtils.getEntityManager();
 		em.getTransaction().begin();
 		try {
-			em.createQuery("DELETE FROM " + TimestampedPredictedOSMShift.class.getName() + " o").executeUpdate();
+			em.createQuery("DELETE FROM " + PredictedShift.class.getName() + " o").executeUpdate();
 			em.getTransaction().commit();
 		} catch (RuntimeException e) {
 			if (em.getTransaction().isActive()) {
@@ -101,33 +99,14 @@ public class Predictor {
 
 		// Write model files
 		logger.debug("Writting model files");
-		TypedQuery<OSMSegmentModel> query = em
-				.createQuery("select m from " + OSMSegmentModel.class.getSimpleName() + " m", OSMSegmentModel.class);
-		try {
-			DBUtils.paginatedProcessing(query, 100, new DBUtils.PageProcessor<OSMSegmentModel>() {
-
-				@Override
-				public void processPage(List<OSMSegmentModel> models) throws AbortPaginationException {
-					try {
-						for (OSMSegmentModel osmSegmentModel : models) {
-							String startEndNode = osmSegmentModel.getStartNode() + "-" + osmSegmentModel.getEndNode();
-							// write model file only if we have an associated
-							// osmshift
-							if (osmShiftGeometries.containsKey(startEndNode)) {
-								File modelFile = new File(forecastFolder, startEndNode + ".rds");
-								BufferedOutputStream outputStream = new BufferedOutputStream(
-										new FileOutputStream(modelFile));
-								IOUtils.write(osmSegmentModel.getModel(), outputStream);
-								outputStream.close();
-							}
-						}
-					} catch (IOException e) {
-						throw new DBUtils.AbortPaginationException(e);
-					}
-				}
-			});
-		} catch (AbortPaginationException e) {
-			throw new RException(e.getCause());
+		for (OSMSegment osmSegment : osmSegments) {
+			if (osmSegment.getModel() == null) {
+				continue;
+			}
+			File modelFile = new File(forecastFolder, osmSegment.getId() + ".rds");
+			BufferedOutputStream outputStream = new BufferedOutputStream(new FileOutputStream(modelFile));
+			IOUtils.write(osmSegment.getModel(), outputStream);
+			outputStream.close();
 		}
 
 		// Run RScript processing folder and get a map from predictions
@@ -136,8 +115,7 @@ public class Predictor {
 			Rscript rscript = new Rscript();
 			InputStream predictionOutput = rscript.executeResource("predictor.r", forecastFolder.getAbsolutePath());
 			BufferedReader reader = new BufferedReader(new InputStreamReader(predictionOutput));
-			Pattern pattern = Pattern
-					.compile("Result\\|(\\d+-\\d+)\\|(\\d+)\\|(\\d+[\\.\\d+]?)\\|(\\d+[\\.\\d+]?)\\|(\\d+[\\.\\d+]?)");
+			Pattern pattern = Pattern.compile("Result\\|(\\d+)\\|(\\d+)\\|(\\d+(?:\\.\\d+)?)");
 			String line = null;
 			int persistCounter = 0;
 			int batchSize = 100;
@@ -146,22 +124,15 @@ public class Predictor {
 				Matcher matcher = pattern.matcher(line);
 				if (matcher.find()) {
 					try {
-						String osmShiftStartEndNode = matcher.group(1);
+						Long id = new Long(matcher.group(1));
 						long timestamp = Long.parseLong(matcher.group(2));
 						double prediction = Double.parseDouble(matcher.group(3));
-						double lowerEnd = Double.parseDouble(matcher.group(4));
-						double upperEnd = Double.parseDouble(matcher.group(5));
 
-						TimestampedPredictedOSMShift predictedShift = new TimestampedPredictedOSMShift();
+						PredictedShift predictedShift = new PredictedShift();
 						predictedShift.setMillis(timestamp);
 						predictedShift.setSpeed((int) prediction);
-						predictedShift.setPredictionerror((float) ((upperEnd - lowerEnd) / 2));
-						Geometry geometry = osmShiftGeometries.get(osmShiftStartEndNode);
-						if (geometry != null) {
-							predictedShift.setGeom(geometry);
-						} else {
-							throw new RuntimeException("bug: unrecognized osmShift id: " + osmShiftStartEndNode);
-						}
+						predictedShift.setPredictionerror(-1);
+						predictedShift.setSegment(segmentById.get(id));
 
 						em.persist(predictedShift);
 

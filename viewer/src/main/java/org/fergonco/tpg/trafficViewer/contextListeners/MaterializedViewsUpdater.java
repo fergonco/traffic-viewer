@@ -33,15 +33,18 @@ public class MaterializedViewsUpdater implements ServletContextListener {
 
 				try {
 					predictor.updatePredictions();
-				} catch (IOException | RException e) {
+				} catch (IOException | RException | RuntimeException e) {
 					logger.error("Error while updating predictions", e);
 				}
-
-				refresh("app.osmshiftinfo");
-				refresh("app.timestamps");
-				refresh("app.timestamped_measured_osmshifts");
-				refresh("app.timestamped_osmshiftinfo");
-
+				try {
+					refresh("app.geoshift");
+					refresh("app.timestamps");
+					refresh("app.timestamped_measured_geoshifts");
+					refresh("app.predicted_geoshift");
+					refresh("app.timestamped_geoshift");
+				} catch (RuntimeException e) {
+					logger.error("Error while updating materialized views", e);
+				}
 			}
 		}, 0, _15minutes);
 	}

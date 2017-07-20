@@ -77,13 +77,20 @@ public class DBUtils {
 		void processPage(List<T> pageContents) throws AbortPaginationException;
 	}
 
-	public static class AbortPaginationException extends Exception {
+	public static class AbortPaginationException extends RuntimeException {
 		private static final long serialVersionUID = 1L;
 
 		public AbortPaginationException(Throwable cause) {
 			super(cause);
-			// TODO Auto-generated constructor stub
 		}
 
+	}
+
+	public static String getSchemaName() {
+		return schemaName;
+	}
+
+	public static <T> List<T> getAll(EntityManager em, Class<T> c) {
+		return em.createQuery("Select a from " + c.getSimpleName() + " a", c).getResultList();
 	}
 }

@@ -5,64 +5,63 @@ import static org.mockito.Matchers.anyDouble;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 import javax.persistence.EntityManager;
 
 import org.fergonco.tpg.trafficViewer.DBUtils;
-import org.fergonco.tpg.trafficViewer.jpa.OSMSegmentModel;
-import org.fergonco.tpg.trafficViewer.jpa.OSMShift;
+import org.fergonco.tpg.trafficViewer.TestUtils;
+import org.fergonco.tpg.trafficViewer.jpa.OSMSegment;
+import org.fergonco.tpg.trafficViewer.jpa.PredictedShift;
 import org.fergonco.tpg.trafficViewer.jpa.Shift;
-import org.fergonco.tpg.trafficViewer.jpa.TimestampedPredictedOSMShift;
+import org.fergonco.tpg.trafficViewer.jpa.TPGStopRoute;
 import org.fergonco.tpg.trafficViewer.jpa.WeatherConditions;
 import org.fergonco.traffic.dataGatherer.owm.OWM;
 import org.fergonco.traffic.dataGatherer.owm.WeatherForecast;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.GeometryFactory;
-import com.vividsolutions.jts.geom.LineString;
-
 public class ModelBuilderTest {
 
 	@Before
 	public void prepareDatabase() throws Exception {
-		DBUtils.setPersistenceUnit("test");
-		EntityManager em = DBUtils.getEntityManager();
-		em.getTransaction().begin();
-		em.createQuery("DELETE FROM " + WeatherConditions.class.getSimpleName()).executeUpdate();
-		em.createQuery("DELETE FROM " + OSMShift.class.getSimpleName()).executeUpdate();
-		em.createQuery("DELETE FROM " + Shift.class.getSimpleName()).executeUpdate();
-		em.getTransaction().commit();
+		TestUtils.configureDBUtilsAndClearDatabase();
 	}
 
 	@Test
 	public void testGenerateModelAndPredict() throws Exception {
 		// Populate database
 		EntityManager em = DBUtils.getEntityManager();
+		TPGStopRoute route = em
+				.createQuery(
+						"SELECT r FROM " + TPGStopRoute.class.getSimpleName()
+								+ " r WHERE r.startTPGCode='VATH' AND r.endTPGCode='THGA' AND r.line='Y'",
+						TPGStopRoute.class)
+				.getSingleResult();
 		em.getTransaction().begin();
-		LineString geometry = new GeometryFactory()
-				.createLineString(new Coordinate[] { new Coordinate(0, 0), new Coordinate(10, 10) });
-		geometry.setSRID(4326);
 		long now = new Date().getTime();
 		int FIVE_HOURS = 5 * 60 * 60 * 1000;
 		for (int i = 0; i < 30; i++) {
-			long timestamp = now - i * FIVE_HOURS;
-			persistShift(em, i, 10, 11, geometry, timestamp);
-			long weatherTimestamp = timestamp - 1000;
-			persistWeatherConditions(em, i, weatherTimestamp);
+			persistShift(em, i, now - i * FIVE_HOURS, route);
+			persistWeatherConditions(em, i, now - i * FIVE_HOURS - 1000);
 		}
 		em.getTransaction().commit();
 
 		// Generate models
 		ModelBuilder builder = new ModelBuilder();
-		builder.generateModels();
+		List<OSMSegment> segments = route.getSegments();
+		ArrayList<Long> segmentIds = new ArrayList<>(segments.size());
+		for (OSMSegment osmSegment : segments) {
+			segmentIds.add(osmSegment.getId());
+		}
+		builder.generateModels(segmentIds);
 
 		// Check the models are generated
-		List<OSMSegmentModel> resultList = em
-				.createQuery("select m FROM " + OSMSegmentModel.class.getName() + " m", OSMSegmentModel.class)
+		List<OSMSegment> resultList = em
+				.createQuery("select m FROM " + OSMSegment.class.getName() + " m where m.model is not null",
+						OSMSegment.class)
 				.getResultList();
 		assertTrue("Some model in database", resultList.size() > 0);
 
@@ -75,12 +74,12 @@ public class ModelBuilderTest {
 		predictor.updatePredictions(mock);
 
 		// Check the predictions are there
-		List<TimestampedPredictedOSMShift> predictedOSMShifts = em
-				.createQuery("select p FROM " + TimestampedPredictedOSMShift.class.getName() + " p order by p.millis",
-						TimestampedPredictedOSMShift.class)
+		List<PredictedShift> predictedOSMShifts = em
+				.createQuery("select p FROM " + PredictedShift.class.getName() + " p order by p.millis",
+						PredictedShift.class)
 				.getResultList();
 		assertTrue("there are predictions", predictedOSMShifts.size() > 0);
-		assertTrue("predictions are not 0", predictedOSMShifts.get(0).getSpeed() > 0);
+		assertTrue("speed predictions are not 0", predictedOSMShifts.get(0).getSpeed() > 0);
 		long closestPrediction = predictedOSMShifts.get(0).getMillis();
 		long furtherstPrediction = predictedOSMShifts.get(predictedOSMShifts.size() - 1).getMillis();
 		long range = furtherstPrediction - closestPrediction;
@@ -100,19 +99,13 @@ public class ModelBuilderTest {
 		return weatherConditions;
 	}
 
-	private void persistShift(EntityManager em, int index, int startNode, int endNode, LineString geometry,
-			long timestamp) {
+	private void persistShift(EntityManager em, int index, long timestamp, TPGStopRoute route) {
 		Shift shift = new Shift();
 		shift.setTimestamp(timestamp);
 		shift.setVehicleId(Integer.toString(index));
-		shift.setSpeed(20);
-		OSMShift osmShift = new OSMShift();
-		osmShift.setStartNode(startNode);
-		osmShift.setEndNode(endNode);
-		osmShift.setGeom(geometry);
-		osmShift.setShift(shift);
+		shift.setRoute(route);
+		shift.setSeconds(300);
 		em.persist(shift);
-		em.persist(osmShift);
 	}
 
 }

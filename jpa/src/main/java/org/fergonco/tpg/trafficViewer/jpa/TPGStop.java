@@ -1,34 +1,31 @@
 package org.fergonco.tpg.trafficViewer.jpa;
 
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.Table;
+import javax.persistence.UniqueConstraint;
 
 @Entity
+@Table(uniqueConstraints = @UniqueConstraint(columnNames = { "tpgCode", "line", "destination" }))
 public class TPGStop {
 
 	@Id
-	private String code;
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private long id;
 
-	private long osmid1;
-	private String destination1;
-	private long osmid2;
-	private String destination2;
-
-	public void setCode(String code) {
-		this.code = code;
-	}
+	private String tpgCode;
+	private String line;
+	private String destination;
+	private long osmid;
 
 	public String getCode() {
-		return code;
+		return tpgCode;
 	}
 
-	public String getNodeId(String destination) {
-		if (destination.equals(destination1)) {
-			return Long.toString(osmid1);
-		} else if (destination.equals(destination2)) {
-			return Long.toString(osmid2);
-		} else {
-			throw new IllegalArgumentException("Unknown destination: " + destination);
-		}
+	public String getNodeId() {
+		return Long.toString(osmid);
 	}
+
 }

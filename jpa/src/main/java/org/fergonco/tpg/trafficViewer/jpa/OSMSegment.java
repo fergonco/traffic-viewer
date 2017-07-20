@@ -6,59 +6,49 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.ManyToOne;
 
 import com.vividsolutions.jts.geom.Geometry;
 
 @Entity
-public class OSMShift {
-
+public class OSMSegment {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private long id;
 
 	private long startNode;
 	private long endNode;
+
 	@Column(columnDefinition = "geometry('LINESTRING', 4326)")
 	@Convert(converter = JTSConverter.class)
 	private Geometry geom;
 
-	@ManyToOne
-	private Shift shift;
+	private byte[] model;
 
-	public long getId() {
-		return id;
+	public void setModel(byte[] model) {
+		this.model = model;
 	}
 
-	public long getStartNode() {
-		return startNode;
-	}
-
-	public void setStartNode(long startNode) {
-		this.startNode = startNode;
-	}
-
-	public long getEndNode() {
-		return endNode;
-	}
-
-	public void setEndNode(long endNode) {
-		this.endNode = endNode;
+	public byte[] getModel() {
+		return model;
 	}
 
 	public Geometry getGeom() {
 		return geom;
 	}
 
+	public long getId() {
+		return id;
+	}
+
+	public void setStartNode(long startNode) {
+		this.startNode = startNode;
+	}
+
+	public void setEndNode(long endNode) {
+		this.endNode = endNode;
+	}
+
 	public void setGeom(Geometry geom) {
 		this.geom = geom;
-	}
-
-	public void setShift(Shift shift) {
-		this.shift = shift;
-	}
-
-	public Shift getShift() {
-		return shift;
 	}
 }
