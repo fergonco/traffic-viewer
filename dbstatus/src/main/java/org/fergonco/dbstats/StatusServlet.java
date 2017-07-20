@@ -20,7 +20,7 @@ public class StatusServlet extends HttpServlet {
 
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		String answer = "weather: $weatherStatus\ntransport: $transportStatus";
+		String answer = "weather: $weatherStatus\ntransport: $transportStatus\npredictions: $predictionStatus";
 		Date nowDate = new Date();
 		long now = nowDate.getTime();
 
@@ -36,8 +36,13 @@ public class StatusServlet extends HttpServlet {
 		int hour = calendar.get(Calendar.HOUR_OF_DAY);
 		String transportStatus = ((hour > 7) && (now - lastTransportShift > 60 * 60 * 1000)) ? "fail" : "success";
 
+		Long lastPrediction = (Long) em.createNativeQuery("select max(\"millis\") from app.predictedshift;")
+				.getSingleResult();
+		String predictionStatus = (lastPrediction == null || lastPrediction < now) ? "fail" : "success";
+
 		answer = answer.replace("$weatherStatus", weatherStatus);
 		answer = answer.replace("$transportStatus", transportStatus);
+		answer = answer.replace("$predictionStatus", predictionStatus);
 		resp.getWriter().write(answer);
 	}
 
