@@ -13,7 +13,7 @@ import java.sql.Statement;
 public class SetSourceEndPoints {
 
 	public static void main(String[] args) throws SQLException {
-		Connection c = DriverManager.getConnection("jdbc:postgresql://localhost:54322/backups", "tpg", "tpg");
+		Connection c = DriverManager.getConnection("jdbc:postgresql://localhost:54322/b", "tpg", "tpg");
 		Statement s = c.createStatement();
 
 		while (true) {
@@ -29,7 +29,7 @@ public class SetSourceEndPoints {
 			if (id != -1) {
 				r = s.executeQuery("select startnode, endnode from app.osmshift os where os.shift_id=" + id);
 				if (!r.next()) {
-					throw new RuntimeException();
+					throw new RuntimeException(id + "");
 				}
 				long startnode = r.getLong("startnode");
 				long endnode = r.getLong("endnode");
@@ -47,10 +47,11 @@ public class SetSourceEndPoints {
 				String sourcestartpoint = r.getString("sourcestartpoint");
 				String sourceendpoint = r.getString("sourceendpoint");
 				String where = "where id in (select shift_id from app.osmshift os where os.startnode=" + startnode
-						+ " and os.endnode=" + endnode + ");";
-				System.out.println("select sourcestartpoint, sourceendpoint from app.shift " + where);
+						+ " and os.endnode=" + endnode + ")";
+				System.out.println("select sourcestartpoint, sourceendpoint, count(*) from app.shift " + where
+						+ " group by sourcestartpoint, sourceendpoint ;");
 				String sql = "update app.shift set sourcestartpoint='" + sourcestartpoint + "', sourceendpoint='"
-						+ sourceendpoint + "' " + where;
+						+ sourceendpoint + "' " + where + ";";
 				System.out.println(sql);
 				if (r.next()) {
 					throw new RuntimeException();
