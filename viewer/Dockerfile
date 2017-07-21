@@ -1,5 +1,5 @@
 FROM tomcat:7-jre8-alpine
-ADD target/viewer-1.0-SNAPSHOT.war /usr/local/tomcat/webapps/traffic-viewer.war
+ADD target/viewer-1.0.1.war /usr/local/tomcat/webapps/traffic-viewer.war
 
 # Copied from https://github.com/artemklevtsov/r-alpine/blob/master/gcc/release/Dockerfile
 ENV R_VERSION ${R_VERSION:-3.4.0}

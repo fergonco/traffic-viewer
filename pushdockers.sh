@@ -1,6 +1,7 @@
 set -e
 
-docker push fergonco/traffic-viewer
-docker push fergonco/traffic-viewer-dbstatus
-docker push fergonco/traffic-viewer-datagatherer
+VERSION=1.0.1
 
+docker push fergonco/traffic-viewer:$VERSION
+docker push fergonco/traffic-viewer-dbstatus:$VERSION
+docker push fergonco/traffic-viewer-datagatherer:$VERSION
