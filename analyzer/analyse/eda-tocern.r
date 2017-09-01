@@ -2,32 +2,28 @@ library(ggplot2)
 library(gridExtra)
 library(arm)
 
-speeds <- read.csv("tocern.csv")
+speeds <- read.csv("/tmp/output.csv")
 
 histograms <- function() {
   plots <- list()
   # response variable histogram
-  plots[[length(plots)+1]] <- ggplot(data=speeds, aes(x=speed)) + geom_density()
+  plots[[length(plots)+1]] <- ggplot(data=speeds, aes(x=speed)) + geom_histogram(binwidth = 2)
   
   # response variable histogram coloured and faceted by a predictor variable
-  plots[[length(plots)+1]] <- ggplot(data=speeds, aes(x=speed, fill=weekday)) + geom_density()
-  plots[[length(plots)+1]] <- ggplot(data=speeds, aes(x=speed, fill=weekday)) + geom_density() + facet_wrap(~weekday)
-  plots[[length(plots)+1]] <- ggplot(data=speeds, aes(x=speed, fill=weather)) + geom_histogram(binwidth = 5)+ facet_wrap(~weather)
-  plots[[length(plots)+1]] <- ggplot(data=speeds, aes(x=speed, fill=morningrush)) + geom_histogram(binwidth = 3)
-
+  plots[[length(plots)+1]] <- ggplot(data=speeds, aes(x=speed, fill=weekday)) + geom_histogram(binwidth = 2)
+  plots[[length(plots)+1]] <- ggplot(data=speeds, aes(x=speed, fill=weekday)) + geom_histogram(binwidth = 2) + facet_wrap(~weekday)
+  plots[[length(plots)+1]] <- ggplot(data=speeds, aes(x=speed, fill=weather)) + geom_histogram(binwidth = 2)+ facet_wrap(~weather)
+  plots[[length(plots)+1]] <- ggplot(data=speeds, aes(x=speed, fill=holidaySizefr)) + geom_histogram(binwidth = 2)+ facet_wrap(~holidaySizefr)
+  
   do.call(grid.arrange, c(plots, nrow=2))
   plots <- list()
   
   # scatter plots speed~minutesDay coloured by a third variable
-  plots[[length(plots)+1]] <- ggplot(data=speeds, aes(x=morningfall, y=speed)) + geom_point()
-  plots[[length(plots)+1]] <- ggplot(data=speeds, aes(x=morningrise, y=speed)) + geom_point()
-  plots[[length(plots)+1]] <- ggplot(data=speeds, aes(x=remainingday, y=speed)) + geom_point()
   plots[[length(plots)+1]] <- ggplot(data=speeds, aes(x=minutesDay, y=speed)) + geom_point()
   plots[[length(plots)+1]] <- ggplot(data=speeds, aes(x=minutesDay, y=speed, color=schoolfr)) + geom_point()
   plots[[length(plots)+1]] <- ggplot(data=speeds, aes(x=minutesDay, y=speed, color=weekday)) + geom_point()
-  plots[[length(plots)+1]] <- ggplot(data=speeds, aes(x=distortedMinutes, y=speed)) + geom_point()
   
-  do.call(grid.arrange, c(plots, nrow=3))
+  # do.call(grid.arrange, c(plots, nrow=3))
   plots <- list()
   
   # predictor histograms
@@ -37,7 +33,7 @@ histograms <- function() {
   plots[[length(plots)+1]] <- ggplot(data=speeds, aes(x=pressure)) + geom_histogram(binwidth = 3)
   plots[[length(plots)+1]] <- ggplot(data=speeds, aes(x=weekday)) + geom_histogram(stat = "count")
   print(summary(speeds[,c("holidaych", "holidayfr", "schoolch", "schoolfr")]))
-  do.call(grid.arrange, c(plots, nrow=2))
+  #do.call(grid.arrange, c(plots, nrow=2))
   plots <- list()
 }
 
@@ -76,12 +72,12 @@ residualPlots <- function(fit) {
   grid.arrange(fittedVsResidualsPlot, qqPlot, residualHistogram, ncol = 2)
 }
 
-edaHist <- FALSE
+edaHist <- TRUE
 edaScatter <- FALSE
 model <- FALSE
 fitAnalysis <- FALSE
-predict <- TRUE
-crossValidation <- TRUE
+predict <- FALSE
+crossValidation <- FALSE
 
 if (edaHist) {
   histograms()
@@ -93,7 +89,7 @@ if (model) {
   fits <- list()
   fits[[length(fits)+1]] <- calculateModel(speed ~ minutesDay + weekday + schoolfr + humidity + pressure + temperature + weather)
   fits[[length(fits)+1]] <- calculateModel(speed ~ distortedMinutes + weekday + schoolfr + humidity + pressure + temperature + weather)
-  fits[[length(fits)+1]] <- calculateModel(speed ~ distortedMinutes * weekday + weather)
+  fits[[length(fits)+1]] <- calculateModel(speed ~ distortedMinutes * weekday + weekday * weather)
   fits[[length(fits)+1]] <- calculateModel(speed ~ morningrush * weekday * weather)
   fits[[length(fits)+1]] <- calculateModel(speed ~ morningrush * weekday + morningrush * weather + morningrush * schoolfr)
   print(AIC(fits[[1]],fits[[2]],fits[[3]],fits[[4]],fits[[5]]))

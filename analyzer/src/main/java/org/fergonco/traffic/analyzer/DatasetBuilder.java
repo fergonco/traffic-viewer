@@ -1,5 +1,6 @@
 package org.fergonco.traffic.analyzer;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.text.ParseException;
@@ -140,6 +141,12 @@ public class DatasetBuilder {
 	}
 
 	public static void main(String[] args) throws Exception {
-		new DatasetBuilder().build(System.out, 907579280, 906227763);
+		File file = new File("/tmp/output.csv");
+		if (file.exists() && !file.delete()) {
+			throw new IOException("Cannot delete file");
+		}
+		PrintStream stream = new PrintStream("/tmp/output.csv");
+		new DatasetBuilder().build(stream, 907579280, 906227763);
+		stream.close();
 	}
 }

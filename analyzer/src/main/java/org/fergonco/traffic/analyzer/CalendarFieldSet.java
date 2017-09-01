@@ -14,6 +14,7 @@ import com.google.gson.Gson;
 
 public class CalendarFieldSet implements OutputFieldSet {
 
+	private static final long DAYMILLIS = 24 * 60 * 60 * 1000;
 	private Map<Integer, String> dayNames;
 	private Map<Integer, String> previousDay;
 	private SchoolCalendar schoolCalendar;
@@ -51,19 +52,16 @@ public class CalendarFieldSet implements OutputFieldSet {
 
 	@Override
 	public String[] getNames() {
-		return new String[] { "minutesHour", "minutesDay", "distortedMinutes", "morningrush", "morningfall",
-				"morningrise", "remainingday", "weekday", "holidayfr", "holidaych", "schoolfr", "schoolch" };
+		return new String[] { "minutesHour", "minutesDay", "weekday", "holidayfr", "holidaych", "schoolfr", "schoolch",
+				"holidaySizefr", "holidaySizech" };
 	}
 
 	@Override
 	public Object[] getValues(OutputContext outputContext) {
 		long timestamp = outputContext.getShift().getTimestamp();
-		Calendar calendar = Calendar.getInstance();
-		calendar.setTimeInMillis(timestamp);
-		calendar.setTimeZone(TimeZone.getTimeZone("Europe/Rome"));
+		Calendar calendar = getCalendar(timestamp);
 		int minutesInHour = calendar.get(Calendar.MINUTE);
 		int minutesSinceMidnight = calendar.get(Calendar.HOUR_OF_DAY) * 60 + calendar.get(Calendar.MINUTE);
-		double distortedMinutes = Math.sqrt(Math.abs(450 - minutesSinceMidnight));
 		String dayOfWeek;
 		if (minutesSinceMidnight < 120) {
 			// last services after midnight moved to previous day
@@ -72,34 +70,57 @@ public class CalendarFieldSet implements OutputFieldSet {
 		} else {
 			dayOfWeek = dayNames.get(calendar.get(Calendar.DAY_OF_WEEK));
 		}
-		boolean morningrush = minutesSinceMidnight > 400 && minutesSinceMidnight < 550;
 
-		// morning fall
-		String morningFall = "NA";
-		if (minutesSinceMidnight < 450) {
-			morningFall = Integer.toString(450 - minutesSinceMidnight);
-		}
-
-		// morning rise
-		String morningRise = "NA";
-		if (minutesSinceMidnight >= 450 && minutesSinceMidnight < 570) {
-			morningRise = Integer.toString(minutesSinceMidnight - 450);
-		}
-
-		// remainingDay
-		String remainingDay = "NA";
-		if (minutesSinceMidnight >= 570) {
-			remainingDay = Integer.toString(minutesSinceMidnight - 570);
-		}
+		int holidaySizefr = getHolidaySize(timestamp, "france");
+		int holidaySizech = getHolidaySize(timestamp, "switzerland");
 
 		boolean holidayFrance = schoolCalendar.isHoliday("france", timestamp);
 		boolean holidaySwitzerland = schoolCalendar.isHoliday("switzerland", timestamp);
 		boolean schoolFrance = schoolCalendar.isSchool("france", timestamp);
 		boolean schoolSwitzerland = schoolCalendar.isSchool("switzerland", timestamp);
 
-		return new Object[] { minutesInHour, minutesSinceMidnight, distortedMinutes, indicator(morningrush),
-				morningFall, morningRise, remainingDay, dayOfWeek, indicator(holidayFrance),
-				indicator(holidaySwitzerland), indicator(schoolFrance), indicator(schoolSwitzerland) };
+		return new Object[] { minutesInHour, minutesSinceMidnight, dayOfWeek, indicator(holidayFrance),
+				indicator(holidaySwitzerland), indicator(schoolFrance), indicator(schoolSwitzerland), holidaySizefr,
+				holidaySizech };
+	}
+
+	private Calendar getCalendar(long timestamp) {
+		Calendar calendar = Calendar.getInstance();
+		calendar.setTimeInMillis(timestamp);
+		calendar.setTimeZone(TimeZone.getTimeZone("Europe/Rome"));
+		return calendar;
+	}
+
+	private int getHolidaySize(long timestamp, String country) {
+		return getHolidaySize(timestamp + DAYMILLIS, 1, country) + getHolidaySize(timestamp, -1, country);
+	}
+
+	private int getHolidaySize(long timestamp, int direction, String country) {
+		int workdaysInARow = 0;
+		long testDayTimestamp = timestamp;
+		int size = 0;
+		while (true) {
+			if (!schoolCalendar.isHoliday(country, testDayTimestamp)
+					&& schoolCalendar.isSchool(country, testDayTimestamp)
+					&& getCalendar(testDayTimestamp).get(Calendar.DAY_OF_WEEK) != Calendar.SATURDAY
+					&& getCalendar(testDayTimestamp).get(Calendar.DAY_OF_WEEK) != Calendar.SUNDAY) {
+				if (workdaysInARow == 1) {
+					break;
+				} else {
+					workdaysInARow++;
+				}
+			} else {
+				// Count workdays if they are in the middle
+				if (size > 0) {
+					size += workdaysInARow;
+				}
+
+				size++;
+				workdaysInARow = 0;
+			}
+			testDayTimestamp += direction * DAYMILLIS;
+		}
+		return size;
 	}
 
 	private Object indicator(boolean booleanVariable) {
