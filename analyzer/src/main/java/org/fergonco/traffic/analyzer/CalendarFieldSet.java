@@ -52,14 +52,16 @@ public class CalendarFieldSet implements OutputFieldSet {
 
 	@Override
 	public String[] getNames() {
-		return new String[] { "minutesHour", "minutesDay", "weekday", "holidayfr", "holidaych", "schoolfr", "schoolch",
-				"holidaySizefr", "holidaySizech" };
+		return new String[] { "month", "hour", "minutesHour", "minutesDay", "weekday", "holidayfr", "holidaych",
+				"schoolfr", "schoolch", "holidaySizefr", "holidaySizech" };
 	}
 
 	@Override
 	public Object[] getValues(OutputContext outputContext) {
 		long timestamp = outputContext.getShift().getTimestamp();
 		Calendar calendar = getCalendar(timestamp);
+		int month = calendar.get(Calendar.MONTH);
+		int hour = calendar.get(Calendar.HOUR_OF_DAY);
 		int minutesInHour = calendar.get(Calendar.MINUTE);
 		int minutesSinceMidnight = calendar.get(Calendar.HOUR_OF_DAY) * 60 + calendar.get(Calendar.MINUTE);
 		String dayOfWeek;
@@ -79,7 +81,7 @@ public class CalendarFieldSet implements OutputFieldSet {
 		boolean schoolFrance = schoolCalendar.isSchool("france", timestamp);
 		boolean schoolSwitzerland = schoolCalendar.isSchool("switzerland", timestamp);
 
-		return new Object[] { minutesInHour, minutesSinceMidnight, dayOfWeek, indicator(holidayFrance),
+		return new Object[] { month, hour, minutesInHour, minutesSinceMidnight, dayOfWeek, indicator(holidayFrance),
 				indicator(holidaySwitzerland), indicator(schoolFrance), indicator(schoolSwitzerland), holidaySizefr,
 				holidaySizech };
 	}

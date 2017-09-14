@@ -4,60 +4,6 @@ library(arm)
 
 speeds <- read.csv("/tmp/output.csv")
 
-histograms <- function() {
-  plots <- list()
-  # response variable histogram
-  plots[[length(plots)+1]] <- ggplot(data=speeds, aes(x=speed)) + geom_histogram(binwidth = 2)
-  
-  # response variable histogram coloured and faceted by a predictor variable
-  plots[[length(plots)+1]] <- ggplot(data=speeds, aes(x=speed, fill=weekday)) + geom_histogram(binwidth = 2)
-  plots[[length(plots)+1]] <- ggplot(data=speeds, aes(x=speed, fill=weekday)) + geom_histogram(binwidth = 2) + facet_wrap(~weekday)
-  plots[[length(plots)+1]] <- ggplot(data=speeds, aes(x=speed, fill=weather)) + geom_histogram(binwidth = 2)+ facet_wrap(~weather)
-  plots[[length(plots)+1]] <- ggplot(data=speeds, aes(x=speed, fill=holidaySizefr)) + geom_histogram(binwidth = 2)+ facet_wrap(~holidaySizefr)
-  
-  do.call(grid.arrange, c(plots, nrow=2))
-  plots <- list()
-  
-  # scatter plots speed~minutesDay coloured by a third variable
-  plots[[length(plots)+1]] <- ggplot(data=speeds, aes(x=minutesDay, y=speed)) + geom_point()
-  plots[[length(plots)+1]] <- ggplot(data=speeds, aes(x=minutesDay, y=speed, color=schoolfr)) + geom_point()
-  plots[[length(plots)+1]] <- ggplot(data=speeds, aes(x=minutesDay, y=speed, color=weekday)) + geom_point()
-  
-  # do.call(grid.arrange, c(plots, nrow=3))
-  plots <- list()
-  
-  # predictor histograms
-  plots[[length(plots)+1]] <- ggplot(data=speeds, aes(x=weather)) + geom_histogram(stat = "count")
-  plots[[length(plots)+1]] <- ggplot(data=speeds, aes(x=temperature)) + geom_histogram(binwidth = 2)
-  plots[[length(plots)+1]] <- ggplot(data=speeds, aes(x=humidity)) + geom_histogram(binwidth = 5)
-  plots[[length(plots)+1]] <- ggplot(data=speeds, aes(x=pressure)) + geom_histogram(binwidth = 3)
-  plots[[length(plots)+1]] <- ggplot(data=speeds, aes(x=weekday)) + geom_histogram(stat = "count")
-  print(summary(speeds[,c("holidaych", "holidayfr", "schoolch", "schoolfr")]))
-  #do.call(grid.arrange, c(plots, nrow=2))
-  plots <- list()
-}
-
-scatterplots <- function() {
-  plots <- list()
-  plots[[length(plots)+1]] <- ggplot(data = speeds, aes(x = morningrush, y = speed)) + geom_boxplot()
-  plots[[length(plots)+1]] <- ggplot(data = speeds, aes(x = minutesDay, y = speed)) + geom_point(shape = 1) 
-  plots[[length(plots)+1]] <- ggplot(data = speeds, aes(x = minutesHour, y = speed)) + geom_point(shape = 1) 
-  plots[[length(plots)+1]] <- ggplot(data = speeds, aes(x = weekday, y = speed)) + geom_boxplot()
-  do.call(grid.arrange, c(plots, list(ncol = 2)))
-  plots <- list()
-  plots[[length(plots)+1]] <- ggplot(data = speeds, aes(x = holidayfr, y = speed)) + geom_boxplot()
-  plots[[length(plots)+1]] <- ggplot(data = speeds, aes(x = holidaych, y = speed)) + geom_boxplot()
-  plots[[length(plots)+1]] <- ggplot(data = speeds, aes(x = schoolfr, y = speed)) + geom_boxplot()
-  plots[[length(plots)+1]] <- ggplot(data = speeds, aes(x = schoolch, y = speed)) + geom_boxplot()
-  do.call(grid.arrange, c(plots, list(ncol = 2)))
-  plots <- list()
-  plots[[length(plots)+1]] <- ggplot(data = speeds, aes(x = humidity, y = speed)) + geom_point(shape = 1) 
-  plots[[length(plots)+1]] <- ggplot(data = speeds, aes(x = pressure, y = speed)) + geom_point(shape = 1) 
-  plots[[length(plots)+1]] <- ggplot(data = speeds, aes(x = temperature, y = speed)) + geom_point(shape = 1) 
-  plots[[length(plots)+1]] <- ggplot(data = speeds, aes(x = weather, y = speed)) + geom_boxplot()
-  do.call(grid.arrange, c(plots, list(ncol = 2)))
-}
-
 calculateModel <- function(formula) {
   fit <- lm(data = speeds, formula)
   print(summary(fit))
@@ -66,24 +12,36 @@ calculateModel <- function(formula) {
 }
 
 residualPlots <- function(fit) {
-  fittedVsResidualsPlot <- ggplot(data = fit, aes(y=.resid, x=.fitted)) + geom_point() + geom_hline(yintercept = 0) + geom_smooth(se = FALSE) + labs(x="Fitted values", y="Residuals")
-  qqPlot <- ggplot(fit, aes(sample = .resid)) + geom_qq() + geom_abline(intercept = mean(fit$residuals), slope = sd(fit$residuals))
-  residualHistogram <- ggplot(fit, aes(x = .resid)) + geom_density()
-  grid.arrange(fittedVsResidualsPlot, qqPlot, residualHistogram, ncol = 2)
+  fittedVsResidualsPlot <- ggplot(data = fit, aes(y=.resid, x=.fitted)) + geom_point(shape=1) + geom_hline(yintercept = 0) + geom_smooth(se = FALSE, aes(color="red")) + labs(x="Fitted values", y="Residuals")
+  print(fittedVsResidualsPlot)
+  #qqPlot <- ggplot(fit, aes(sample = .resid)) + geom_qq() + geom_abline(intercept = mean(fit$residuals), slope = sd(fit$residuals))
+  #residualHistogram <- ggplot(fit, aes(x = .resid)) + geom_density()
+  #grid.arrange(fittedVsResidualsPlot, qqPlot, residualHistogram, ncol = 2)
 }
 
-edaHist <- TRUE
-edaScatter <- FALSE
+testPolynomialResidual <- FALSE
 model <- FALSE
 fitAnalysis <- FALSE
 predict <- FALSE
 crossValidation <- FALSE
 
-if (edaHist) {
-  histograms()
-}
-if (edaScatter) {
-  scatterplots()
+if (testPolynomialResidual) {
+  print(ggplot(data=speeds[speeds$weekday=='tuesday' & speeds$schoolfr == "true", ], aes(x=minutesDay, y=speed)) + geom_point() + geom_smooth(method = "lm", formula = y ~ poly(x,9), colour = "red"))
+  formulas <- c(
+    speed ~ weekday * minutesDay + schoolfr * minutesDay + schoolfr + weekday + minutesDay,
+    speed ~ weekday * poly(minutesDay, 2) + schoolfr * poly(minutesDay, 2) + schoolfr + weekday + poly(minutesDay, 2),
+    speed ~ weekday * poly(minutesDay, 3) + schoolfr * poly(minutesDay, 3) + schoolfr + weekday + poly(minutesDay, 3),
+    speed ~ weekday * poly(minutesDay, 4) + schoolfr * poly(minutesDay, 4) + schoolfr + weekday + poly(minutesDay, 4),
+    speed ~ weekday * poly(minutesDay, 5) + schoolfr * poly(minutesDay, 5) + schoolfr + weekday + poly(minutesDay, 5),
+    speed ~ weekday * poly(minutesDay, 6) + schoolfr * poly(minutesDay, 6) + schoolfr + weekday + poly(minutesDay, 6)
+  )
+  for (formula in formulas) {
+    fit <- lm(data = speeds, formula)
+    residualPlots(fit)
+    # print(summary(fit))
+    # print(ggplot(data=speeds, aes(x=minutesDay, y=speed)) + geom_point() + geom_smooth(method = "lm", formula = y ~ poly(x,6), colour = "red"))
+  }
+  # arm::coefplot(fit, xlim=c(-10, 10))
 }
 if (model) {
   fits <- list()
