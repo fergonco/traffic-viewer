@@ -24,7 +24,7 @@ speeds <- read.csv(datasetName)
 # fit2 <- readRDS(modelFilename)
 # prediction <- predict.lm(fit2, newdata = speeds[22,], interval = "prediction", level = 0.95)
 
-fit <- glm(data = speeds, speed ~ distortedMinutes * weekday + weekday * weather)
+fit <- glm(data = speeds, speed ~ minutesDay * weekday + weekday * weather)
 fit$y = c()
 fit$model = c()
 fit$residuals = c()
