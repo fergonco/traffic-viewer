@@ -22,7 +22,7 @@
    map.setView([ 46.24, 6.03 ], 13);
 
    let xhr = new XMLHttpRequest();
-   let url = "http://fergonco.org/geoserver/ows?service=wms&version=1.3.0&request=GetCapabilities&nocache="
+   let url = "/geoserver/ows?service=wms&version=1.3.0&request=GetCapabilities&nocache="
       + new Date().getTime();
    xhr.open("GET", url, true);
    xhr.send();
@@ -44,7 +44,7 @@
    di["timeSelectionListener"] = function(timestamp) {
       var timeString = new Date(timestamp).toISOString();
       if (trafficLayer == null) {
-         trafficLayer = new L.TileLayer.WMS("http://fergonco.org/geoserver/wms", {
+         trafficLayer = new L.TileLayer.WMS("/geoserver/wms", {
             "layers" : "tpg:timestamped_geoshift",
             "format" : 'image/png',
             "transparent" : true
