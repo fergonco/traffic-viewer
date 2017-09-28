@@ -1,8 +1,0 @@
-{
-	"requirejs": {
-		"paths": {
-			"Mustache": "../jslib/mustache",
-			"leaflet": "../jslib/leaflet/leaflet"
-		}
-	}
-}
