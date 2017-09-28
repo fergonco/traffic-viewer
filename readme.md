@@ -104,13 +104,13 @@ In the database, as tpg user:
 	create materialized view app.timestamps as
 		select 
 			generate_series(
-				greatest(
+				(greatest(
 					min("timestamp"),
 					extract ( 
 						epoch from localtimestamp
 					)*1000 - 24*60*60*1000
-				)::bigint,
-				max("timestamp"),
+				)::bigint / 900000) * 900000,
+				(max("timestamp")/900000)*900000,
 				15*60*1000
 			) as millis
 		from app.shift;
