@@ -66,17 +66,6 @@ public class Predictor {
 		Point centroid = gc.getCentroid();
 		WeatherForecast forecast = owm.forecastedConditions(centroid.getX(), centroid.getY());
 
-		// Remove existing predictions
-		logger.debug("Remove existing predictions");
-		em.getTransaction().begin();
-		try {
-			em.createQuery("DELETE FROM " + PredictedShift.class.getName() + " o").executeUpdate();
-			em.getTransaction().commit();
-		} catch (RuntimeException e) {
-			if (em.getTransaction().isActive()) {
-				em.getTransaction().rollback();
-			}
-		}
 		// Generate forecast folder
 		File forecastFolder = Files.createTempDirectory("traffic-forecast").toFile();
 
@@ -111,15 +100,13 @@ public class Predictor {
 
 		// Run RScript processing folder and get a map from predictions
 		logger.debug("Getting forecasts");
+		ArrayList<PredictedShift> predictedShifts = new ArrayList<>();
 		try {
 			Rscript rscript = new Rscript();
 			InputStream predictionOutput = rscript.executeResource("predictor.r", forecastFolder.getAbsolutePath());
 			BufferedReader reader = new BufferedReader(new InputStreamReader(predictionOutput));
 			Pattern pattern = Pattern.compile("Result\\|(\\d+)\\|(\\d+)\\|(\\d+(?:\\.\\d+)?)");
 			String line = null;
-			int persistCounter = 0;
-			int batchSize = 100;
-			em.getTransaction().begin();
 			while ((line = reader.readLine()) != null) {
 				Matcher matcher = pattern.matcher(line);
 				if (matcher.find()) {
@@ -127,21 +114,12 @@ public class Predictor {
 						Long id = new Long(matcher.group(1));
 						long timestamp = Long.parseLong(matcher.group(2));
 						double prediction = Double.parseDouble(matcher.group(3));
-
 						PredictedShift predictedShift = new PredictedShift();
 						predictedShift.setMillis(timestamp);
 						predictedShift.setSpeed((int) prediction);
 						predictedShift.setPredictionerror(-1);
 						predictedShift.setSegment(segmentById.get(id));
-
-						em.persist(predictedShift);
-
-						persistCounter++;
-						if (persistCounter % batchSize == 0) {
-							em.flush();
-							em.clear();
-						}
-
+						predictedShifts.add(predictedShift);
 					} catch (NumberFormatException e) {
 						logger.error("Bad R output: \"" + line + "\"");
 					}
@@ -149,15 +127,38 @@ public class Predictor {
 					logger.info("Ignoring Rscript output: \"" + line + "\"");
 				}
 			}
-			em.getTransaction().commit();
 			if (rscript.getExitCode() != 0) {
 				logger.error("Script exited with non zero code");
 			}
 		} catch (IOException e) {
 			logger.error("Cannot get predictions", e);
-		} finally {
-			FileUtils.deleteDirectory(forecastFolder);
 		}
+
+		// Remove existing predictions and add new ones
+		logger.debug("Remove existing predictions");
+		em.getTransaction().begin();
+		try {
+			em.createQuery("DELETE FROM " + PredictedShift.class.getName() + " o").executeUpdate();
+
+			int persistCounter = 0;
+			int batchSize = 100;
+			for (PredictedShift predictedShift : predictedShifts) {
+				em.persist(predictedShift);
+				persistCounter++;
+				if (persistCounter % batchSize == 0) {
+					em.flush();
+					em.clear();
+				}
+			}
+			em.getTransaction().commit();
+		} catch (RuntimeException e) {
+			if (em.getTransaction().isActive()) {
+				em.getTransaction().rollback();
+			}
+		}
+
+		FileUtils.deleteDirectory(forecastFolder);
+
 		logger.debug("predictions done");
 	}
 
