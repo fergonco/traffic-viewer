@@ -10,6 +10,7 @@ lapply(files, function(file){
   predictions <- predict.glm(fit, newdata = forecastDataset) # was valid for predict.lm, not anymore: , interval = "prediction", level = 0.95)
   matches <- regmatches(file, regexec("(\\d*).rds", file))
   id <- matches[[1]][2]
+  options(scipen = 20)
   for (i in 1:nrow(forecastDataset)){
     print(paste("Result", id, forecastDataset[i, "timestamp"], predictions[i], sep="|"))
   }
