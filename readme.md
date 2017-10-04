@@ -343,6 +343,8 @@ change pom.xml version if a major change
 	mvn versions:set -DnewVersion=1.1
 	mvn versions:commit
 change Dockerfiles, mkdockers.sh and pushdockers.sh accordingly
+git tag -a version
+git push --tags
 mvn clean install
 ./mkdockers.sh
 ./pushdockers.sh
