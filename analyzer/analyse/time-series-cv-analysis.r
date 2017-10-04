@@ -107,6 +107,13 @@ for (i in 1:20) {
   CV[index, "degree"] <- i
   CV[index, "formula"] <- as.character(formula)[3]
 }
+for (i in 1:20) {
+  index <- nrow(CV) + 1
+  formula <- speed ~ weekday + schoolfr + poly(minutesDay, i) + weekday * poly(minutesDay, j)
+  CV[index, "cv"] <- timeSeriesCV(speeds, formula)
+  CV[index, "degree"] <- i
+  CV[index, "formula"] <- as.character(formula)[3]
+}
 plot <- ggplot(data = CV, aes(x=degree, y=cv, color=factor(formula))) + geom_point()  + geom_line()
 
 levels <- levels(as.factor(CV$formula))
