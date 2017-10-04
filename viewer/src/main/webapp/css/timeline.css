@@ -1,6 +1,6 @@
 #Timeline {
-	height: 20vh;
-	font-size: 2vh;
+	height: 18vh;
+	font-size: 1.5vh;
 	overflow-x: scroll;
 	overflow-y: hidden;
 	-webkit-touch-callout: none; /* iOS Safari */
