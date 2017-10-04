@@ -5,6 +5,7 @@ import static org.mockito.Matchers.anyDouble;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -47,6 +48,10 @@ public class ModelBuilderTest {
 			persistShift(em, i, now - i * FIVE_HOURS, route);
 			persistWeatherConditions(em, i, now - i * FIVE_HOURS - 1000);
 		}
+		// no schoolfr
+		persistShift(em, 30, new SimpleDateFormat("yyyy-MM-dd").parse("2017-08-01").getTime(), route);
+		// schoolfr
+		persistShift(em, 31, new SimpleDateFormat("yyyy-MM-dd").parse("2017-02-19").getTime(), route);
 		em.getTransaction().commit();
 
 		// Generate models

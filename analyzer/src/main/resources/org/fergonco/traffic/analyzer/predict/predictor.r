@@ -7,7 +7,7 @@ files <- list.files(forecastFolder, pattern = "*.rds");
 lapply(files, function(file){
   fileName <- paste(forecastFolder, "/", file, sep = "")
   fit <- readRDS(fileName)
-  predictions <- predict(fit, newdata = forecastDataset) # was valid for predict.lm, not anymore: , interval = "prediction", level = 0.95)
+  predictions <- predict.glm(fit, newdata = forecastDataset) # was valid for predict.lm, not anymore: , interval = "prediction", level = 0.95)
   matches <- regmatches(file, regexec("(\\d*).rds", file))
   id <- matches[[1]][2]
   for (i in 1:nrow(forecastDataset)){
