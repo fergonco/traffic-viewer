@@ -154,7 +154,7 @@ In the database, as tpg user:
 	create materialized view app.timestamped_geoshift as 
 		(select id, geom, draw_timestamp, speed, -1 as predictionerror from app.timestamped_measured_geoshifts)
 		union
-		(select id, geom, draw_timestamp, speed, predictionerror from app.predicted_geoshift where draw_timestamp > (select max(draw_timestamp) from app.timestamped_measured_geoshifts));
+		(select id, geom, draw_timestamp, speed, predictionerror from app.predicted_geoshift where draw_timestamp > localtimestamp);
 	
 
 ## 3.2 geoserver
@@ -337,13 +337,27 @@ We need to get GeoServer and the viewer on the same server and port, so we use n
 			request "/geoserver/ows?service=wms&version=1.3.0&request=GetCapabilities"
 		then restart
 	
-# 4 Data preparation
+# 4 Release
 
-## 4.1 OSM Data download
+change pom.xml version if a major change
+	mvn versions:set -DnewVersion=1.1
+	mvn versions:commit
+change Dockerfiles, mkdockers.sh and pushdockers.sh accordingly
+mvn clean install
+./mkdockers.sh
+./pushdockers.sh
+update start.sh
+stop docker
+start new docker
+up a minor version in pom.xml, mkdockers and pushdockers
+
+# 5 Data preparation
+
+## 5.1 OSM Data download
 
 	wget 'http://overpass-api.de/api/map?bbox=5.9627,46.2145,6.1287,46.2782' -O ligne-y.osm.xml
 
-## 4.2 Distances between stops. TPGStopRoute* tables
+## 5.2 Distances between stops. TPGStopRoute* tables
 
 * Generate reference table tpgstops with TPGStopExtractor, getting coordinates from TPG API
 * Visualize generated stops with QGIS project in data-gatherer/network/qgis.qgs
@@ -366,7 +380,7 @@ We need to get GeoServer and the viewer on the same server and port, so we use n
   * If a step is not calculated it is most probably due to one-way=yes. Modify it in osm-overrides.xml
 * Ejecutar DistanceCalculator para generar las tablas TPGStopRoute y TPGStopRouteSegments
 
-## 4.3 Stops info
+## 5.3 Stops info
 
 	insert into app.tpgstop2 (destination, line, osmid, tpgcode) values('GARE CORNAVIN', 'F', 792507552, 'GXAI');
 	insert into app.tpgstop2 (destination, line, osmid, tpgcode) values('GARE CORNAVIN', 'F', 983750310, 'GXGC');
@@ -482,9 +496,9 @@ We need to get GeoServer and the viewer on the same server and port, so we use n
 	commit;
 	
 	
-# 5 Analysis
+# 6 Analysis
 
-## 5.1 Load backups in database
+## 6.1 Load backups in database
 
 	psql -h localhost -U geomatico -d postgres -p54322
 	create database tpganalysis;

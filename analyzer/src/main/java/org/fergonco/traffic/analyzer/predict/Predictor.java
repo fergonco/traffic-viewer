@@ -71,7 +71,7 @@ public class Predictor {
 
 		// Build prediction dataset
 		Date now = new Date();
-		long forecastTimestamp = now.getTime() + HOUR / 2;
+		long forecastTimestamp = ((now.getTime() + HOUR / 2) / 900000) * 900000;
 		logger.debug("Predicting for next " + (FORECAST_LIMIT / HOUR) + " hours each " + (FORECAST_STEP / (double) HOUR)
 				+ " hours");
 		PrintStream datasetStream = new PrintStream(new FileOutputStream(new File(forecastFolder, "dataset.csv")));
